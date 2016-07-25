@@ -268,7 +268,7 @@ public class TestLineConnections {
 
         assertEquals(c_is1_beg_is3_end,c_is1_beg_is3_end_swapped);
         assertEquals(c_is1_beg_is3_end.hashCode(), c_is1_beg_is3_end_swapped.hashCode());
-        LineWelder lw = new LineWelder(gf);
+        LineWelder lw = new LineWelder(gf,null);
 
         /*
         is1 = TestUtils.TestUtils.createIsoline(0,0,"0 0.1,31 1,3 4",gf);

@@ -41,6 +41,10 @@ public class TOcadObject extends ByteDeserializable {
                 Sym == 106006;
     }
 
+    public boolean isSlope() {
+        return Sym == 104000;
+    }
+
     public int getType() {
         if (Sym == 101000) return 2;
         if (Sym == 102000) return 3;

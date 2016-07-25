@@ -7,8 +7,8 @@ import java.util.Iterator;
  */
 public class ArrayReverseIterator<T> implements Iterator<T> {
 
-    T[] array;
-    int index;
+    private T[] array;
+    private int index;
     public ArrayReverseIterator( T[] array ) {
         this.array = array;
         index = array.length-1;

@@ -5,14 +5,19 @@ import Isolines.Isoline;
 import Loader.Binary.*;
 import Loader.Interpolation.Curve;
 import Loader.Interpolation.CurveString;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineSegment;
-import com.vividsolutions.jts.geom.LineString;
+import Loader.Interpolation.SlopeMark;
+import Utils.Constants;
+import Utils.GeomUtils;
+import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.math.Vector2D;
 
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 
 /**
  * Created by Artem on 21.07.2016.
@@ -80,15 +85,54 @@ public class MapDeserializer {
         return ret;
     }
 
+
+    public ArrayList<SlopeMark> slopeMarks;
+
     public ArrayList<IIsoline> toIsolines(double interpolation_step,GeometryFactory gf) throws Exception {
         if (interpolation_step <= 0) throw new Exception("Invalid interpolation step");
+
+        slopeMarks = new ArrayList<>();
+        for (TOcadObject obj : objects) {
+            if (obj.isSlope()) {
+                slopeMarks.add( new SlopeMark(obj) );
+            }
+            //ret.add(CurveString.fromTDPoly(obj.Poly).interpolate(interpolation_step,gf));
+        }
 
         ArrayList<IIsoline> ret = new ArrayList<>();
         for (TOcadObject obj : objects) {
             if (obj.isLine()) {
-                ret.add(new Isoline(obj.getType(),0,CurveString.fromTDPoly(obj.Poly).getCoordinateSequence(interpolation_step,gf),gf) );
+
+                // Detected slope, lying on this curve;
+                SlopeMark slope = null;
+                LineString ls = CurveString.fromTDPoly(obj.Poly).interpolate(interpolation_step, gf);
+                Iterator<SlopeMark> it = slopeMarks.iterator();
+                // Find slope within specified distance
+                while (it.hasNext()) {
+                    SlopeMark s = it.next();
+                    Point p = gf.createPoint(s.origin);
+                    if (ls.isWithinDistance(p, Constants.slope_near_dist)) {
+                        slope = s;
+                        break;
+                    }
+                }
+
+                int slope_side = 0;
+                if (slope != null) {
+                    double prec = Constants.tangent_precision/ls.getLength();
+                    double projFact = GeomUtils.projectionFactor(slope.origin,ls);
+                    double pos1 = GeomUtils.clamp(projFact-prec,0,1);
+                    double pos2 = GeomUtils.clamp(projFact+prec,0,1);
+                    Coordinate c1 = GeomUtils.pointAlong(ls,pos1);
+                    Coordinate c2 = GeomUtils.pointAlong(ls,pos2);
+                    LineSegment seg = new LineSegment(c1,c2);
+                    slope_side = GeomUtils.getSide(seg,slope.pointAlong(Constants.slope_length));
+                    // Find out slope side
+                    //Coordinate endpoint = Vector2D.create(slope.origin).add(slope.vec.multiply(Constants.slope_length)).toCoordinate();
+                    //Coordinate p1;
+                }
+                ret.add(new Isoline(obj.getType(), slope_side, ls.getCoordinateSequence(), gf));
             }
-            //ret.add(CurveString.fromTDPoly(obj.Poly).interpolate(interpolation_step,gf));
         }
         return ret;
     }

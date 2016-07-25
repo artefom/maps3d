@@ -1,5 +1,6 @@
 package Algorithm.LineConnection;
 
+import Algorithm.EdgeDetection.Edge;
 import Isolines.IIsoline;
 import Isolines.Isoline;
 import Utils.Constants;
@@ -10,6 +11,7 @@ import com.vividsolutions.jts.geom.LineString;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
 /**
@@ -21,6 +23,8 @@ public class LineWelder {
     Intersector intersector;
     ConnectionExtractor extr;
     ConnectionEvaluator eval;
+    SteepDetector steepDetector;
+    Edge edge;
 
     public LineWelder() {
         this.gf = new GeometryFactory();
@@ -32,7 +36,8 @@ public class LineWelder {
         );
     }
 
-    public LineWelder(GeometryFactory gf) {
+    public LineWelder(GeometryFactory gf, Edge edge) {
+        this.edge = edge;
         this.gf = gf;
         eval = new ConnectionEvaluator(
                 Math.toRadians(Constants.CONNECTIONS_MIN_ANGLE_DEG),
@@ -65,6 +70,7 @@ public class LineWelder {
                 result_ls.getCoordinateSequence(),gf);
 
         Isoline_attributed ret = new Isoline_attributed(new_iline,con.first().other,con.second().other);
+
         return ret;
     };
 
@@ -73,8 +79,16 @@ public class LineWelder {
         for (IIsoline i : cont)
             isos.add(new Isoline_attributed(i));
 
-        intersector = new Intersector(isos.stream().map((x)->x.getGeometry()).collect(Collectors.toList()));
-        extr = new ConnectionExtractor(intersector,eval,gf);
+        ArrayList<LineString> steeps = new ArrayList<>();
+        for (IIsoline i: cont) {
+            if (i.getType() == 4){
+                steeps.add(i.getLineString());
+            }
+        }
+
+        intersector = new Intersector(isos.stream().map((x)->x.getGeometry()).collect(Collectors.toList()),gf);
+        steepDetector = new SteepDetector(steeps, Constants.CONNECTIONS_NEAR_STEEP_THRESHOLD, gf);
+        extr = new ConnectionExtractor(intersector,steepDetector,eval,gf,edge);
 
         ArrayList<Connection> cons_array = extr.apply(isos);
 
@@ -89,9 +103,21 @@ public class LineWelder {
         }
         LinkedList<IIsoline> ret = new LinkedList<>();
         for (Isoline_attributed iso: isos)
-            if (iso != null && iso.isValid()) ret.add(iso.getIsoline());
+            if (iso != null && iso.isValid()) {
+                IIsoline iline = iso.getIsoline();
+                if (iline != null) {
+                    iline.setEdgeToEdge(iso.isEdgeToEdge(edge));
+                    ret.add(iline);
+                }
+            }
         for (Isoline_attributed iso: welded_lines)
-            if (iso != null && iso.isValid()) ret.add(iso.getIsoline());
+            if (iso != null && iso.isValid()) {
+                IIsoline iline = iso.getIsoline();
+                if (iline != null) {
+                    iline.setEdgeToEdge(iso.isEdgeToEdge(edge));
+                    ret.add(iline);
+                }
+            }
         return ret;
     }
 }

@@ -7,8 +7,8 @@ import java.util.Iterator;
  */
 public class ArrayIterator<T> implements Iterator<T> {
 
-    T[] array;
-    int index;
+    private T[] array;
+    private int index;
     public ArrayIterator(T[] array) {
         this.array = array;
         index = 0;

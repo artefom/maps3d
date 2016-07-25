@@ -82,12 +82,10 @@ public class MainApp extends Application implements Initializable {
 
     private void redraw() {
         if (displayedContainer != null) {
-            List<GeometryWrapper> geometry = drawer.draw(displayedContainer);
+            List<GeometryWrapper> geometry = drawer.draw(displayedContainer,mc.edge);
             renderer.clear();
             renderer.addAll(geometry);
-            if (mc.edge != null) {
-                renderer.add( drawer.draw(mc.edge) );
-            }
+            renderer.addAll( drawer.draw(mc.slopeMarks) );
         };
 
     }
@@ -214,6 +212,8 @@ public class MainApp extends Application implements Initializable {
 
     @FXML void onBtnLinesClick() {
         mc.connectLines();
+        if (!original_ch_b.isSelected())
+            displayedContainer = mc.ic;
         redraw();
         render();
     }

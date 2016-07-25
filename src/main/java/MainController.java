@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.stream.Stream;
 
 import Isolines.*;
+import Loader.Interpolation.SlopeMark;
 import Loader.MapDeserializer;
+import Utils.Constants;
 import com.vividsolutions.jts.geom.*;
 
 /**
@@ -21,6 +23,8 @@ public class MainController {
     public IsolineContainer ic;
 
     public Edge edge;
+
+    public ArrayList<SlopeMark> slopeMarks;
 
     MainController() {
         gf = new GeometryFactory();
@@ -57,7 +61,9 @@ public class MainController {
         MapDeserializer dser = new MapDeserializer();
         dser.DeserializeMap(f.getPath());
         ArrayList<IIsoline> isos = dser.toIsolines(1,gf);
+        slopeMarks = new ArrayList<>();
         isos.forEach(ic::add);
+        dser.slopeMarks.forEach(slopeMarks::add);
     }
 
     public int IsolineCount() {
@@ -72,13 +78,14 @@ public class MainController {
     }
 
     public void connectLines() {
-        LineWelder lw = new LineWelder(gf);
-        lw.WeldAll(ic);
+        if (edge == null) return;
+        LineWelder lw = new LineWelder(gf,edge);
+        //lw.WeldAll(ic);
         ic = new IsolineContainer(gf,lw.WeldAll(ic));
     }
 
     public void detectEdge() {
-        edge = Edge.fromIsolines(ic,10);
+        edge = Edge.fromIsolines(ic, Constants.EDGE_CONCAVE_THRESHOLD);
     }
 
     public void buildGraph() {

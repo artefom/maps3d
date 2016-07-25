@@ -1,5 +1,6 @@
 package Loader.Binary;
 
+import Utils.Constants;
 import com.vividsolutions.jts.geom.Coordinate;
 
 /**
@@ -38,12 +39,12 @@ public class TDPoly {
         return (x&((1 << 4)-1)) | ((y&((1 << 4)-1))<<4);
     };
 
-    public int getX() {
-        return x >> 4;
+    public double getX() {
+        return (x >> 4) / Constants.map_scale_factor;
     }
 
-    public int getY() {
-        return y >> 4;
+    public double getY() {
+        return (y >> 4) / Constants.map_scale_factor;
     }
 
     public boolean isNull() {
@@ -51,7 +52,7 @@ public class TDPoly {
     }
 
     public Coordinate toCoordinate() {
-        return new Coordinate((double)getX()/1600,(double)getY()/1600);
+        return new Coordinate(getX(),getY());
     }
 
     public boolean isBezier() {

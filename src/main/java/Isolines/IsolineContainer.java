@@ -6,10 +6,7 @@ import Utils.Interpolator;
 import com.vividsolutions.jts.algorithm.ConvexHull;
 import com.vividsolutions.jts.geom.*;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -270,6 +267,14 @@ public class IsolineContainer extends HashSet<IIsoline> {
 
     public GeometryFactory getFactory() {
         return gf;
+    }
+
+    public ArrayList<Geometry> getIsolinesAsGeometry() {
+        ArrayList<Geometry> ret = new ArrayList<>(this.size());
+        for (IIsoline i : this) {
+            ret.add(i.getGeometry());
+        }
+        return ret;
     }
 
 

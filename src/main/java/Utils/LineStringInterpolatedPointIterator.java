@@ -7,7 +7,7 @@ import com.vividsolutions.jts.geom.LineString;
 import java.util.Iterator;
 
 /**
- * Created by Artyom.Fomenko on 19.07.2016.
+ * Created by Artyom.Fomenko on 19.07.2016
  */
 public class LineStringInterpolatedPointIterator implements Iterator<Coordinate> {
 
@@ -20,7 +20,7 @@ public class LineStringInterpolatedPointIterator implements Iterator<Coordinate>
     private double pos_begin;
     private double pos_end;
 
-    public LineStringInterpolatedPointIterator(LineString ls, double max_length) {
+    public LineStringInterpolatedPointIterator(LineString ls, double max_length, double offset) {
         double len = ls.getLength();
         int segments_num = (int) Math.ceil(len / max_length);
 
@@ -29,10 +29,23 @@ public class LineStringInterpolatedPointIterator implements Iterator<Coordinate>
         this.iter = new LineStringIterator(ls,internal_buf);
         iter.next();
         this.internal_buf_len = internal_buf.getLength();
+        length_buf = offset;
+        double pos = length_buf/internal_buf_len;
+        while (pos >= 1) {
+            length_buf -= internal_buf_len;
+            if (iter.hasNext()) {
+                iter.next();
+            } else {
+                finished = true;
+                break;
+            }
+            internal_buf_len = internal_buf.getLength();
+            pos = length_buf/internal_buf_len;
+        }
         finished = false;
     }
 
-    private Coordinate getNextCoordinate(Coordinate buf) {
+    public Coordinate getNextCoordinate(Coordinate buf) {
         double pos = length_buf/internal_buf_len;
         while (pos >= 1) {
             length_buf-=internal_buf_len;

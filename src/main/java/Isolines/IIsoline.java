@@ -10,6 +10,11 @@ public interface IIsoline {
     int getSlopeSide();
     int getType();
 
+    boolean isClosed();
+
+    void setEdgeToEdge(boolean isedgetoedge);
+    boolean isEdgeToEdge();
+
     //Debug use Only;
     static int last_id = 0;
     int getID();

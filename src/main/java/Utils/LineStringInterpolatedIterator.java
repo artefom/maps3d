@@ -12,26 +12,21 @@ import java.util.Iterator;
  */
 public class LineStringInterpolatedIterator implements Iterator<LineSegment> {
 
-    LineString ls;
-    LineSegment buf;
-    LineSegment internal_buf;
-    double internal_buf_len;
-    LineStringIterator iter;
-    double max_length;
-    int segments_num;
-    double step;
-    double length_buf;
-    Coordinate prev_coord;
-    Coordinate next_coord;
-    boolean finished;
+    private LineSegment buf;
+    private LineSegment internal_buf;
+    private double internal_buf_len;
+    private LineStringIterator iter;
+    private double step;
+    private double length_buf;
+    private Coordinate prev_coord;
+    private Coordinate next_coord;
+    private boolean finished;
 
     public LineStringInterpolatedIterator(LineString ls, LineSegment buf, double max_length) {
-        this.ls = ls;
         this.buf = buf;
-        this.max_length = max_length;
         double len = ls.getLength();
-        this.segments_num = (int)Math.ceil(len/max_length);
-        this.step = len/segments_num;
+        int segments_num = (int) Math.ceil(len / max_length);
+        this.step = len/ segments_num;
         this.internal_buf = new LineSegment();
         this.iter = new LineStringIterator(ls,internal_buf);
         iter.next();

@@ -57,7 +57,7 @@ public class LineWelderTest {
     @Before
     public void setupIsolines() {
         gf = new GeometryFactory();
-        welder = new LineWelder(gf);
+        welder = new LineWelder(gf,null);
         is1 = createIsoline(0,0,"0 0.1,31 1,3 4",gf);
         is2 = createIsoline(0, 0, "-2 3, 0 12, 3 -3, -8 12",gf);
         is3 = createIsoline(0, 0, "0 0, 1 1, 2 2",gf);

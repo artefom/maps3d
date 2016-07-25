@@ -17,12 +17,14 @@ public class Isoline implements IIsoline {
     private int type;
     private int slope_side;
     private int id;
+    private boolean isedgetoedge;
 
     public Isoline(int type, int side, CoordinateSequence cs, GeometryFactory gf) {
         lineString = new LineString(cs,gf);
         id = ++DebugUtils.isoline_last_id;
         slope_side = side;
         this.type = type;
+        isedgetoedge = false;
     }
 
     public Isoline(IIsoline other) {
@@ -31,10 +33,25 @@ public class Isoline implements IIsoline {
         id = ++DebugUtils.isoline_last_id;
         slope_side = other.getSlopeSide();
         type = other.getType();
+        isedgetoedge = other.isEdgeToEdge();
     }
 
     public int getType() {
         return  type;
+    }
+
+    @Override
+    public boolean isClosed() {
+        return this.lineString.isClosed();
+    }
+
+    public void setEdgeToEdge(boolean isedgetoedge) {
+        this.isedgetoedge = isedgetoedge;
+    }
+
+    @Override
+    public boolean isEdgeToEdge() {
+        return isedgetoedge;
     }
 
     @Override

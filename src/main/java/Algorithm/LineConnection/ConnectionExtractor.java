@@ -1,5 +1,8 @@
 package Algorithm.LineConnection;
 
+import Algorithm.EdgeDetection.Edge;
+import Utils.Constants;
+import com.sun.corba.se.impl.orbutil.closure.Constant;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
 import java.util.ArrayList;
@@ -14,12 +17,16 @@ public class ConnectionExtractor implements Function<ArrayList<Isoline_attribute
     private Intersector intersector;
     private GeometryFactory gf;
     private ConnectionEvaluator evaluator;
+    private SteepDetector steepDetector;
+    private Edge edge;
 
-    public ConnectionExtractor(Intersector intersector, ConnectionEvaluator evaluator,
-                               GeometryFactory gf) {
+    public ConnectionExtractor(Intersector intersector, SteepDetector steepDetector, ConnectionEvaluator evaluator,
+                               GeometryFactory gf,Edge edge) {
         this.intersector = intersector;
+        this.edge = edge;
         this.gf = gf;
         this.evaluator = evaluator;
+        this.steepDetector = steepDetector;
         buffer = new Connection();
     }
 
@@ -34,23 +41,27 @@ public class ConnectionExtractor implements Function<ArrayList<Isoline_attribute
     private void addIfNotIntersects(ArrayList<Connection> cons, LineEnd le1, LineEnd le2) {
         if (le1 == null || le2 == null) return;
         buffer.SetLineEnds(le1,le2);
+        //if (edge.isWithinEdge(le1.line.p1) || edge.isWithinEdge(le2.line.p1)) return;
         buffer.score = evaluator.apply(buffer);
         if (buffer.score > -0.5) {
             if (!intersector.apply(buffer.getConnectionLine()) || buffer.connectionLine.getLength() < 0.001) {
+                if ( (buffer.connectionLine.getLength() < Constants.CONNECTIONS_WELD_DIST ) ||
+                        !steepDetector.isNearSteep(buffer)) {
+                    buffer.score += ConnectionEvaluator.parallelScore(buffer) / 2;
 
-                buffer.score += ConnectionEvaluator.parallelScore(buffer)/2;
-
-                for (Connection con : cons) {
-                    if (con.getConnectionLine().intersects(buffer.getConnectionLine())) {
-                        buffer.score *= 0.5;
-                        con.score *= 0.5;
+                    if (buffer.first().isWithinEdge(edge))
+                        buffer.score -= 0.7;
+                    if (buffer.second().isWithinEdge(edge))
+                        buffer.score -= 0.7;
+                    for (Connection con : cons) {
+                        if (con.getConnectionLine().intersects(buffer.getConnectionLine())) {
+                            buffer.score *= 0.5;
+                            con.score *= 0.5;
+                        }
                     }
-                }
-
-                //if (buffer.score > 0.3) {
                     cons.add(buffer);
                     buffer = new Connection();
-                //}
+                }
             }
         }
     }

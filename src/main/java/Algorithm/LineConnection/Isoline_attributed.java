@@ -1,5 +1,6 @@
 package Algorithm.LineConnection;
 
+import Algorithm.EdgeDetection.Edge;
 import Isolines.IIsoline;
 import Isolines.Isoline;
 import com.vividsolutions.jts.geom.*;
@@ -89,6 +90,11 @@ public class Isoline_attributed {
     @Override
     public int hashCode() {
         return iso.hashCode();
+    }
+
+    public boolean isEdgeToEdge(Edge edge) {
+        if (begin == null || end == null) return false;
+        return this.begin.isWithinEdge(edge) && this.end.isWithinEdge(edge);
     }
 
     @Override

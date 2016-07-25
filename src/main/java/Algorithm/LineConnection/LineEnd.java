@@ -1,5 +1,6 @@
 package Algorithm.LineConnection;
 
+import Algorithm.EdgeDetection.Edge;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineSegment;
 import com.vividsolutions.jts.geom.LineString;
@@ -19,16 +20,23 @@ public class LineEnd {
     public LineSegment line;
     public LineEnd other;
 
+    private int isWithinEdge_cached_id;
+    public boolean isWithinEdge;
+
     public LineEnd(Isoline_attributed isoline, LineSegment ls, int end_index) {
         this.isoline = isoline;
         this.end_index = end_index;
         this.line = ls;
+        isWithinEdge = false;
+        isWithinEdge_cached_id = -1;
     }
 
     public LineEnd() {
         isoline = null;
         end_index = 0;
         line = null;
+        isWithinEdge = false;
+        isWithinEdge_cached_id = -1;
     }
 
     public static LineSegment getEnd(LineString ls, int end_index) {
@@ -56,6 +64,17 @@ public class LineEnd {
             return iso.end;
         }
         return null;
+    }
+
+    public void isWithinEdgeCacheReset() {
+        isWithinEdge_cached_id = -1;
+    }
+    public boolean isWithinEdge(Edge edge) {
+        if (isWithinEdge_cached_id == edge.getID())
+            return isWithinEdge;
+        isWithinEdge = edge.isWithinEdge(line);
+        isWithinEdge_cached_id = edge.getID();
+        return isWithinEdge;
     }
 
     public boolean isValid() {
