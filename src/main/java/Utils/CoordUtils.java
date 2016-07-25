@@ -21,4 +21,8 @@ public class CoordUtils {
 
     public static Coordinate mul(Coordinate c1, double val) { return new Coordinate(c1.x*val,c1.y*val); };
     public static Coordinate div(Coordinate c1, double val) { return new Coordinate(c1.x/val,c1.y/val); };
+
+    public static Coordinate weightedAverage( Coordinate c1, Coordinate c2, double pos) {
+        return add(mul(c1,(1-pos)),mul(c2,pos));
+    }
 }

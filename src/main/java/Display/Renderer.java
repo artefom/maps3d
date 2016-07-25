@@ -1,9 +1,6 @@
 package Display;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.*;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
@@ -126,11 +123,9 @@ public class Renderer {
         this.scale = (double)(Math.max(bbox.getWidth(),bbox.getHeight()));;
     }
 
-    public void render(GraphicsContext gc, double Width, double Height) {
+    public void render(List<GeometryWrapper> gws, GraphicsContext gc, double Width, double Height) {
         double correction_scale = (double)(Math.min(Width,Height));
         Coordinate correction_shift = new Coordinate(Width*0.5,Height*0.5);
-        gc.setFill(Color.WHITE);
-        gc.fillRect(0,0,Width,Height);
         for (GeometryWrapper gs : gws) {
 
             gc.setLineWidth(gs.width);
@@ -159,6 +154,12 @@ public class Renderer {
                 c1.y = c2.y;
             }
         }
+    }
+
+    public void render(GraphicsContext gc, double Width, double Height) {
+        gc.setFill(Color.WHITE);
+        gc.fillRect(0,0,Width,Height);
+        render(gws,gc, Width, Height);
     }
 
 }

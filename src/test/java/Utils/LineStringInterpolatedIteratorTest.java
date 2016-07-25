@@ -9,8 +9,9 @@ import org.junit.Test;
 import static TestUtils.TestUtils.assertEquals;
 import static TestUtils.TestUtils.createLineSegment;
 import static TestUtils.TestUtils.createLineString;
-import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
+import org.junit.Assert;
+//import static org.junit.Assert.*;
+//import static org.junit.Assert.assertEquals;
 
 /**
  * Created by Artyom.Fomenko on 19.07.2016.
@@ -24,9 +25,9 @@ public class LineStringInterpolatedIteratorTest {
         LineString ls = createLineString("0 0, 1 1", gf);
         LineSegment buf = new LineSegment();
         LineStringInterpolatedIterator it = new LineStringInterpolatedIterator(ls,buf,5);
-        assertTrue(it.hasNext());
+        Assert.assertTrue(it.hasNext());
         it.next();
-        assertFalse(it.hasNext());
+        Assert.assertFalse(it.hasNext());
     }
 
     @Test
@@ -34,15 +35,15 @@ public class LineStringInterpolatedIteratorTest {
         LineString ls = createLineString("0 0, 4 0, 4 3, 0 0", gf);
         LineSegment buf = new LineSegment();
         LineStringInterpolatedIterator it = new LineStringInterpolatedIterator(ls,buf,12.0/4);
-        assertTrue(it.hasNext());
+        Assert.assertTrue(it.hasNext());
         it.next();
-        assertTrue(it.hasNext());
+        Assert.assertTrue(it.hasNext());
         it.next();
-        assertTrue(it.hasNext());
+        Assert.assertTrue(it.hasNext());
         it.next();
-        assertTrue(it.hasNext());
+        Assert.assertTrue(it.hasNext());
         it.next();
-        assertFalse(it.hasNext());
+        Assert.assertFalse(it.hasNext());
     }
 
     @Test

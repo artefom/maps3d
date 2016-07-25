@@ -3,6 +3,7 @@ package Utils;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Function;
 
@@ -37,6 +38,14 @@ public class GeomUtils {
         double v2x = c.x - seg.p0.x;
         double v2y = c.y - seg.p0.y;
         return ( (v1x*v2y - v1y*v2x) > 0) ? 1 : -1;
+    }
+
+    public static double getDistSide( LineSegment seg, Coordinate c) {
+        double v1x = seg.p1.x-seg.p0.x;
+        double v1y = seg.p1.y-seg.p0.y;
+        double v2x = c.x - seg.p0.x;
+        double v2y = c.y - seg.p0.y;
+        return v1x*v2y - v1y*v2x;
     }
 
     public static double projectionFactor( Coordinate c, LineString ls ) {

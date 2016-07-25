@@ -2,6 +2,7 @@ package Algorithm.LineConnection;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineSegment;
 import com.vividsolutions.jts.geom.LineString;
 
 import static Utils.CoordUtils.*;
@@ -16,13 +17,12 @@ public class Connection {
     private LineEnd l1;
     private LineEnd l2;
     double score;
-    LineString connectionLine;
+    LineSegment connectionSegment;
 
     public  Connection() {
         l1 = null;
         l2 = null;
         score = -1;
-        connectionLine = null;
     }
 
     private Connection(LineEnd l1, LineEnd l2, GeometryFactory gf) {
@@ -32,8 +32,9 @@ public class Connection {
         getConLine(gf);
     }
 
-    public LineString getConnectionLine() {
-        return connectionLine;
+
+    public LineSegment getConnectionSegment() {
+        return connectionSegment;
     }
 
     public static Connection fromLineEnds(LineEnd l1, LineEnd l2) {
@@ -49,11 +50,7 @@ public class Connection {
     }
 
     private void getConLine(GeometryFactory gf) {
-        double p1 = 0.01;
-        double p2 = 0.99;
-        connectionLine = gf.createLineString(new Coordinate[] {
-                add(mul(first().line.p1,p2),mul(second().line.p1,p1)),
-                add(mul(first().line.p1,p1),mul(second().line.p1,p2))});
+        connectionSegment = new LineSegment(l1.line.p1,l2.line.p1);
     }
 
     public boolean isValid() {

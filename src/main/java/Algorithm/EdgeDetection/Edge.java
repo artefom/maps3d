@@ -5,6 +5,8 @@ import Algorithm.LineConnection.Intersector;
 import Algorithm.LineConnection.LineEnd;
 import Isolines.IsolineContainer;
 import Utils.Constants;
+import Utils.CoordUtils;
+import Utils.GeomUtils;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;
 import org.opensphere.geometry.algorithm.*;
@@ -44,7 +46,7 @@ public class Edge {
     }
 
     public static Edge fromIsolines(IsolineContainer isos, double threshold) {
-        Intersector intersector = new Intersector( isos.getIsolinesAsGeometry(), isos.getFactory() );
+        Intersector intersector = new Intersector( isos.getIsolinesAsGeometry(), isos.getFactory(), Constants.CONNECTIONS_INTERSECTION_OFFSET);
         return fromGeometryCollection(isos.stream().map((x)->x.getGeometry()).collect(Collectors.toList()),
                 isos.getFactory(), intersector, threshold);
     }
@@ -55,9 +57,9 @@ public class Edge {
 
     public boolean isWithinEdge(LineSegment ls) {
         if (isWithinEdge(ls.p1)) return true;
-        Coordinate traced = intersector.trace(
-                Vector2D.create(ls.p1).add(Vector2D.create(ls.p0,ls.p1).multiply(0.01)).toCoordinate(),
-                Vector2D.create(ls.p0,ls.p1),max_dist);
+        Coordinate begin = ls.p1;
+        Vector2D vec = Vector2D.create(ls.p0,ls.p1).normalize();
+        Coordinate traced = intersector.trace(begin,vec,0.01,max_dist);
         if (traced == null) return true;
         if (gf.createLineString(new Coordinate[]{ls.p1, traced}).intersects(outerBound)) {
             return true;

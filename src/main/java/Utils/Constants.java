@@ -18,6 +18,8 @@ public class Constants {
     public static final double CONNECTIONS_WELD_DIST = 0.5;
     public static final double CONNECTIONS_MAX_DIST = 12;
     public static final double CONNECTIONS_NEAR_STEEP_THRESHOLD = 0.5;
+    // Don't count intersections within this offset from edges
+    public static final double CONNECTIONS_INTERSECTION_OFFSET = 0.1;
 
     //DRAWING
     public static final double DRAWING_LINE_WIDTH = 0.2;
@@ -42,6 +44,7 @@ public class Constants {
     public static final double map_scale_factor = 1600;
 
     //Nearby detection
-    public static final double NEARBY_TRACE_STEP = 0.5;
+    public static final double NEARBY_TRACE_STEP = 2;
     public static final double NEARBY_TRACE_LENGTH=10;
+    public static final double NEARBY_TRACE_OFFSET = 0.01;
 }

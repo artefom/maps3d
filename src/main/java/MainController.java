@@ -1,5 +1,6 @@
 import Algorithm.EdgeDetection.Edge;
 import Algorithm.LineConnection.LineWelder;
+import Algorithm.NearbyGraph.GraphBuilder;
 import Isolines.IsolineContainer;
 
 import java.io.*;
@@ -89,7 +90,8 @@ public class MainController {
     }
 
     public void buildGraph() {
-
+        GraphBuilder gb = new GraphBuilder(ic);
+        gb.buildConnections();
     }
 
     public void interpolate() {

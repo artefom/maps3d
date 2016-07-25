@@ -8,7 +8,7 @@ import com.vividsolutions.jts.geom.*;
 /**
  * Created by Artem on 20.07.2016.
  */
-class Isoline_attributed {
+public class Isoline_attributed {
 
     private IIsoline iso;
     public LineEnd begin;

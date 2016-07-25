@@ -6,6 +6,7 @@ import Display.Drawer;
 import Display.GeometryWrapper;
 import Display.Renderer;
 import Isolines.IIsoline;
+import Isolines.Isoline;
 import Isolines.IsolineContainer;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -24,6 +25,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -32,6 +34,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
@@ -55,6 +58,13 @@ public class MainApp extends Application implements Initializable {
     private Renderer renderer;
     private Drawer drawer;
 
+    private IIsoline highlighted_yellow_last;
+    private IIsoline highlighted_yellow;
+    private IIsoline highlighted_red_last;
+    private IIsoline highlighted_red;
+    private IIsoline highlighted_blue_last;
+    private IIsoline highlighted_blue;
+
     public static void main(String[] args) throws Exception {
         launch(args);
     }
@@ -67,6 +77,7 @@ public class MainApp extends Application implements Initializable {
         this.mouseIsDown = false;
         this.displayedContainer = null;
         this.originalContainer = null;
+        this.current_isoline = null;
     }
 
     @Override
@@ -95,6 +106,10 @@ public class MainApp extends Application implements Initializable {
         GraphicsContext gc = display.getGraphicsContext2D();
 
         renderer.render(gc,(float)display.getWidth(),(float)display.getHeight());
+
+        if (highlighted_red != null) renderer.render(drawer.draw(highlighted_red, Color.RED,1),gc,(float)display.getWidth(),(float)display.getHeight());
+        if (highlighted_blue != null) renderer.render(drawer.draw(highlighted_blue, Color.BLUE,1),gc,(float)display.getWidth(),(float)display.getHeight());
+        if (highlighted_yellow != null) renderer.render(drawer.draw(highlighted_yellow, Color.YELLOW,1),gc,(float)display.getWidth(),(float)display.getHeight());
     }
 
     @FXML
@@ -129,15 +144,19 @@ public class MainApp extends Application implements Initializable {
 
     boolean mouseIsDown;
     Coordinate mousePos;
+    IIsoline current_isoline;
 
     @FXML void canvasMouseEntered(MouseEvent event) {
         mousePos.x = event.getX();
         mousePos.y = event.getY();
+        current_isoline = null;
     }
 
     @FXML void canvasMouseMove(MouseEvent event) {
         mousePos.x = event.getX();
         mousePos.y = event.getY();
+        current_isoline = null;
+        highlighted_yellow = null;
 
         Coordinate localmPos = new Coordinate(mousePos);
         renderer.screenToLocal(localmPos,display.getWidth(),display.getHeight());
@@ -147,18 +166,24 @@ public class MainApp extends Application implements Initializable {
         renderer.screenToLocal(localmPos2,display.getWidth(),display.getHeight());
         double distance = localmPos.distance(localmPos2);
 
-        if (displayedContainer == null)
+        if (displayedContainer == null) {
+            UpdateHighLights();
             return;
+        }
         List<IIsoline> isolines = mc.getIsolinesInCircle(localmPos.x, localmPos.y, distance, displayedContainer).collect(Collectors.toList());
         if (isolines.size() > 1) {
             statusText.setText("Hover over multiple isolines");
+            UpdateHighLights();
             return;
         } else if (isolines.size() == 0) {
             statusText.setText("No isolines under mouse");
+            UpdateHighLights();
             return;
         }
 
         IIsoline il = isolines.get(0);
+        current_isoline = il;
+        highlighted_yellow = current_isoline;
 
         statusText.setText("Is closed: "+il.getLineString().isClosed()+
                 "; Type: "+il.getType()+
@@ -167,12 +192,18 @@ public class MainApp extends Application implements Initializable {
                 "; Line end = "+il.getLineString().getCoordinateN(il.getLineString().getNumPoints()-1) +
                 "; Line id = "+il.getID());
 
+        UpdateHighLights();
         //statusText.setText("Mouse position: ("+localmPos.x+", "+localmPos.y+")");
 //        int[] line_ids = ic
     }
 
     @FXML void canvasMouseDown(MouseEvent event) {
         mouseIsDown = true;
+        if (current_isoline != null) {
+            List<GeometryWrapper> gws =  drawer.drawTraces(mc.ic.getIsolinesAsGeometry(),current_isoline.getLineString());
+            renderer.addAll(gws);
+            render();
+        }
     }
 
     @FXML void canvasMouseUp(MouseEvent event) {
@@ -244,5 +275,17 @@ public class MainApp extends Application implements Initializable {
 
         display.widthProperty().addListener(listener);
         display.heightProperty().addListener(listener);
+    }
+
+    public void UpdateHighLights() {
+        if (!(highlighted_blue != highlighted_blue_last ||
+                highlighted_red != highlighted_red_last ||
+                highlighted_yellow != highlighted_yellow_last)) return;
+
+        highlighted_yellow_last = highlighted_yellow;
+        highlighted_red_last = highlighted_red;
+        highlighted_blue_last = highlighted_blue;
+
+        render();
     }
 }

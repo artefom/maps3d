@@ -5,8 +5,8 @@ package Utils;
  */
 public class Pair<C1,C2> {
 
-    C1 v1;
-    C2 v2;
+    public C1 v1;
+    public C2 v2;
     public Pair(C1 v1, C2 v2) {
         this.v1 = v1;
         this.v2 = v2;

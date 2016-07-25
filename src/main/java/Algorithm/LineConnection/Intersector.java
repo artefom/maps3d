@@ -1,10 +1,10 @@
 package Algorithm.LineConnection;
 
+import Utils.CoordUtils;
 import Utils.GeomUtils;
+import Utils.Pair;
 import Utils.Tracer;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;
 
 import java.util.List;
@@ -20,22 +20,20 @@ public class Intersector {
     private GeometryFactory gf;
     private Tracer<Geometry> geometryTracer;
 
-    public Intersector(List<Geometry> primitives, GeometryFactory gf) {
+    public Intersector(List<Geometry> primitives, GeometryFactory gf, double offset) {
         this.gf = gf;
         this.primitives = primitives;
         this.geometryTracer = new Tracer<>(primitives,(p)->p,gf);
     }
 
-    public Boolean apply(Geometry geometry) {
-        for (Geometry g : primitives) {
-            if (g.intersects(geometry)) return true;
-        }
-        return false;
-    }
+    public boolean intersects(LineSegment seg) {
+        return geometryTracer.intersects(seg,0.01,0.99);
+    };
 
-    public Coordinate trace(Coordinate pivot, Vector2D vec, double dist) {
-        return geometryTracer.trace(pivot,vec,dist).first();
+    public Coordinate trace(Coordinate pivot, Vector2D vec,double min_dist, double max_dist) {
+        Tracer<Geometry>.traceres ret_pair = geometryTracer.trace(pivot, vec,min_dist,max_dist);
+        if (ret_pair.entitiy == null) return null;
+        return ret_pair.point;
     }
-
 
 }

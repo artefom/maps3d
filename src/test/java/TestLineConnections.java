@@ -6,7 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import static TestUtils.TestUtils.*;
 
-import static org.junit.Assert.*;
+import org.junit.Assert;
 
 /**
  * Created by Artem on 16.07.2016.
@@ -175,8 +175,8 @@ public class TestLineConnections {
     @Test
     public void testLineEquity() {
 
-        assertTrue(is1 == is1);
-        assertFalse(is1 == is2);
+        Assert.assertTrue(is1 == is1);
+        Assert.assertFalse(is1 == is2);
         assertNotEquals(is1, is2);
         assertNotEquals(is1, is3);
         assertNotEquals(is1, is4);
@@ -188,18 +188,18 @@ public class TestLineConnections {
 
         TestUtils.assertEquals(is3, is4);
         assertEquals(is4, is3);
-        assertEquals(is3.hashCode(), is4.hashCode());
+        Assert.assertEquals(is3.hashCode(), is4.hashCode());
 
         assertNotEquals(is4_t1_s1, is5_t1_s1);
         assertNotEquals(is4_t1_s2, is5_t1_s2);
 
-        assertNotEquals(is4_t1_s1.hashCode(), is5_t1_s1.hashCode());
-        assertNotEquals(is4_t1_s2.hashCode(), is5_t1_s2.hashCode());
+        Assert.assertNotEquals(is4_t1_s1.hashCode(), is5_t1_s1.hashCode());
+        Assert.assertNotEquals(is4_t1_s2.hashCode(), is5_t1_s2.hashCode());
 
         assertEquals(is4_t1_s1, is5_t1_s2);
         assertEquals(is4_t1_s2, is5_t1_s1);
-        assertEquals(is4_t1_s1.hashCode(), is5_t1_s2.hashCode());
-        assertEquals(is4_t1_s2.hashCode(), is5_t1_s1.hashCode());
+        Assert.assertEquals(is4_t1_s1.hashCode(), is5_t1_s2.hashCode());
+        Assert.assertEquals(is4_t1_s2.hashCode(), is5_t1_s1.hashCode());
 
         assertNotEquals(is3, is5);
 
@@ -210,64 +210,64 @@ public class TestLineConnections {
     public void testLineEnds() throws Exception {
 
         assertEquals(is5, is6);
-        assertNotEquals(is6_lbeg, is5_lbeg);
-        assertNotEquals(is6_lend, is5_lend);
-        assertNotEquals(is6_lbeg, is5_lbeg_copy);
-        assertNotEquals(is6_lend_copy, is5_lend);
+        Assert.assertNotEquals(is6_lbeg, is5_lbeg);
+        Assert.assertNotEquals(is6_lend, is5_lend);
+        Assert.assertNotEquals(is6_lbeg, is5_lbeg_copy);
+        Assert.assertNotEquals(is6_lend_copy, is5_lend);
         assertEquals(is6_lbeg.line, is5_lbeg.line);
-        assertNotEquals(is6_lbeg, is5_lbeg);
+        Assert.assertNotEquals(is6_lbeg, is5_lbeg);
 
-        assertEquals(is1_lbeg.end_index, 1);
+        Assert.assertEquals(is1_lbeg.end_index, 1);
 //        assertEquals(is1_lbeg.line, TestUtils.createLineSegment("31.0 1.0, 0.0 0.1"));
         assertEquals(is1_lend.isoline,is1);
-        assertEquals(is1_lend.end_index,-1);
+        Assert.assertEquals(is1_lend.end_index,-1);
 //        assertEquals(is1_lend.line, TestUtils.createLineSegment("31 1, 3 4"));
         assertEquals(is1_lend.isoline,is1);
 
-        assertEquals(is2_lbeg.end_index,1);
+        Assert.assertEquals(is2_lbeg.end_index,1);
 //        assertEquals(is2_lbeg.line, TestUtils.createLineSegment("0 12, -2 3"));
         assertEquals(is2_lbeg.isoline,is2);
-        assertEquals(is2_lend.end_index,-1);
+        Assert.assertEquals(is2_lend.end_index,-1);
 //        assertEquals(is2_lend.line, TestUtils.createLineSegment("3 -3, -8 12"));
         assertEquals(is2_lend.isoline,is2);
 
-        assertEquals(is3_lbeg.end_index,1);
+        Assert.assertEquals(is3_lbeg.end_index,1);
 //        assertEquals(is3_lbeg.line, TestUtils.createLineSegment("1 1, 0 0"));
         assertEquals(is3_lbeg.isoline,is3);
-        assertEquals(is3_lend.end_index,-1);
+        Assert.assertEquals(is3_lend.end_index,-1);
 //        assertEquals(is3_lend.line, TestUtils.createLineSegment("1 1, 2 2"));
         assertEquals(is3_lend.isoline,is3);
 
-        assertEquals(is4_lbeg.end_index,1);
+        Assert.assertEquals(is4_lbeg.end_index,1);
 //        assertEquals(is4_lbeg.line, TestUtils.createLineSegment("1 1, 2 2"));
         assertEquals(is4_lbeg.isoline,is4);
-        assertEquals(is4_lend.end_index,-1);
+        Assert.assertEquals(is4_lend.end_index,-1);
 //        assertEquals(is4_lend.line, TestUtils.createLineSegment("1 1, 0 0"));
         assertEquals(is4_lend.isoline,is4);
 
-        assertEquals(is5_lbeg.end_index,1);
+        Assert.assertEquals(is5_lbeg.end_index,1);
 //        assertEquals(is5_lbeg.line, TestUtils.createLineSegment("1 1, 0 0"));
         assertEquals(is5_lbeg.isoline,is5);
-        assertEquals(is5_lend.end_index,-1);
+        Assert.assertEquals(is5_lend.end_index,-1);
 //        assertEquals(is5_lend.line, TestUtils.createLineSegment("1 1, 2 2"));
         assertEquals(is5_lend.isoline,is5);
 
-        assertEquals(is6_lbeg.end_index, 1);
+        Assert.assertEquals(is6_lbeg.end_index, 1);
 //        assertEquals(is6_lbeg.line, TestUtils.createLineSegment("1 1, 0 0"));
         assertEquals(is6_lbeg.isoline, is6);
-        assertEquals(is6_lend.end_index,-1);
+        Assert.assertEquals(is6_lend.end_index,-1);
 //        assertEquals(is6_lend.line, TestUtils.createLineSegment("1 1, 2 2"));
         assertEquals(is6_lend.isoline, is6);
 
-        assertNotEquals(is1_lbeg, is1_lend);
-        assertNotEquals(is4_lbeg, is1_lbeg);
+        Assert.assertNotEquals(is1_lbeg, is1_lend);
+        Assert.assertNotEquals(is4_lbeg, is1_lbeg);
     }
 
     @Test
     public void testConnections() throws Exception {
 
-        assertEquals(c_is1_beg_is3_end,c_is1_beg_is3_end_swapped);
-        assertEquals(c_is1_beg_is3_end.hashCode(), c_is1_beg_is3_end_swapped.hashCode());
+        Assert.assertEquals(c_is1_beg_is3_end,c_is1_beg_is3_end_swapped);
+        Assert.assertEquals(c_is1_beg_is3_end.hashCode(), c_is1_beg_is3_end_swapped.hashCode());
         LineWelder lw = new LineWelder(gf,null);
 
         /*

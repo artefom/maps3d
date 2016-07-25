@@ -2,6 +2,7 @@ package Display;
 
 import Algorithm.EdgeDetection.Edge;
 import Isolines.IIsoline;
+import Isolines.Isoline;
 import Isolines.IsolineContainer;
 import Loader.Interpolation.SlopeMark;
 import Utils.*;
@@ -91,6 +92,39 @@ public class Drawer {
             i += 1;
         }
         return gf.createLineString(coords_list.toArray(new Coordinate[coords_list.size()]));
+    }
+
+    // Debug method
+    public List<GeometryWrapper> drawTraces(Collection<Geometry> occluders, LineString ls) {
+        List<GeometryWrapper> gws = new ArrayList<>();
+
+        Tracer<Geometry> tracer = new Tracer<>(occluders,(iso)->iso,gf);
+        LineSegment buf = new LineSegment();
+
+        LineStringInterpolatedLineIterator it = new LineStringInterpolatedLineIterator(ls,
+                buf, Constants.NEARBY_TRACE_STEP,Constants.NEARBY_TRACE_STEP*0.01);
+        while (it.hasNext()) {
+            it.next();
+            Coordinate trace_base = buf.midPoint();
+            Vector2D trace_positive_vec = Vector2D.create(buf.p0,buf.p1).rotateByQuarterCircle(1).normalize();
+            Vector2D trace_negative_vec = Vector2D.create(trace_positive_vec).negate();
+            Tracer.traceres traced_positive_pair =
+                    tracer.trace(trace_base,trace_positive_vec, Constants.NEARBY_TRACE_OFFSET,Constants.NEARBY_TRACE_LENGTH);
+            Tracer.traceres traced_negetive_pair =
+                    tracer.trace(trace_base,trace_negative_vec, Constants.NEARBY_TRACE_OFFSET,Constants.NEARBY_TRACE_LENGTH);
+
+            if (traced_positive_pair.entitiy != null)
+                gws.add( new GeometryWrapper( gf.createLineString(new Coordinate[]{trace_base,traced_positive_pair.point}),Color.RED,1) );
+            if (traced_negetive_pair.entitiy != null)
+                gws.add( new GeometryWrapper( gf.createLineString(new Coordinate[]{trace_base,traced_negetive_pair.point}),Color.BLUE,1) );
+        }
+        return gws;
+    }
+
+    public List<GeometryWrapper> draw(IIsoline i, Color color, double width) {
+        List<GeometryWrapper> gws = new ArrayList<>();
+        gws.add(new GeometryWrapper(i.getLineString(),color,width));
+        return gws;
     }
 
 }

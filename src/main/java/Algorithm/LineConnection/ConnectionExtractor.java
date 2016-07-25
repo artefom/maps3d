@@ -2,7 +2,9 @@ package Algorithm.LineConnection;
 
 import Algorithm.EdgeDetection.Edge;
 import Utils.Constants;
+import Utils.Tracer;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.triangulate.quadedge.TraversalVisitor;
 
 import java.util.ArrayList;
 import java.util.function.Function;
@@ -43,8 +45,8 @@ public class ConnectionExtractor implements Function<ArrayList<Isoline_attribute
         //if (edge.isWithinEdge(le1.line.p1) || edge.isWithinEdge(le2.line.p1)) return;
         buffer.score = evaluator.apply(buffer);
         if (buffer.score > -0.5) {
-            if (!intersector.apply(buffer.getConnectionLine()) || buffer.connectionLine.getLength() < 0.001) {
-                if ( (buffer.connectionLine.getLength() < Constants.CONNECTIONS_WELD_DIST ) ||
+            if (!intersector.intersects(buffer.getConnectionSegment()) || buffer.connectionSegment.getLength() < 0.001) {
+                if ( (buffer.connectionSegment.getLength() < Constants.CONNECTIONS_WELD_DIST ) ||
                         !steepDetector.isNearSteep(buffer)) {
                     buffer.score += ConnectionEvaluator.parallelScore(buffer) / 2;
 
@@ -53,7 +55,7 @@ public class ConnectionExtractor implements Function<ArrayList<Isoline_attribute
                     if (buffer.second().isWithinEdge(edge))
                         buffer.score -= 0.7;
                     for (Connection con : cons) {
-                        if (con.getConnectionLine().intersects(buffer.getConnectionLine())) {
+                        if (Tracer.intersects(buffer.getConnectionSegment(),con.getConnectionSegment(),0.01,0.99)) {
                             buffer.score *= 0.5;
                             con.score *= 0.5;
                         }
