@@ -1,6 +1,7 @@
 package Algorithm.LineConnection;
 
 import Utils.GeomUtils;
+import Utils.Tracer;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -17,12 +18,12 @@ public class Intersector {
 
     private List<Geometry> primitives;
     private GeometryFactory gf;
-    private GeomUtils.Tracer<Geometry> geometryTracer;
+    private Tracer<Geometry> geometryTracer;
 
     public Intersector(List<Geometry> primitives, GeometryFactory gf) {
         this.gf = gf;
         this.primitives = primitives;
-        this.geometryTracer = new GeomUtils.Tracer<>(primitives,(p)->p,gf);
+        this.geometryTracer = new Tracer<>(primitives,(p)->p,gf);
     }
 
     public Boolean apply(Geometry geometry) {

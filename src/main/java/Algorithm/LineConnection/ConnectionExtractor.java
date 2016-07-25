@@ -2,7 +2,6 @@ package Algorithm.LineConnection;
 
 import Algorithm.EdgeDetection.Edge;
 import Utils.Constants;
-import com.sun.corba.se.impl.orbutil.closure.Constant;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
 import java.util.ArrayList;
