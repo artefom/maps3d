@@ -40,4 +40,8 @@ public class Constants {
     public static final double slope_length = 1;
     public static final double tangent_precision = 0.6;
     public static final double map_scale_factor = 1600;
+
+    //Nearby detection
+    public static final double NEARBY_TRACE_STEP = 0.5;
+    public static final double NEARBY_TRACE_LENGTH=10;
 }
