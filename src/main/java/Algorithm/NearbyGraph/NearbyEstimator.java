@@ -8,6 +8,8 @@ import Utils.*;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;
 import javafx.scene.paint.Color;
+import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import java.util.*;
 
@@ -18,23 +20,37 @@ public class NearbyEstimator {
 
     GeometryFactory gf;
     public NearbyEstimator(GeometryFactory gf) {
+        step = Constants.NEARBY_TRACE_STEP;
+        precision = Constants.NEARBY_TRACE_STEP*0.01;
         this.gf = gf;
     }
 
-    public void estimate(Collection<Isoline_attributed> isolines) {
+    private double step;
+    private double precision;
+
+    public SimpleWeightedGraph<Isoline_attributed.LineSide,DefaultWeightedEdge> getRelationGraph(NearbyContainer cont) {
+
+        SimpleWeightedGraph<Isoline_attributed.LineSide,DefaultWeightedEdge> ret = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
+
+        //Add vertecies to graph;
+        for (Isoline_attributed iso : cont.getIsolines()) {
+            ret.addVertex(iso.getSideNegative());
+            ret.addVertex(iso.getSidePositive());
+            DefaultWeightedEdge edge = ret.addEdge(iso.getSideNegative(),iso.getSidePositive());
+            ret.setEdgeWeight(edge,-100000000);
+        }
 
         List<GeometryWrapper> gws = new ArrayList<>();
 
-        Tracer<Isoline_attributed> tracer = new Tracer<Isoline_attributed>(isolines,(iso)->iso.getIsoline().getLineString(),gf);
+        Tracer<Isoline_attributed> tracer = new Tracer<Isoline_attributed>(cont.getIsolines(),(iso)->iso.getIsoline().getLineString(),gf);
         LineSegment buf = new LineSegment();
 
-        NearbyConnectionPool p = new NearbyConnectionPool();
-
         //Iterate through isolines to calculate all neighbours for each isoline
-        for (Isoline_attributed iso : isolines) {
+        for (Isoline_attributed iso : cont.getIsolines()) {
+            if ( iso.getIsoline().isSteep() ) continue;
             LineString ls = iso.getIsoline().getLineString();
             LineStringInterpolatedLineIterator it = new LineStringInterpolatedLineIterator(ls,
-                buf, Constants.NEARBY_TRACE_STEP,Constants.NEARBY_TRACE_STEP*0.01);
+                buf, step, precision);
 
             while (it.hasNext()) {
                 it.next();
@@ -54,22 +70,55 @@ public class NearbyEstimator {
                     tracer.trace(trace_base,trace_negative_vec, Constants.NEARBY_TRACE_OFFSET,Constants.NEARBY_TRACE_LENGTH);
 
                 // Process  pairs, only if trace did hit something and did nont hit current isoline.
-                if (traced_positive_pair.entitiy != null && traced_positive_pair.entitiy != iso) {
-                    p.add(new NearbyConnection(iso,traced_positive_pair.entitiy,1,-traced_positive_pair.side,1));
+
+                if (traced_positive_pair.entitiy != null && traced_positive_pair.entitiy != iso && !traced_positive_pair.entitiy.getIsoline().isSteep() ) {
+                    int from_side_index = 1;
+                    int to_side_index = traced_positive_pair.side;
+                    Isoline_attributed.LineSide from_side = iso.getSideByIndex(from_side_index);
+                    Isoline_attributed.LineSide to_side = traced_positive_pair.entitiy.getSideByIndex(to_side_index);
+                    DefaultWeightedEdge edge = ret.getEdge(from_side,to_side);
+                    if (edge == null) {
+                        edge = ret.addEdge(from_side,to_side);
+                        ret.setEdgeWeight(edge,0);
+                    }
+                    ret.setEdgeWeight(edge,ret.getEdgeWeight(edge)-1);
                 }
 
-                if (traced_negetive_pair.entitiy != null && traced_negetive_pair.entitiy != iso) {
-                    p.add(new NearbyConnection(iso,traced_negetive_pair.entitiy,-1,-traced_negetive_pair.side,1));
+                if (traced_negetive_pair.entitiy != null && traced_negetive_pair.entitiy != iso && !traced_negetive_pair.entitiy.getIsoline().isSteep() ) {
+                    int from_side_index = -1;
+                    int to_side_index = traced_negetive_pair.side;
+                    Isoline_attributed.LineSide from_side = iso.getSideByIndex(from_side_index);
+                    Isoline_attributed.LineSide to_side = traced_negetive_pair.entitiy.getSideByIndex(to_side_index);
+                    DefaultWeightedEdge edge = ret.getEdge(from_side,to_side);
+                    if (edge == null) {
+                        edge = ret.addEdge(from_side,to_side);
+                        ret.setEdgeWeight(edge,0);
+                    }
+                    ret.setEdgeWeight(edge,ret.getEdgeWeight(edge)-1);
                 }
 
             }
 
         }
 
-        for (NearbyConnection con : p.pool) {
-            con.from.addOutcomming(con);
-            con.to.addIncomming(con);
-        }
+        return ret;
+
     }
 
+
+    public double getStep() {
+        return step;
+    }
+
+    public void setStep(double step) {
+        this.step = step;
+    }
+
+    public double getPrecision() {
+        return precision;
+    }
+
+    public void setPrecision(double precision) {
+        this.precision = precision;
+    }
 }

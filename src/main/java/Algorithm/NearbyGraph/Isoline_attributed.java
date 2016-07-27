@@ -1,6 +1,9 @@
 package Algorithm.NearbyGraph;
 
 import Isolines.IIsoline;
+import com.vividsolutions.jts.geom.LineSegment;
+import com.vividsolutions.jts.geom.LineString;
+import org.jgrapht.graph.DefaultWeightedEdge;
 
 import java.util.*;
 
@@ -9,63 +12,84 @@ import java.util.*;
  */
 public class Isoline_attributed {
 
-    private IIsoline isoline;
-    private int mark;
+    public static class LineSide {
 
-    public List<NearbyConnection> outcomming;
-    public List<NearbyConnection> incomming;
+        private Isoline_attributed isoline;
+
+        private LineSide other;
+        private boolean positive;
+
+        private LineSide(Isoline_attributed isoline, boolean positive) {
+            this.isoline = isoline;
+            this.positive = positive;
+        }
+
+        public LineSide getOther() {
+            return other;
+        }
+
+        public boolean isPositive() {
+            return positive;
+        }
+
+        public boolean isNegative() {
+            return !positive;
+        }
+
+        public Isoline_attributed getIsoline() {
+            return isoline;
+        }
+
+        @Override
+        public String toString() {
+            return "(LS"+ (positive ? "+: " : "-: ") +isoline.toString()+")";
+        }
+    }
+
+    private IIsoline isoline;
+    private LineSide ls_positive;
+    private LineSide ls_negative;
+
     //public HashMap<Isoline_attributed, Integer > outcomming;
 
-    public Isoline_attributed(IIsoline isoline) {
-        mark = -1;
-        outcomming = new LinkedList<>();
-        incomming = new LinkedList<>();
+    private Isoline_attributed(IIsoline isoline) {
         this.isoline = isoline;
+        ls_positive = new LineSide(this,true);
+        ls_negative = new LineSide(this,false);
+        ls_negative.other = ls_positive;
+        ls_positive.other = ls_negative;
+    }
+
+
+    public static Isoline_attributed fromIsoline(IIsoline isoline) {
+        return new Isoline_attributed(isoline);
     }
 
     public IIsoline getIsoline() {
         return isoline;
     }
 
-
-    public int getMark() {
-        return mark;
+    public LineSide getSidePositive() {
+        return ls_positive;
     }
 
-    public void setMark(int mark) {
-        this.mark = mark;
+    public LineSide getSideNegative() {
+        return ls_negative;
     }
 
-//    public void setConnections(HashMap<Isoline_attributed, Integer> weights) {
-//        outcomming = new LinkedList<>();
-//        for (Map.Entry<Isoline_attributed,Integer> ent : weights.entrySet()) {
-//            outcomming.add(new NearbyConnection(this,ent.getKey(),ent.getValue()));
-//        }
-//    }
-
-    public void addOutcomming(NearbyConnection connection) {
-        outcomming.add(connection);
+    /**
+     * Get Line side by it's index (-1 for negative side, 1 for positive side)
+     * if id != -1 and id != 1 throws Runtime exception
+     */
+    public LineSide getSideByIndex(int id) {
+        if (id == -1) return getSideNegative();
+        if (id == 1) return getSidePositive();
+        throw new RuntimeException("Unknown side index");
     }
 
-    public void addIncomming(NearbyConnection connection) {
-        incomming.add(connection);
-    }
-
-    public void resetConnecions() {
-        outcomming = new LinkedList<>();
-        incomming = new LinkedList<>();
-    }
-
-    public boolean destroyConnection(NearbyConnection con) {
-        Iterator<NearbyConnection> it = outcomming.iterator();
-        while (it.hasNext()) {
-            NearbyConnection current_con = it.next();
-            if (current_con == con){
-                it.remove();
-                return true;
-            }
-        }
-        return false;
+    @Override
+    public String toString() {
+        return this.isoline.toString();
     }
 
 }

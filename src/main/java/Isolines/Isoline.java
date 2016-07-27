@@ -79,8 +79,14 @@ public class Isoline implements IIsoline {
 //                getLoopedCoordinates(il),il.getGeometry().getFactory());
 //    }
 
+    @Override
     public int getSlopeSide() {
         return slope_side;
+    }
+
+    @Override
+    public void setSlopeSide(int side) {
+        slope_side = side;
     }
 
 
@@ -145,11 +151,17 @@ public class Isoline implements IIsoline {
 
     @Override
     public String toString() {
-        String str = "ISOLINE(";
-        for (int i = 0; i != lineString.getNumPoints(); ++i) {
-            str += lineString.getCoordinateN(i).toString() + ", ";
-        }
-        str += ")";
-        return str;
+        LineString ls = getLineString();
+        int end = getLineString().getNumPoints()-1;
+        double startx = ls.getCoordinateN(0).x;
+        double starty = ls.getCoordinateN(0).y;
+        double endx = ls.getCoordinateN(end).x;
+        double endy = ls.getCoordinateN(end).y;
+        return "ISOLINE_"+getSlopeSide()+"(" + startx + "," + starty + " - " + endx + "," + endy + ")";
+    }
+
+    @Override
+    public boolean isSteep() {
+        return type == 4;
     }
 }

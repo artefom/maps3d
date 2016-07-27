@@ -8,9 +8,11 @@ import com.vividsolutions.jts.geom.*;
 public interface IIsoline {
 
     int getSlopeSide();
+    void setSlopeSide(int side);
     int getType();
 
     boolean isClosed();
+    boolean isSteep();
 
     void setEdgeToEdge(boolean isedgetoedge);
     boolean isEdgeToEdge();

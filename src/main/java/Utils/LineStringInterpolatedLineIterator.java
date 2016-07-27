@@ -36,7 +36,7 @@ public class LineStringInterpolatedLineIterator implements Iterator<LineSegment>
         } else {
             LineSegment line;
             double back_length_buf = step;
-            double pos;
+            double pos = 0;
             int i = -1;
             do {
                 line = new LineSegment(
@@ -46,7 +46,7 @@ public class LineStringInterpolatedLineIterator implements Iterator<LineSegment>
                 pos = back_length_buf/line.getLength();
                 back_length_buf -= line.getLength();
                 i-=1;
-            } while (pos > 1);
+            } while (pos > 1 && ls.getNumPoints()+i-1 >= 0);
             buf.p0 = line.pointAlong(pos);
         }
         return buf;

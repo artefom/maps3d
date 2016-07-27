@@ -50,6 +50,7 @@ public class Tracer<T>{
         LineString boundary;
         Coordinate coord1;
         Coordinate coord2;
+        Coordinate[] ls_coords;
         for (T ent : entities) {
             LineString ls = (LineString)geometryFunction.apply(ent);
 
@@ -57,12 +58,12 @@ public class Tracer<T>{
             Envelope bbox = ls.getEnvelopeInternal();
             if (!((x0 > bbox.getMinX() && x0 < bbox.getMaxX()) &&
                     (y0 > bbox.getMinY() && y0 < bbox.getMaxY()))) {
-                boundary = (LineString) ls.getEnvelope().getBoundary();
-                coord1 = boundary.getCoordinateN(0);
+                Coordinate[] coords = ls.getEnvelope().getBoundary().getCoordinates();
+                coord1 = coords[0];
                 prev_side = getSide(vec, coord1);
                 boolean intersected = false;
-                for (int i = 1; i < boundary.getNumPoints(); ++i) {
-                    coord2 = boundary.getCoordinateN(i);
+                for (int i = 1; i < coords.length; ++i) {
+                    coord2 = coords[i];
                     side = getSide(vec, coord2);
                     if (prev_side != side) {
                         a = coord1.y - coord2.y;
@@ -82,18 +83,19 @@ public class Tracer<T>{
 
             /*TEST FOR INTERSECTION WITH LINE STRING*/
 
-            coord1 = ls.getCoordinateN(0);
+            ls_coords = ls.getCoordinates();
+            coord1 = ls_coords[0];
             prev_side = getSide(vec,coord1);
-            for (int i = 1; i < ls.getNumPoints(); ++i) {
-                coord2 = ls.getCoordinateN(i);
+            for (int i = 1; i < ls_coords.length; ++i) {
+                coord2 = ls_coords[i];
                 side = getSide(vec,coord2);
                 if (prev_side != side) {
-                    result_side = prev_side;
                     a = coord1.y-coord2.y;
                     b = coord2.x-coord1.x;
                     c = coord1.x*coord2.y-coord2.x*coord1.y;
                     t = -(c+a*x0+b*y0)/(a*vx+b*vy);
                     if (t > min && t < proj_factor) {
+                        result_side = side;
                         proj_factor = t;
                         ret = ent;
                     }
@@ -124,6 +126,7 @@ public class Tracer<T>{
         LineString boundary;
         Coordinate coord1;
         Coordinate coord2;
+        Coordinate[] line_coords;
         for (T ent : entities) {
             LineString ls = (LineString)geometryFunction.apply(ent);
 
@@ -131,12 +134,12 @@ public class Tracer<T>{
             Envelope bbox = ls.getEnvelopeInternal();
             if (!((x0 > bbox.getMinX() && x0 < bbox.getMaxX()) &&
                     (y0 > bbox.getMinY() && y0 < bbox.getMaxY()))) {
-                boundary = (LineString) ls.getEnvelope().getBoundary();
-                coord1 = boundary.getCoordinateN(0);
+                Coordinate[] coords = ls.getEnvelope().getBoundary().getCoordinates();
+                coord1 = coords[0];
                 prev_side = getSide(vec, coord1);
                 boolean intersected = false;
-                for (int i = 1; i < boundary.getNumPoints(); ++i) {
-                    coord2 = boundary.getCoordinateN(i);
+                for (int i = 1; i < coords.length; ++i) {
+                    coord2 = coords[i];
                     int side = getSide(vec, coord2);
                     if (prev_side != side) {
                         a = coord1.y - coord2.y;
@@ -156,10 +159,11 @@ public class Tracer<T>{
 
             /*TEST FOR INTERSECTION WITH LINE STRING*/
 
-            coord1 = ls.getCoordinateN(0);
+            line_coords = ls.getCoordinates();
+            coord1 = line_coords[0];
             prev_side = getSide(vec,coord1);
-            for (int i = 1; i < ls.getNumPoints(); ++i) {
-                coord2 = ls.getCoordinateN(i);
+            for (int i = 1; i < line_coords.length; ++i) {
+                coord2 = line_coords[i];
                 int side = getSide(vec,coord2);
                 if (prev_side != side) {
                     a = coord1.y-coord2.y;

@@ -1,6 +1,8 @@
 import Algorithm.EdgeDetection.Edge;
 import Algorithm.LineConnection.LineWelder;
-import Algorithm.NearbyGraph.GraphBuilder;
+import Algorithm.NearbyGraph.NearbyContainer;
+import Algorithm.NearbyGraph.NearbyEstimator;
+import Algorithm.NearbyGraph.NearbyGraphWrapper;
 import Isolines.IsolineContainer;
 
 import java.io.*;
@@ -90,8 +92,11 @@ public class MainController {
     }
 
     public void buildGraph() {
-        GraphBuilder gb = new GraphBuilder(ic);
-        gb.buildConnections();
+        NearbyContainer cont = new NearbyContainer(ic);
+        NearbyEstimator est = new NearbyEstimator(gf);
+        NearbyGraphWrapper graph = new NearbyGraphWrapper(est.getRelationGraph(cont));
+        graph.ConvertToSpanningTree();
+        graph.recoverAllSlopes();
     }
 
     public void interpolate() {
