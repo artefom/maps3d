@@ -18,6 +18,7 @@ public class Tracer<T>{
         public Coordinate point;
         //Vector2D normal;
         public int side;
+        public double distance;
     }
 
     private Function<T,Geometry> geometryFunction;
@@ -43,6 +44,7 @@ public class Tracer<T>{
         double b;
         double c;
         double t;
+        double result_dist = max;
         int side;
         int prev_side;
         int result_side = 0;
@@ -56,8 +58,8 @@ public class Tracer<T>{
 
             /*TEST FOR INTERSECTION WITH BOUNDING BOX*/
             Envelope bbox = ls.getEnvelopeInternal();
-            if (!((x0 > bbox.getMinX() && x0 < bbox.getMaxX()) &&
-                    (y0 > bbox.getMinY() && y0 < bbox.getMaxY()))) {
+            if (!((x0 >= bbox.getMinX() && x0 <= bbox.getMaxX()) &&
+                    (y0 >= bbox.getMinY() && y0 <= bbox.getMaxY()))) {
                 Coordinate[] coords = ls.getEnvelope().getBoundary().getCoordinates();
                 coord1 = coords[0];
                 prev_side = getSide(vec, coord1);
@@ -98,6 +100,7 @@ public class Tracer<T>{
                         result_side = side;
                         proj_factor = t;
                         ret = ent;
+                        result_dist = t;
                     }
                 }
                 prev_side = side;
@@ -108,6 +111,7 @@ public class Tracer<T>{
         result.entitiy = ret;
         result.point = vec.pointAlong(proj_factor);
         result.side = result_side;
+        result.distance = result_dist;
         return result;
     }
 
@@ -132,8 +136,8 @@ public class Tracer<T>{
 
             /*TEST FOR INTERSECTION WITH BOUNDING BOX*/
             Envelope bbox = ls.getEnvelopeInternal();
-            if (!((x0 > bbox.getMinX() && x0 < bbox.getMaxX()) &&
-                    (y0 > bbox.getMinY() && y0 < bbox.getMaxY()))) {
+            if (!((x0 >= bbox.getMinX() && x0 <= bbox.getMaxX()) &&
+                    (y0 >= bbox.getMinY() && y0 <= bbox.getMaxY()))) {
                 Coordinate[] coords = ls.getEnvelope().getBoundary().getCoordinates();
                 coord1 = coords[0];
                 prev_side = getSide(vec, coord1);
@@ -177,6 +181,72 @@ public class Tracer<T>{
                 prev_side = side;
                 coord1 = coord2;
             }
+        }
+        return false;
+    }
+
+    public static boolean intersects( LineString ls, LineSegment vec, double min_length_fraction, double max_length_fraction) {
+        double x0 = vec.p0.x;
+        double y0 = vec.p0.y;
+        double vx = vec.p1.x-x0;
+        double vy = vec.p1.y-y0;
+        double proj_factor = max_length_fraction;
+        double a;
+        double b;
+        double c;
+        double t;
+        double prev_side;
+        LineString boundary;
+        Coordinate coord1;
+        Coordinate coord2;
+        Coordinate[] line_coords;
+
+        /*TEST FOR INTERSECTION WITH BOUNDING BOX*/
+        Envelope bbox = ls.getEnvelopeInternal();
+        if (!((x0 >= bbox.getMinX() && x0 <= bbox.getMaxX()) &&
+                (y0 >= bbox.getMinY() && y0 <= bbox.getMaxY()))) {
+            Coordinate[] coords = ls.getEnvelope().getBoundary().getCoordinates();
+            coord1 = coords[0];
+            prev_side = getSide(vec, coord1);
+            boolean intersected = false;
+            for (int i = 1; i < coords.length; ++i) {
+                coord2 = coords[i];
+                int side = getSide(vec, coord2);
+                if (prev_side != side) {
+                    a = coord1.y - coord2.y;
+                    b = coord2.x - coord1.x;
+                    c = coord1.x * coord2.y - coord2.x * coord1.y;
+                    t = -(c + a * x0 + b * y0) / (a * vx + b * vy);
+                    if (t > 0 && t < proj_factor) {
+                        intersected = true;
+                        break;
+                    }
+                }
+                prev_side = side;
+                coord1 = coord2;
+            }
+            if (intersected == false) return false;
+        }
+
+        /*TEST FOR INTERSECTION WITH LINE STRING*/
+
+        line_coords = ls.getCoordinates();
+        coord1 = line_coords[0];
+        prev_side = getSide(vec,coord1);
+        for (int i = 1; i < line_coords.length; ++i) {
+            coord2 = line_coords[i];
+            int side = getSide(vec,coord2);
+            if (prev_side != side) {
+                a = coord1.y-coord2.y;
+                b = coord2.x-coord1.x;
+                c = coord1.x*coord2.y-coord2.x*coord1.y;
+                t = -(c+a*x0+b*y0)/(a*vx+b*vy);
+                if (t > min_length_fraction && t < proj_factor) {
+                    return true;
+                }
+            }
+            prev_side = side;
+            coord1 = coord2;
         }
         return false;
     }

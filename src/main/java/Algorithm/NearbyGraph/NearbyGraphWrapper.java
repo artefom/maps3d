@@ -106,26 +106,80 @@ public class NearbyGraphWrapper {
             boolean inverted = side1.isPositive() == side2.isPositive();
             Isoline_attributed.LineSide propSide;
             if ( (propSide = propagateSlope(side1,side2,inverted)) != null) {
-                //it = edges.iterator();
-                ArrayDeque<DefaultWeightedEdge> propagating_edges = new ArrayDeque<>();
-                graph.edgesOf(propSide.getOther()).forEach((x)->{
-                    if (graph.getEdgeWeight(x) < current_weight)
-                        propagating_edges.addLast(x);
-                });
-                while (propagating_edges.size() != 0) {
-                    edge = propagating_edges.pollFirst();
-                    double weight = graph.getEdgeWeight(edge);
-                    side1 = graph.getEdgeSource(edge);
-                    side2 = graph.getEdgeTarget(edge);
-                    inverted = side1.isPositive() == side2.isPositive();
-                    if ((propSide = propagateSlope(side1,side2,inverted))!=null) {
-                        graph.edgesOf(propSide.getOther()).forEach((x)->{
-                            if (weight < current_weight)
-                                propagating_edges.addLast(x);
-                        });
-                    }
-                }
+                it = edges.iterator();
+//                ArrayDeque<DefaultWeightedEdge> propagating_edges = new ArrayDeque<>();
+//                graph.edgesOf(propSide.getOther()).forEach((x)->{
+//                    if (graph.getEdgeWeight(x) < current_weight)
+//                        propagating_edges.addLast(x);
+//                });
+//                while (propagating_edges.size() != 0) {
+//                    edge = propagating_edges.pollFirst();
+//                    double weight = graph.getEdgeWeight(edge);
+//                    side1 = graph.getEdgeSource(edge);
+//                    side2 = graph.getEdgeTarget(edge);
+//                    inverted = side1.isPositive() == side2.isPositive();
+//                    if ((propSide = propagateSlope(side1,side2,inverted))!=null) {
+//                        graph.edgesOf(propSide.getOther()).forEach((x)->{
+//                            if (weight < current_weight)
+//                                propagating_edges.addLast(x);
+//                        });
+//                    }
+//                }
             }
+        }
+    }
+
+    /**
+     * Recover heights of isolines, slope side of each isoline should be known. Also, it's recommended
+     * to perform a line-connection pre-processing.
+     */
+    public void recoverAllHeights() {
+
+        BreadthFirstHeightRoceveryIterator it = new BreadthFirstHeightRoceveryIterator(getGraph(),isolines.iterator().next());
+        while (it.hasNext()) {
+            it.next();
+        }
+    }
+
+    public static class BreadthFirstHeightRoceveryIterator extends BreadthFirstIterator<Isoline_attributed.LineSide,DefaultWeightedEdge> {
+
+        Graph<Isoline_attributed.LineSide, DefaultWeightedEdge> g;
+        public BreadthFirstHeightRoceveryIterator( Graph<Isoline_attributed.LineSide, DefaultWeightedEdge> g, Isoline_attributed startLine ) {
+            super(g, startLine.getSidePositive());
+            this.g = g;
+            super.encounterVertex(startLine.getSideNegative(),g.getEdge(startLine.getSidePositive(),startLine.getSideNegative()));
+            startLine.getIsoline().setHeight(0);
+            startLine.height_recovered = true;
+        }
+
+        @Override
+        protected void encounterVertex(Isoline_attributed.LineSide target, DefaultWeightedEdge edge) {
+            super.encounterVertex(target, edge);
+            if (target.getIsoline().height_recovered || edge == null) return;
+            Isoline_attributed.LineSide pivot = Graphs.getOppositeVertex(getGraph(),edge,target);
+            if (!pivot.getIsoline().height_recovered) {
+                throw new RuntimeException("Encountering vertex from vertex with unrecovered height");
+            }
+            double height_delta = 1;
+            if (pivot.getIsoline().getIsoline().isHalf() || target.getIsoline().getIsoline().isHalf()) {
+                height_delta = 0.5;
+            }
+            if (pivot.getIsoline().getIsoline().getSlopeSide() == 0) {
+                throw new RuntimeException("Slope side undetermined!");
+                //pivot.getIsoline().getIsoline().setHeight(-100000);
+            }
+            int mul1 = pivot.getSign() == pivot.getIsoline().getIsoline().getSlopeSide() ? -1 : 1;
+            int mul2 = target.getSign() == target.getIsoline().getIsoline().getSlopeSide() ? -1 : 1;
+            if (mul1 == -mul2) {
+                height_delta = height_delta*mul1;
+            } else {
+                height_delta = 0;
+            }
+//            if (pivot.getSign() == pivot.getIsoline().getIsoline().getSlopeSide()) {
+//                height_delta = -height_delta;
+//            }
+            target.getIsoline().getIsoline().setHeight(  pivot.getIsoline().getIsoline().getHeight()+height_delta );
+            target.getIsoline().height_recovered = true;
         }
     }
 

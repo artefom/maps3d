@@ -2,6 +2,8 @@
  * Created by Artyom.Fomenko on 15.07.2016.
  */
 
+import Algorithm.Interpolation.InterpolatedContainer;
+import Algorithm.Interpolation.Isoline_attributed;
 import Display.Drawer;
 import Display.GeometryWrapper;
 import Display.Renderer;
@@ -10,6 +12,7 @@ import Isolines.Isoline;
 import Isolines.IsolineContainer;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineString;
 import javafx.application.Application;
 import javafx.beans.InvalidationListener;
 import javafx.event.ActionEvent;
@@ -128,6 +131,7 @@ public class MainApp extends Application implements Initializable {
 //                        Constants.CONNECTIONS_MAX_DIST,
 //                        Constants.CONNECTIONS_WELD_DIST);
 
+
                 displayedContainer = mc.ic;
                 redraw();
                 renderer.Fit();
@@ -188,6 +192,7 @@ public class MainApp extends Application implements Initializable {
         statusText.setText("Is closed: "+il.getLineString().isClosed()+
                 "; Type: "+il.getType()+
                 "; Slope side: "+il.getSlopeSide()+
+                "; Height: "+il.getHeight()+
                 "; Line begin = "+il.getLineString().getCoordinateN(0)+
                 "; Line end = "+il.getLineString().getCoordinateN(il.getLineString().getNumPoints()-1) +
                 "; Line id = "+il.getID());
@@ -200,9 +205,16 @@ public class MainApp extends Application implements Initializable {
     @FXML void canvasMouseDown(MouseEvent event) {
         mouseIsDown = true;
         if (current_isoline != null) {
-            List<GeometryWrapper> gws =  drawer.drawTraces(mc.ic.getIsolinesAsGeometry(),current_isoline.getLineString());
-            renderer.addAll(gws);
+            if (mc.interp == null) mc.interp = new InterpolatedContainer(mc.ic);
+            Isoline_attributed iso = new Isoline_attributed(current_isoline);
+            mc.interp.match(iso);
+            List<LineString> lines = iso.getMatchingLines(mc.ic.getFactory());
+            renderer.addAll( drawer.drawGeometry(lines,Color.RED) );
             render();
+
+//            List<GeometryWrapper> gws =  drawer.drawTraces(mc.ic.getIsolinesAsGeometry(),current_isoline.getLineString());
+//            renderer.addAll(gws);
+//            render();
         }
     }
 

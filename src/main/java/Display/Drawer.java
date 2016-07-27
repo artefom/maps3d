@@ -73,6 +73,14 @@ public class Drawer {
         return geom;
     }
 
+    public List<GeometryWrapper> drawGeometry(Collection<LineString> geometries, Color color) {
+      List<GeometryWrapper> gws = new ArrayList<>();
+        for (Geometry g : geometries) {
+            gws.add(new GeometryWrapper(g,color,1));
+        }
+        return gws;
+    }
+
     public List<GeometryWrapper> draw(Collection<SlopeMark> slopes) {
         ArrayList<GeometryWrapper> gws = new ArrayList<>();
         slopes.forEach((s)->{

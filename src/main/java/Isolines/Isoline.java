@@ -18,6 +18,7 @@ public class Isoline implements IIsoline {
     private int slope_side;
     private int id;
     private boolean isedgetoedge;
+    private double height;
 
     public Isoline(int type, int side, CoordinateSequence cs, GeometryFactory gf) {
         lineString = new LineString(cs,gf);
@@ -25,6 +26,7 @@ public class Isoline implements IIsoline {
         slope_side = side;
         this.type = type;
         isedgetoedge = false;
+        height = 0;
     }
 
     public Isoline(IIsoline other) {
@@ -34,6 +36,7 @@ public class Isoline implements IIsoline {
         slope_side = other.getSlopeSide();
         type = other.getType();
         isedgetoedge = other.isEdgeToEdge();
+        height = other.getHeight();
     }
 
     public int getType() {
@@ -157,11 +160,26 @@ public class Isoline implements IIsoline {
         double starty = ls.getCoordinateN(0).y;
         double endx = ls.getCoordinateN(end).x;
         double endy = ls.getCoordinateN(end).y;
-        return "ISOLINE_"+getSlopeSide()+"(" + startx + "," + starty + " - " + endx + "," + endy + ")";
+        return "ISOLINE_"+getSlopeSide()+"_"+getType()+"_h="+getHeight()+"(" + startx + "," + starty + " - " + endx + "," + endy + ")";
     }
 
     @Override
     public boolean isSteep() {
         return type == 4;
+    }
+
+    @Override
+    public boolean isHalf() {
+        return type == 1;
+    }
+
+    @Override
+    public double getHeight() {
+        return this.height;
+    }
+
+    @Override
+    public void setHeight(double height) {
+        this.height = height;
     }
 }

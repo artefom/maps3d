@@ -36,6 +36,8 @@ public class Isoline_attributed {
             return !positive;
         }
 
+        public int getSign(){ return this.positive ? 1 : -1; }
+
         public Isoline_attributed getIsoline() {
             return isoline;
         }
@@ -49,6 +51,7 @@ public class Isoline_attributed {
     private IIsoline isoline;
     private LineSide ls_positive;
     private LineSide ls_negative;
+    public boolean height_recovered = false;
 
     //public HashMap<Isoline_attributed, Integer > outcomming;
 

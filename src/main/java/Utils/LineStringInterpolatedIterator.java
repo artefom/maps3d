@@ -41,7 +41,7 @@ public class LineStringInterpolatedIterator implements Iterator<LineSegment> {
     private Coordinate getNextCoordinate(Coordinate buf) {
         length_buf+=step;
         double pos = length_buf/internal_buf_len;
-        while (pos >= 1) {
+        while (pos >= 0.99999999) {
             length_buf-=internal_buf_len;
             if (iter.hasNext()) {
                 iter.next();

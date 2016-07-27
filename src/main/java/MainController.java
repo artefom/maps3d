@@ -1,4 +1,6 @@
 import Algorithm.EdgeDetection.Edge;
+import Algorithm.Interpolation.InterpolatedContainer;
+import Algorithm.Interpolation.Interpolator;
 import Algorithm.LineConnection.LineWelder;
 import Algorithm.NearbyGraph.NearbyContainer;
 import Algorithm.NearbyGraph.NearbyEstimator;
@@ -24,6 +26,7 @@ public class MainController {
     private GeometryFactory gf;
 
     public IsolineContainer ic;
+    public InterpolatedContainer interp;
 
     public Edge edge;
 
@@ -97,9 +100,13 @@ public class MainController {
         NearbyGraphWrapper graph = new NearbyGraphWrapper(est.getRelationGraph(cont));
         graph.ConvertToSpanningTree();
         graph.recoverAllSlopes();
+        graph.recoverAllHeights();
     }
 
     public void interpolate() {
+
+        Interpolator interpolator = new Interpolator(ic,5);
+        interpolator.writeDataToFile("heights.txt");
 
     }
 

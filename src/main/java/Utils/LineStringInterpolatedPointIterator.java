@@ -31,7 +31,7 @@ public class LineStringInterpolatedPointIterator implements Iterator<Coordinate>
         this.internal_buf_len = internal_buf.getLength();
         length_buf = offset;
         double pos = length_buf/internal_buf_len;
-        while (pos >= 1) {
+        while (pos >= 0.99999999) {
             length_buf -= internal_buf_len;
             if (iter.hasNext()) {
                 iter.next();
@@ -47,7 +47,7 @@ public class LineStringInterpolatedPointIterator implements Iterator<Coordinate>
 
     public Coordinate getNextCoordinate(Coordinate buf) {
         double pos = length_buf/internal_buf_len;
-        while (pos >= 1) {
+        while (pos >= 0.99999999) {
             length_buf-=internal_buf_len;
             if (iter.hasNext()) {
                 iter.next();
@@ -62,6 +62,7 @@ public class LineStringInterpolatedPointIterator implements Iterator<Coordinate>
         buf.x = internal_buf.p0.x*(1-pos)+internal_buf.p1.x*pos;
         buf.y = internal_buf.p0.y*(1-pos)+internal_buf.p1.y*pos;
         length_buf+=step;
+
         return buf;
     }
 

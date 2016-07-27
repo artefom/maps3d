@@ -2,6 +2,7 @@ package Loader.Interpolation;
 
 import Loader.Binary.TDPoly;
 
+import Utils.LineStringInterpolatedPointIterator;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.CoordinateSequence;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -55,12 +56,21 @@ public class CurveString {
     }
 
     public LineString interpolate(int steps, GeometryFactory gf) {
-        double step = 1.0/steps;
-        Coordinate[] coords = new Coordinate[steps+1];
-        for (int i = 0; i <= steps; ++i) {
-            coords[i] = pointAlong(i*step);
+        int pre_steps = steps*10;
+        double pre_step = 1.0/pre_steps;
+        Coordinate[] coords = new Coordinate[pre_steps+1];
+        for (int i = 0; i <= pre_steps; ++i) {
+            coords[i] = pointAlong(i*pre_step);
         }
-        return gf.createLineString(coords);
+        LineString pre_ls = gf.createLineString(coords);
+        //return pre_ls;
+        ArrayList<Coordinate> resultCoords = new ArrayList<>();
+        LineStringInterpolatedPointIterator it = new LineStringInterpolatedPointIterator(pre_ls,pre_ls.getLength()/steps,0);
+        while (it.hasNext()) {
+            Coordinate next = it.next();
+            resultCoords.add(next);
+        }
+        return gf.createLineString(resultCoords.toArray(new Coordinate[resultCoords.size()]));
     }
 
 

@@ -11,8 +11,12 @@ public interface IIsoline {
     void setSlopeSide(int side);
     int getType();
 
+    double getHeight();
+    void setHeight(double height);
+
     boolean isClosed();
     boolean isSteep();
+    boolean isHalf();
 
     void setEdgeToEdge(boolean isedgetoedge);
     boolean isEdgeToEdge();
