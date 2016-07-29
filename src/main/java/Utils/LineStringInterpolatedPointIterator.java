@@ -28,21 +28,32 @@ public class LineStringInterpolatedPointIterator implements Iterator<Coordinate>
         this.internal_buf = new LineSegment();
         this.iter = new LineStringIterator(ls,internal_buf);
         iter.next();
-        this.internal_buf_len = internal_buf.getLength();
         length_buf = offset;
+        finished = false;
+
+        this.internal_buf_len = internal_buf.getLength();
+        while (internal_buf_len == 0) {
+            if (iter.hasNext()) {
+                iter.next();
+                this.internal_buf_len = internal_buf.getLength();
+            } else {
+                internal_buf_len = 1;
+                length_buf = 1;
+            }
+        }
+
         double pos = length_buf/internal_buf_len;
         while (pos >= 0.99999999) {
             length_buf -= internal_buf_len;
             if (iter.hasNext()) {
                 iter.next();
             } else {
-                finished = true;
+                length_buf = internal_buf_len;
                 break;
             }
             internal_buf_len = internal_buf.getLength();
             pos = length_buf/internal_buf_len;
         }
-        finished = false;
     }
 
     public Coordinate getNextCoordinate(Coordinate buf) {
@@ -57,6 +68,19 @@ public class LineStringInterpolatedPointIterator implements Iterator<Coordinate>
                 break;
             }
             internal_buf_len = internal_buf.getLength();
+
+            while (internal_buf_len == 0) {
+                if (iter.hasNext()) {
+                    iter.next();
+                    this.internal_buf_len = internal_buf.getLength();
+                } else {
+                    length_buf = 1;
+                    internal_buf_len = 1;
+                    finished = true;
+                    break;
+                }
+            }
+
             pos = length_buf/internal_buf_len;
         };
         buf.x = internal_buf.p0.x*(1-pos)+internal_buf.p1.x*pos;

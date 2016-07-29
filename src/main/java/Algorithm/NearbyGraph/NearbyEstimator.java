@@ -33,6 +33,7 @@ public class NearbyEstimator {
         SimpleWeightedGraph<Isoline_attributed.LineSide,DefaultWeightedEdge> ret = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 
         //Add vertecies to graph;
+        System.out.println("Recovering edges...");
         for (Isoline_attributed iso : cont.getIsolines()) {
             ret.addVertex(iso.getSideNegative());
             ret.addVertex(iso.getSidePositive());
@@ -45,8 +46,19 @@ public class NearbyEstimator {
         Tracer<Isoline_attributed> tracer = new Tracer<Isoline_attributed>(cont.getIsolines(),(iso)->iso.getIsoline().getLineString(),gf);
         LineSegment buf = new LineSegment();
 
+        System.out.println("Tracing perpendiculars");
+        int total = cont.getIsolines().size();
+        int current = 0;
+        int percent_prev = -1;
         //Iterate through isolines to calculate all neighbours for each isoline
         for (Isoline_attributed iso : cont.getIsolines()) {
+            current += 1;
+            int percent = (int)Math.round((double)current/total*100);
+            if (percent_prev != percent) {
+                System.out.println(percent+"%, "+current+" of "+total);
+                percent_prev = percent;
+            }
+
             if ( iso.getIsoline().isSteep() ) continue;
             LineString ls = iso.getIsoline().getLineString();
             LineStringInterpolatedLineIterator it = new LineStringInterpolatedLineIterator(ls,

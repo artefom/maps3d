@@ -86,7 +86,7 @@ public class LineWelder {
             }
         }
 
-        intersector = new Intersector(isos.stream().map((x)->x.getGeometry()).collect(Collectors.toList()),gf, Constants.CONNECTIONS_INTERSECTION_OFFSET );
+        intersector = new Intersector(isos.stream().map((x)->x.getGeometry()).collect(Collectors.toList()),gf );
         steepDetector = new SteepDetector(steeps, Constants.CONNECTIONS_NEAR_STEEP_THRESHOLD, gf);
         extr = new ConnectionExtractor(intersector,steepDetector,eval,gf,edge);
 

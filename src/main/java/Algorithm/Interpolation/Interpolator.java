@@ -9,10 +9,11 @@ import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineSegment;
 import com.vividsolutions.jts.math.Vector2D;
 
-import java.awt.*;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Artyom.Fomenko on 27.07.2016.
@@ -30,48 +31,52 @@ public class Interpolator {
         this.tracer = new Tracer<>(container,(x)->x.getLineString(),container.getFactory());
     }
 
-    public double estimatePointHeight(Coordinate point) {
-        int angle_steps = 8;
-        double angle_step = (Math.PI*2)/(angle_steps);
-        Vector2D vec = Vector2D.create(0,1);
-        double hit_num = 0;
-        double height_accum = 0;
-        double weight_accum = 0;
-        for (int i = 0; i < angle_steps; ++i) {
-            Tracer<IIsoline>.traceres res = tracer.trace(point, vec,0,100);
-            vec = vec.rotate(angle_step);
-            if (res.entitiy != null && !res.entitiy.isSteep()) {
-                hit_num+=1;
-                if (res.distance < 0.01) return res.entitiy.getHeight();
-                double weight = 1.0/res.distance;
-                weight_accum+=weight;
-                height_accum+=(res.entitiy.getHeight()*weight);
+    public double estimatePointHeight(Coordinate point, List<WeightedCoordinate> coords ) {
+        double nearest_dist = 100000;
+        double nearest_height = 0;
+        for (WeightedCoordinate wc : coords) {
+            if ( Math.abs(point.x-wc.x) < nearest_dist ) {
+                if (Math.abs(point.y-wc.y) < nearest_dist) {
+                    nearest_dist = (Math.abs(point.x-wc.x)+Math.abs(point.y-wc.y))*0.5;
+                    nearest_height = wc.z;
+                }
             }
         }
-        if (hit_num < 2) {
-            return -100000;
-        } else {
-            return height_accum/weight_accum;
-        }
+        return nearest_height;
     }
 
+
+
     public void writeDataToFile(String path) {
+
+        InterpolatedContainer interp = new InterpolatedContainer(cont);
+
+        double[][] heights = interp.getAllInterpolatingPoints();
+
         PrintWriter out;
         try {
             out = new PrintWriter(path);
         } catch (FileNotFoundException ex){
             throw new RuntimeException("Could not save output");
         }
-        int x_steps = (int)Math.ceil(envelope.getWidth()/step);
-        int y_steps = (int)Math.ceil(envelope.getHeight()/step);
-        double x_step = envelope.getWidth()/x_steps;
-        double y_step = envelope.getHeight()/y_steps;
-        Coordinate point = new Coordinate();
-        for (int i = y_steps; i >= 0; --i) {
-            point.y = envelope.getMinY()+i*y_step;
-            for (int j = 0; j <= x_steps; ++j) {
-                point.x = envelope.getMinX()+j*x_step;
-                out.print(estimatePointHeight(point)+" ");
+        int y_steps = heights.length;
+        int x_steps = heights[0].length;
+//        int x_steps = (int)Math.ceil(envelope.getWidth()/step);
+//        int y_steps = (int)Math.ceil(envelope.getHeight()/step);
+//        double x_step = envelope.getWidth()/x_steps;
+//        double y_step = envelope.getHeight()/y_steps;
+//        Coordinate point = new Coordinate();
+
+        System.out.println("Writing to file");
+        for (int i = y_steps-1; i >= 0; --i) {
+            //System.out.println( (y_steps-i) + " out of " + y_steps);
+            //point.y = envelope.getMinY()+i*y_step;
+            for (int j = 0; j != x_steps; ++j) {
+                //point.x = envelope.getMinX()+j*x_step;
+                //out.print(estimatePointHeight(point,coords)+" ");
+                //if (heights[i][j] != null)
+                out.print(heights[i][j]+" ");
+                //else out.print("0 ");
             }
             out.println();
         }

@@ -36,6 +36,8 @@ public class Drawer {
 
             LineString ls = i.getLineString();
 
+
+
             if (Constants.DRAWING_INTERPOLATION)
                 ls = interpolatedLine(ls,Constants.DRAWING_INTERPOLATION_STEP);
             Color col = i.getLineString().isClosed() ?

@@ -20,7 +20,7 @@ public class Intersector {
     private GeometryFactory gf;
     private Tracer<Geometry> geometryTracer;
 
-    public Intersector(List<Geometry> primitives, GeometryFactory gf, double offset) {
+    public Intersector(List<Geometry> primitives, GeometryFactory gf) {
         this.gf = gf;
         this.primitives = primitives;
         this.geometryTracer = new Tracer<>(primitives,(p)->p,gf);

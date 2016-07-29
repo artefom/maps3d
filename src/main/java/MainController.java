@@ -101,11 +101,12 @@ public class MainController {
         graph.ConvertToSpanningTree();
         graph.recoverAllSlopes();
         graph.recoverAllHeights();
+        System.out.println("Graph built successfully");
     }
 
     public void interpolate() {
 
-        Interpolator interpolator = new Interpolator(ic,5);
+        Interpolator interpolator = new Interpolator(ic,1);
         interpolator.writeDataToFile("heights.txt");
 
     }

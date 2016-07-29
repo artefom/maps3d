@@ -12,6 +12,7 @@ import Isolines.Isoline;
 import Isolines.IsolineContainer;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineSegment;
 import com.vividsolutions.jts.geom.LineString;
 import javafx.application.Application;
 import javafx.beans.InvalidationListener;
@@ -206,11 +207,11 @@ public class MainApp extends Application implements Initializable {
         mouseIsDown = true;
         if (current_isoline != null) {
             if (mc.interp == null) mc.interp = new InterpolatedContainer(mc.ic);
-            Isoline_attributed iso = new Isoline_attributed(current_isoline);
-            mc.interp.match(iso);
-            List<LineString> lines = iso.getMatchingLines(mc.ic.getFactory());
-            renderer.addAll( drawer.drawGeometry(lines,Color.RED) );
-            render();
+//            Isoline_attributed iso = mc.interp.getByIsoline(current_isoline); //new Isoline_attributed(current_isoline);
+//            mc.interp.match(iso);
+//            List<LineSegment> lines = iso.getMatchingLines(mc.ic.getFactory());
+            //renderer.addAll( drawer.drawGeometry( mc.ic.getFactory().createLineString(lines.) lines,Color.RED) );
+            //render();
 
 //            List<GeometryWrapper> gws =  drawer.drawTraces(mc.ic.getIsolinesAsGeometry(),current_isoline.getLineString());
 //            renderer.addAll(gws);

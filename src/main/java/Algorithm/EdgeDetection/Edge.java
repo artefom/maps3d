@@ -46,7 +46,7 @@ public class Edge {
     }
 
     public static Edge fromIsolines(IsolineContainer isos, double threshold) {
-        Intersector intersector = new Intersector( isos.getIsolinesAsGeometry(), isos.getFactory(), Constants.CONNECTIONS_INTERSECTION_OFFSET);
+        Intersector intersector = new Intersector( isos.getIsolinesAsGeometry(), isos.getFactory());
         return fromGeometryCollection(isos.stream().map((x)->x.getGeometry()).collect(Collectors.toList()),
                 isos.getFactory(), intersector, threshold);
     }

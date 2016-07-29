@@ -33,6 +33,8 @@ public class NearbyGraphWrapper {
 
     public void ConvertToSpanningTree() {
 
+        System.out.println("Creating spanning tree...");
+
         SimpleWeightedGraph<Isoline_attributed.LineSide,DefaultWeightedEdge> new_graph =
                 new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
         KruskalMinimumSpanningTree<Isoline_attributed.LineSide,DefaultWeightedEdge> spanningTree =
@@ -93,6 +95,9 @@ public class NearbyGraphWrapper {
      * Recover missing slope sides, this should be done before trying to recover heights
      */
     public void recoverAllSlopes() {
+
+        System.out.println("Recovering slopes...");
+
         LinkedList<DefaultWeightedEdge> edges = new LinkedList<>();
         graph.edgeSet().forEach(edges::add);
         edges.sort( (lhs,rhs)-> Double.compare(graph.getEdgeWeight(lhs),graph.getEdgeWeight(rhs)) );
@@ -135,10 +140,12 @@ public class NearbyGraphWrapper {
      */
     public void recoverAllHeights() {
 
+        System.out.print("Recovering heights...");
         BreadthFirstHeightRoceveryIterator it = new BreadthFirstHeightRoceveryIterator(getGraph(),isolines.iterator().next());
         while (it.hasNext()) {
             it.next();
         }
+        System.out.println("success.");
     }
 
     public static class BreadthFirstHeightRoceveryIterator extends BreadthFirstIterator<Isoline_attributed.LineSide,DefaultWeightedEdge> {

@@ -60,27 +60,31 @@ public class Tracer<T>{
             Envelope bbox = ls.getEnvelopeInternal();
             if (!((x0 >= bbox.getMinX() && x0 <= bbox.getMaxX()) &&
                     (y0 >= bbox.getMinY() && y0 <= bbox.getMaxY()))) {
-                Coordinate[] coords = ls.getEnvelope().getBoundary().getCoordinates();
-                coord1 = coords[0];
-                prev_side = getSide(vec, coord1);
-                boolean intersected = false;
-                for (int i = 1; i < coords.length; ++i) {
-                    coord2 = coords[i];
-                    side = getSide(vec, coord2);
-                    if (prev_side != side) {
-                        a = coord1.y - coord2.y;
-                        b = coord2.x - coord1.x;
-                        c = coord1.x * coord2.y - coord2.x * coord1.y;
-                        t = -(c + a * x0 + b * y0) / (a * vx + b * vy);
-                        if (t > 0 && t < proj_factor) {
-                            intersected = true;
-                            break;
+                try {
+                    Coordinate[] coords = ls.getEnvelope().getBoundary().getCoordinates();
+                    coord1 = coords[0];
+                    prev_side = getSide(vec, coord1);
+                    boolean intersected = false;
+                    for (int i = 1; i < coords.length; ++i) {
+                        coord2 = coords[i];
+                        side = getSide(vec, coord2);
+                        if (prev_side != side) {
+                            a = coord1.y - coord2.y;
+                            b = coord2.x - coord1.x;
+                            c = coord1.x * coord2.y - coord2.x * coord1.y;
+                            t = -(c + a * x0 + b * y0) / (a * vx + b * vy);
+                            if (t > 0 && t < proj_factor) {
+                                intersected = true;
+                                break;
+                            }
                         }
+                        prev_side = side;
+                        coord1 = coord2;
                     }
-                    prev_side = side;
-                    coord1 = coord2;
+                    if (intersected == false) continue;
+                } catch (Exception ignored) {
+
                 }
-                if (intersected == false) continue;
             }
 
             /*TEST FOR INTERSECTION WITH LINE STRING*/
@@ -138,6 +142,7 @@ public class Tracer<T>{
             Envelope bbox = ls.getEnvelopeInternal();
             if (!((x0 >= bbox.getMinX() && x0 <= bbox.getMaxX()) &&
                     (y0 >= bbox.getMinY() && y0 <= bbox.getMaxY()))) {
+
                 Coordinate[] coords = ls.getEnvelope().getBoundary().getCoordinates();
                 coord1 = coords[0];
                 prev_side = getSide(vec, coord1);
@@ -158,7 +163,8 @@ public class Tracer<T>{
                     prev_side = side;
                     coord1 = coord2;
                 }
-                if (intersected == false) continue;
+                if (!intersected) continue;
+
             }
 
             /*TEST FOR INTERSECTION WITH LINE STRING*/
@@ -175,6 +181,9 @@ public class Tracer<T>{
                     c = coord1.x*coord2.y-coord2.x*coord1.y;
                     t = -(c+a*x0+b*y0)/(a*vx+b*vy);
                     if (t > min_length_fraction && t < proj_factor) {
+                        if (t < 0.01) {
+                            System.out.println("ALARM");
+                        }
                         return true;
                     }
                 }
@@ -205,6 +214,7 @@ public class Tracer<T>{
         Envelope bbox = ls.getEnvelopeInternal();
         if (!((x0 >= bbox.getMinX() && x0 <= bbox.getMaxX()) &&
                 (y0 >= bbox.getMinY() && y0 <= bbox.getMaxY()))) {
+
             Coordinate[] coords = ls.getEnvelope().getBoundary().getCoordinates();
             coord1 = coords[0];
             prev_side = getSide(vec, coord1);
@@ -226,6 +236,7 @@ public class Tracer<T>{
                 coord1 = coord2;
             }
             if (intersected == false) return false;
+
         }
 
         /*TEST FOR INTERSECTION WITH LINE STRING*/

@@ -131,7 +131,11 @@ public class MapDeserializer {
                     //Coordinate endpoint = Vector2D.create(slope.origin).add(slope.vec.multiply(Constants.slope_length)).toCoordinate();
                     //Coordinate p1;
                 }
-                ret.add(new Isoline(obj.getType(), slope_side, ls.getCoordinateSequence(), gf));
+                if (ls.getLength() > 0.01 && ls.getNumPoints() >= 2) {
+                    ret.add(new Isoline(obj.getType(), slope_side, ls.getCoordinateSequence(), gf));
+                } else {
+                    System.out.println("Found invalid line string");
+                }
             }
         }
         return ret;
