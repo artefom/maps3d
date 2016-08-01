@@ -9,6 +9,9 @@ import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineSegment;
 import com.vividsolutions.jts.math.Vector2D;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -55,9 +58,9 @@ public class Interpolator {
 
         PrintWriter out;
         try {
-            out = new PrintWriter(path);
+            out = new PrintWriter(path + ".txt");
         } catch (FileNotFoundException ex){
-            throw new RuntimeException("Could not save output");
+            throw new RuntimeException("Could not save " + path + ".txt");
         }
         int y_steps = heights.length;
         int x_steps = heights[0].length;
@@ -81,6 +84,34 @@ public class Interpolator {
             out.println();
         }
         out.close();
+
+
+        //getting bounds of possible height values
+        double minHeight = heights[0][0], maxHeight = heights[0][0];
+        for (int i = y_steps-1; i >= 0; --i) {
+            for (int j = 0; j != x_steps; ++j) {
+                minHeight = Math.min(minHeight, heights[i][j]);
+                maxHeight = Math.max(maxHeight, heights[i][j]);
+            }
+        }
+
+        //creating visual heightmap
+        BufferedImage image = new BufferedImage(x_steps, y_steps, BufferedImage.TYPE_INT_RGB);
+        for (int i = y_steps-1; i >= 0; --i) {
+            for (int j = 0; j != x_steps; ++j) {
+                int grey = (int) GeomUtils.map(heights[i][j], minHeight, maxHeight, 255, 0);
+                image.setRGB(j, i, (((grey << 8) + (int)(grey*0.8)) << 8) + (int)(grey*0.5));
+            }
+        }
+
+        //writing it to file
+        try {
+            File png = new File(path + ".png");
+            ImageIO.write(image, "png", png);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not save " + path + ".png");
+        }
+
     }
 
 }

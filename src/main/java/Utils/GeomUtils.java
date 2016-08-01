@@ -90,5 +90,7 @@ public class GeomUtils {
         return Math.max(from, Math.min(to,val));
     }
 
-
+    public static double map(double value, double inMin, double inMax, double outMin, double outMax) {
+        return outMin + (value - inMin)*(outMax - outMin)/(inMax - inMin);
+    }
 }

@@ -107,7 +107,7 @@ public class MainController {
     public void interpolate() {
 
         Interpolator interpolator = new Interpolator(ic,1);
-        interpolator.writeDataToFile("heights.txt");
+        interpolator.writeDataToFile("heights");
 
     }
 
