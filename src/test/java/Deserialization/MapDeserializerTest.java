@@ -1,8 +1,4 @@
-package Loader;
-
-import Loader.Binary.TDPoly;
-import Loader.Binary.TOcadObject;
-import org.junit.Test;
+package Deserialization;
 
 /**
  * Created by Artem on 21.07.2016.
@@ -12,7 +8,7 @@ public class MapDeserializerTest {
 //    @Test
 //    public void mapDeserializeTest() throws Exception {
 //
-//        MapDeserializer d = new MapDeserializer();
+//        OcadDeserialization d = new OcadDeserialization();
 //
 //        d.DeserializeMap("C:\\Users\\artefom_w10\\Desktop\\ocad_converter\\sample.ocd");
 //

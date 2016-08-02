@@ -8,9 +8,16 @@ import java.util.Collection;
 import java.util.function.Function;
 
 /**
- * Created by Artyom.Fomenko on 19.07.2016.
+ * Class, containing static 2D geometry functions
  */
 public class GeomUtils {
+
+    /**
+     * Point along line string
+     * @param ls
+     * @param lineStringLengthFraction fraction of length
+     * @return
+     */
     public static Coordinate pointAlong(LineString ls, double lineStringLengthFraction ) {
         LineSegment segment = new LineSegment();
         LineStringIterator it = new LineStringIterator(ls,segment);
@@ -32,6 +39,11 @@ public class GeomUtils {
         return new Coordinate( ls.getCoordinateN(ls.getNumPoints()-1) );
     }
 
+    /**
+     * @param seg
+     * @param c
+     * @return 1 if c is to the LEFT from seg, -1 if c is to the RIGHT from seg (looking from seg.p0 to seg.p1)
+     */
     public static int getSide( LineSegment seg, Coordinate c ) {
         double v1x = seg.p1.x-seg.p0.x;
         double v1y = seg.p1.y-seg.p0.y;
@@ -40,14 +52,13 @@ public class GeomUtils {
         return ( (v1x*v2y - v1y*v2x) > 0) ? 1 : -1;
     }
 
-    public static double getDistSide( LineSegment seg, Coordinate c) {
-        double v1x = seg.p1.x-seg.p0.x;
-        double v1y = seg.p1.y-seg.p0.y;
-        double v2x = c.x - seg.p0.x;
-        double v2y = c.y - seg.p0.y;
-        return v1x*v2y - v1y*v2x;
-    }
 
+    /**
+     * returns length fraction of closest point along {@link LineString} ls to {@link Coordinate} c
+     * @param c
+     * @param ls
+     * @return length fraction
+     */
     public static double projectionFactor( Coordinate c, LineString ls ) {
         LineSegment seg = new LineSegment();
         double min_dist = c.distance(ls.getCoordinateN(0));
@@ -67,6 +78,12 @@ public class GeomUtils {
         return min_length/length_accum;
     }
 
+    /**
+     * Returns closest point on {@link LineString} ls to {@link Coordinate} c
+     * @param c
+     * @param ls
+     * @return Point, lying on ls
+     */
     public static Coordinate closestPoint(Coordinate c, LineString ls) {
         LineSegment buf = new LineSegment();
         LineStringIterator it = new LineStringIterator(ls,buf);
@@ -90,6 +107,15 @@ public class GeomUtils {
         return Math.max(from, Math.min(to,val));
     }
 
+    /**
+     * map value from range (inMin-inMax) to range (outMin-outMax)
+     * @param value value to be mapped
+     * @param inMin first interval minimum value
+     * @param inMax first interval maximum value
+     * @param outMin second interval minimum value
+     * @param outMax second interval maximum value
+     * @return outMin + (value - inMin)*(outMax - outMin)/(inMax - inMin)
+     */
     public static double map(double value, double inMin, double inMax, double outMin, double outMax) {
         return outMin + (value - inMin)*(outMax - outMin)/(inMax - inMin);
     }

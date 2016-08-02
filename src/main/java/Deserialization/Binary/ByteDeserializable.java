@@ -1,4 +1,4 @@
-package Loader.Binary;
+package Deserialization.Binary;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;

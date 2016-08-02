@@ -3,7 +3,7 @@ package Utils;
 import java.util.Iterator;
 
 /**
- * Created by Artem on 16.07.2016.
+ * Reversed iterator over primitive array
  */
 public class ArrayReverseIterator<T> implements Iterator<T> {
 

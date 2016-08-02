@@ -9,7 +9,11 @@ import java.util.function.Function;
 import static Utils.GeomUtils.getSide;
 
 /**
- * Created by Artyom.Fomenko on 25.07.2016.
+ * Tracer traces ray from point and returns {@link traceres} containing information about entity, which this trace
+ * did hit. distance to it and hitpoint.
+ *
+ * Entity collection is passed to tracer constructor alongside with function which extracts {@link Geometry} from generic entity
+ * WARNING: Currently Entity's geometry MUST be castable to {@link LineString}
  */
 public class Tracer<T>{
 

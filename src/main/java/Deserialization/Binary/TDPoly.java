@@ -1,4 +1,4 @@
-package Loader.Binary;
+package Deserialization.Binary;
 
 import Utils.Constants;
 import com.vividsolutions.jts.geom.Coordinate;

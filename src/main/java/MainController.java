@@ -5,6 +5,7 @@ import Algorithm.LineConnection.LineWelder;
 import Algorithm.NearbyGraph.NearbyContainer;
 import Algorithm.NearbyGraph.NearbyEstimator;
 import Algorithm.NearbyGraph.NearbyGraphWrapper;
+import Deserialization.OcadDeserialization;
 import Isolines.IsolineContainer;
 
 import java.io.*;
@@ -12,8 +13,7 @@ import java.util.ArrayList;
 import java.util.stream.Stream;
 
 import Isolines.*;
-import Loader.Interpolation.SlopeMark;
-import Loader.MapDeserializer;
+import Deserialization.Interpolation.SlopeMark;
 import Utils.Constants;
 import com.vividsolutions.jts.geom.*;
 
@@ -64,7 +64,7 @@ public class MainController {
 //    }
 
     public void openFile(File f) throws Exception {
-        MapDeserializer dser = new MapDeserializer();
+        OcadDeserialization dser = new OcadDeserialization();
         dser.DeserializeMap(f.getPath());
         ArrayList<IIsoline> isos = dser.toIsolines(1,gf);
         slopeMarks = new ArrayList<>();

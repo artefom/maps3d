@@ -1,7 +1,7 @@
 package Utils;
 
 /**
- * Created by Artyom.Fomenko on 28.07.2016.
+ * Abstract class for performing Dynamic Time Wrapping algorithm on various types
  */
 
 public abstract class DTW<T> {

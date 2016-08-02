@@ -3,7 +3,7 @@ package Display;
 import Algorithm.LineConnection.MapEdge;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
-import Loader.Interpolation.SlopeMark;
+import Deserialization.Interpolation.SlopeMark;
 import Utils.*;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;

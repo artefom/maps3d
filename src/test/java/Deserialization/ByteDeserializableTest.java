@@ -1,14 +1,4 @@
-package Loader;
-
-import Loader.Binary.OcadHeader;
-import org.junit.Test;
-
-import java.nio.channels.SeekableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-import static org.junit.Assert.*;
+package Deserialization;
 
 /**
  * Created by Artem on 21.07.2016.

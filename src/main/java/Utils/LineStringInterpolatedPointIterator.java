@@ -7,7 +7,7 @@ import com.vividsolutions.jts.geom.LineString;
 import java.util.Iterator;
 
 /**
- * Created by Artyom.Fomenko on 19.07.2016
+ * Tthis iterator yields Points along LineString with fixed step (one could easily use {@link LineStringInterpolatedIterator}, but taking care of endpoint)
  */
 public class LineStringInterpolatedPointIterator implements Iterator<Coordinate> {
 
@@ -56,6 +56,12 @@ public class LineStringInterpolatedPointIterator implements Iterator<Coordinate>
         }
     }
 
+    /**
+     * Records next point coordinates to buf.
+     * Used as performance optimization
+     * @param buf
+     * @return
+     */
     public Coordinate getNextCoordinate(Coordinate buf) {
         double pos = length_buf/internal_buf_len;
         while (pos >= 0.99999999) {
@@ -96,6 +102,12 @@ public class LineStringInterpolatedPointIterator implements Iterator<Coordinate>
         return !finished;
     }
 
+    /**
+     * Creates new Coordinate on each step and returns it.
+     * No internal buffer used, like in {@link LineStringInterpolatedIterator}, {@link LineStringInterpolatedLineIterator}.
+     * For writing new values to existing buffer see {@link LineStringInterpolatedPointIterator#getNextCoordinate(Coordinate)}
+     * @return
+     */
     @Override
     public Coordinate next() {
         return new Coordinate( getNextCoordinate(new Coordinate()) );

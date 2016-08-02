@@ -1,4 +1,4 @@
-package Loader.Binary;
+package Deserialization.Binary;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;

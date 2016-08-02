@@ -1,6 +1,6 @@
-package Loader.Interpolation;
+package Deserialization.Interpolation;
 
-import Loader.Binary.TDPoly;
+import Deserialization.Binary.TDPoly;
 import com.vividsolutions.jts.geom.Coordinate;
 
 /**

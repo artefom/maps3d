@@ -1,4 +1,4 @@
-package Loader.Binary;
+package Deserialization.Binary;
 
 /**
  * Created by Artem on 21.07.2016.

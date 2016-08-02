@@ -2,6 +2,9 @@ package Utils;
 
 import com.vividsolutions.jts.geom.Envelope;
 
+/**
+ * Class for easy converting double coordinates to cell's row and column indexes
+ */
 public class PointRasterizer {
 
     private double x_addition;

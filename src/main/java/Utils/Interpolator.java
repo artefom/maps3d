@@ -10,6 +10,15 @@ import java.util.LinkedList;
  */
 public class Interpolator {
 
+    /**
+     * Get sub-string of {@link LineString} starting from length-fraction 'start' and ending at length-fraction 'end' with
+     * step 'step'. Resulting sub-string with have (int)Math.ceil( Math.abs(end-start)/step) points.
+     * @param ls
+     * @param start
+     * @param end
+     * @param step
+     * @return
+     */
     public static LinkedList<Coordinate> InterpolateAlongLocal(LineString ls, double start, double end, double step ) {
         start = Math.min(1,Math.max(0,start));
         end = Math.min(1,Math.max(0,end));
@@ -23,29 +32,4 @@ public class Interpolator {
         return result;
     };
 
-    /**
-     * Interpolates line from start position to end with step size. Operates in absolute length.
-     * TODO: optimize
-     * @param start Start position
-     * @param end End position
-     * @param step Step size (real step may be a bit smaller)
-     * @return
-     */
-    public static LinkedList<Coordinate> InterpolateAlong(LineString ls, double start, double end, double step) {
-        LinkedList<Coordinate> result = new LinkedList<>();
-
-        double length = ls.getLength();
-        start = start/length;
-        end = end/length;
-        step = step/length;
-        start = Math.min(1,Math.max(0,start));
-        end = Math.min(1,Math.max(0,end));
-        int iterations = (int)Math.ceil( Math.abs(end-start)/step);
-        step = (end-start)/iterations;
-        for (int i = 0; i <= iterations; ++i) {
-            double pos = start+i*step;
-            result.add(GeomUtils.pointAlong(ls,pos));
-        }
-        return result;
-    };
 }

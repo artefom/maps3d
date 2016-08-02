@@ -7,8 +7,19 @@ import com.vividsolutions.jts.geom.LineString;
 import java.util.Iterator;
 
 /**
- * Created by Artyom.Fomenko on 19.07.2016.
- * Iterates though LineSegments of LineString, using step
+ * Iterates through lineString with LineSegment of fixed length.
+ *
+ * example:
+ * iterating through line(0,0 - 0,10) with max_length = 1 (see {@link LineStringInterpolatedIterator#LineStringInterpolatedIterator(LineString, LineSegment, double)}
+ * will give following line segments:
+ * 0,0 - 0,1
+ * 0,1 - 0,2
+ * 0,2 - 0,3
+ * ...
+ * 0,9 - 0,10
+ *
+ * WARNING: segment's length may not equal max_length, but guaranteed to be less
+ * segment length is calculated as follows: ls.getLength() / ( (int)Math.ceil(ls.getLength() / max_length )
  */
 public class LineStringInterpolatedIterator implements Iterator<LineSegment> {
 
@@ -63,6 +74,12 @@ public class LineStringInterpolatedIterator implements Iterator<LineSegment> {
         return !finished;
     }
 
+    /**
+     * Returns reference to internal buffer, whose coordinates are being updated
+     *
+     * DOES NOT CREATE NEW LINESEGMENT ON EACH STEP! USED FOR PERFORMANCE OPTIMIZATION
+     * @return
+     */
     @Override
     public LineSegment next() {
         prev_coord.setCoordinate(next_coord);

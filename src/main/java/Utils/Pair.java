@@ -1,7 +1,7 @@
 package Utils;
 
 /**
- * Created by Artem on 20.07.2016.
+ * Pair of values. When will java have it's own?
  */
 public class Pair<C1,C2> {
 

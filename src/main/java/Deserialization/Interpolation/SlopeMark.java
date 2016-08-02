@@ -1,6 +1,6 @@
-package Loader.Interpolation;
+package Deserialization.Interpolation;
 
-import Loader.Binary.TOcadObject;
+import Deserialization.Binary.TOcadObject;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;

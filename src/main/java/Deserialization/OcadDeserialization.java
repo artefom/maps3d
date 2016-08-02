@@ -1,30 +1,26 @@
-package Loader;
+package Deserialization;
 
 import Isolines.IIsoline;
 import Isolines.Isoline;
-import Loader.Binary.*;
-import Loader.Interpolation.Curve;
-import Loader.Interpolation.CurveString;
-import Loader.Interpolation.SlopeMark;
+import Deserialization.Binary.*;
+import Deserialization.Interpolation.CurveString;
+import Deserialization.Interpolation.SlopeMark;
 import Utils.Constants;
 import Utils.GeomUtils;
 import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.math.Vector2D;
 
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 
 /**
  * Created by Artem on 21.07.2016.
  */
-public class MapDeserializer {
+public class OcadDeserialization {
 
-    public MapDeserializer() {
+    public OcadDeserialization() {
 
     }
 
