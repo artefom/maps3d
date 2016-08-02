@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 /**
- * Created by Artem on 21.07.2016.
+ * Wrapper around Concave hull algorithm to calculate concave hull of isoline collection.
  */
 public class MapEdge {
 
@@ -45,11 +45,18 @@ public class MapEdge {
                 isos.getFactory(), intersector, threshold);
     }
 
-    public boolean isWithinEdge(Coordinate c) {
+
+    private boolean isWithinEdge(Coordinate c) {
         return gf.createPoint(c).isWithinDistance(outerBound, Constants.EDGE_WITHIN_THRESHOLD);
     }
 
-    public boolean isWithinEdge(LineSegment ls) {
+    /**
+     * Determine, whether coordinate is too close to edge
+     * Used and cached by {@link LineEnd#isWithinEdge}.
+     * @param ls
+     * @return
+     */
+    boolean isWithinEdge(LineSegment ls) {
         if (isWithinEdge(ls.p1)) return true;
         Coordinate begin = ls.p1;
         Vector2D vec = Vector2D.create(ls.p0,ls.p1).normalize();
@@ -61,7 +68,7 @@ public class MapEdge {
         return  false;
     }
 
-    public boolean isWithinEdge(Connection con) {
+    private boolean isWithinEdge(Connection con) {
         if (con.first().isWithinEdge(this) || con.second().isWithinEdge(this)) return true;
         return false;
     }

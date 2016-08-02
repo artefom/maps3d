@@ -5,7 +5,7 @@ import Isolines.Isoline;
 import com.vividsolutions.jts.geom.*;
 
 /**
- * Created by Artem on 20.07.2016.
+ * Wrapper around {@link IIsoline}, containing all sufficient information about {@link LineEnd}s.
  */
 public class Isoline_attributed {
 

@@ -18,23 +18,15 @@ import java.util.stream.Collectors;
  */
 public class LineWelder {
 
-    GeometryFactory gf;
-    Intersector intersector;
-    ConnectionExtractor extr;
-    ConnectionEvaluator eval;
-    SteepDetector steepDetector;
-    MapEdge edge;
+    private GeometryFactory gf;
+    private ConnectionEvaluator eval;
+    private MapEdge edge;
 
-    public LineWelder() {
-        this.gf = new GeometryFactory();
-        eval = new ConnectionEvaluator(
-                Math.toRadians(Constants.CONNECTIONS_MIN_ANGLE_DEG),
-                Math.toRadians(Constants.CONNECTIONS_MAX_ANGLE_DEG),
-                Constants.CONNECTIONS_MAX_DIST,
-                Constants.CONNECTIONS_WELD_DIST
-        );
-    }
-
+    /**
+     * Since {@link LineWelder} avoids connecting line ends situating near map edge, map edge should be passed to it.
+     * @param gf used to create new Isolines (performing weld operations)
+     * @param edge edge of map
+     */
     public LineWelder(GeometryFactory gf, MapEdge edge) {
         this.edge = edge;
         this.gf = gf;
@@ -46,6 +38,12 @@ public class LineWelder {
                 );
     }
 
+    /**
+     * Used only for test purposes.
+     * After perfoming this operation, {@link LineEnd}s of returned isoline ought to be extracted, since none of them does not equal to line ends of connected isolines
+     * @param con
+     * @return
+     */
     public Isoline_attributed Weld_copy(Connection con) {
         Pair<LineString, Integer> pair = LineConnector.connect(con,gf);
         if (pair == null) return null;
@@ -58,6 +56,16 @@ public class LineWelder {
         return ret;
     }
 
+    /**
+     * Performs weld operation
+     *
+     * WARNING: after two isolines were connected, ther {@link LineEnd}s are not valid. After weld operation, they
+     * refer to newformed isoline or to null (if {@link LineEnd}s were ones that being connected by this weld).
+     * LineEnds ARE MOVED from old isolines to new one, so all {@link Connection}s remain valid.
+     * This is used to avoid re-calculating scores of connections after two isolines were welded
+     * @param con
+     * @return
+     */
     public Isoline_attributed Weld(Connection con) {
         Pair<LineString, Integer> pair = LineConnector.connect(con,gf);
 
@@ -73,6 +81,12 @@ public class LineWelder {
         return ret;
     };
 
+    /**
+     * Perform welding operating on all isolines.
+     * Connections with higher score are welded first and than welded connections with less score (if they still remain valid (see {@link Connection#isValid()}))
+     * @param cont
+     * @return
+     */
     public LinkedList<IIsoline> WeldAll(Collection<IIsoline> cont) {
         ArrayList<Isoline_attributed> isos = new ArrayList<>(cont.size());
         for (IIsoline i : cont)
@@ -85,9 +99,9 @@ public class LineWelder {
             }
         }
 
-        intersector = new Intersector(isos.stream().map((x)->x.getGeometry()).collect(Collectors.toList()),gf );
-        steepDetector = new SteepDetector(steeps, Constants.CONNECTIONS_NEAR_STEEP_THRESHOLD, gf);
-        extr = new ConnectionExtractor(intersector,steepDetector,eval,gf,edge);
+        Intersector intersector = new Intersector(isos.stream().map((x) -> x.getGeometry()).collect(Collectors.toList()), gf);
+        SteepDetector steepDetector = new SteepDetector(steeps, Constants.CONNECTIONS_NEAR_STEEP_THRESHOLD, gf);
+        ConnectionExtractor extr = new ConnectionExtractor(intersector, steepDetector, eval, gf, edge);
 
         ArrayList<Connection> cons_array = extr.apply(isos);
 

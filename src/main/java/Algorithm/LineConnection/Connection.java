@@ -42,6 +42,11 @@ public class Connection {
         return new Connection(l1,l2,l1.isoline.getFactory());
     }
 
+    /**
+     * Set line ends of current connection
+     * @param l1 {@link LineEnd} of first isoline to be connected
+     * @param l2 {@link LineEnd} of second isoline to be connected
+     */
     public void SetLineEnds(LineEnd l1, LineEnd l2) {
         this.l1 = l1;
         this.l2 = l2;
@@ -53,6 +58,16 @@ public class Connection {
         connectionSegment = new LineSegment(l1.line.p1,l2.line.p1);
     }
 
+    /**
+     * Valid isoline satisfies following conditions:
+     *
+     * Both {@link LineEnd}s are valid (see {@link LineEnd#isValid()}).
+     *
+     * Slope side of two connecting isolines match.
+     * Type of two connecting isolies match
+     *
+     * @return
+     */
     public boolean isValid() {
 
         // Test none of isolines is null
@@ -78,6 +93,11 @@ public class Connection {
         return true;
     };
 
+    /**
+     * Slope side of resulting isoline, that will be formed after performing a {@link LineWelder#Weld(Connection)} on this connection
+     * @return
+     * @throws Exception
+     */
     public int resultSlopeSide() throws Exception {
         int result_ss = -l1.isoline.getSlopeSide()*l1.end_index;
         int second_ss = l2.isoline.getSlopeSide()*l2.end_index;
@@ -91,17 +111,22 @@ public class Connection {
         return result_ss;
     }
 
+    /**
+     * {@link LineEnd} of first isoline, participated in this connection
+     * @return
+     */
     public LineEnd first() {
         return l1;
     }
 
+    /**
+     * {@link LineEnd} of second isoline, participated in this connection
+     * @return
+     */
     public LineEnd second() {
         return l2;
     }
-//
-//        public boolean createsLoop() {
-//            return l1.isoline == l2.isoline;
-//        }
+
 
     @Override
     public int hashCode() {

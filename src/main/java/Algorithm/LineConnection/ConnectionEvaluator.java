@@ -30,8 +30,9 @@ public class ConnectionEvaluator implements Function<Connection, Double> {
 
 
     /**
-     * Score of two lines being parallel 0 - perpendicular 1 - parallel
-     * @return
+     * Tries to determine, weather two isolines are parallel or not.
+     *
+     * Parallel isolines are sitting on different heights of same slope.
      */
     public static double parallelScore(Connection con) {
         if (con.first().isoline == con.second().isoline)
@@ -72,6 +73,11 @@ public class ConnectionEvaluator implements Function<Connection, Double> {
         //return -1;
     }
 
+    /**
+     * Get score of connection
+     * @param connection Connection to be evaluated
+     * @return score. Isolines closer - score higher. Line ends pointing to each other - score higher.
+     */
     @Override
     public Double apply(Connection connection) {
         LineSegment line1 = connection.first().line;

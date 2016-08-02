@@ -10,16 +10,31 @@ import static Utils.CoordUtils.sub;
 
 /**
  * Represents line end. Contains end index and line segment
+ *
+ * Warning: public member 'other' ought to be set by Isoline_attributed, wich current {@link LineEnd} corresponds to
  */
-
 public class LineEnd {
 
     public Isoline_attributed isoline;
     public int end_index;
+    /**
+     * {@link LineSegment} of current end. p1 - endpoint (or startpoint) of {@link Isoline_attributed}, which this {@link LineEnd} corresponds to.
+     */
     public LineSegment line;
+
+    /**
+     * other end of {@link Isoline_attributed} which this {@link LineEnd} corresponds to
+     */
     public LineEnd other;
 
+    /**
+     * Id of {@link MapEdge} used to calculate {@link LineEnd#isWithinEdge}
+     */
     private int isWithinEdge_cached_id;
+
+    /**
+     * Value which is set by {@link ConnectionExtractor} used to cache result of determining this {@link LineEnd} begin near map edge, or pointing to it.
+     */
     public boolean isWithinEdge;
 
     public LineEnd(Isoline_attributed isoline, LineSegment ls, int end_index) {
@@ -38,6 +53,13 @@ public class LineEnd {
         isWithinEdge_cached_id = -1;
     }
 
+    /**
+     * Get end line segment of {@link LineString}
+     * @param ls {@link LineString} to extract {@link LineEnd} from
+     * @param end_index index of end. 1: start, -1: end.
+     * @return {@link LineSegment} whose p1 is firs coordinate of ls (when end_index = 1) or last (when end_index = -1)
+     * and p0 is Vertex of ls, incident with p1.
+     */
     public static LineSegment getEnd(LineString ls, int end_index) {
         if (ls.isClosed()) return null;
         Coordinate begin;
@@ -55,6 +77,13 @@ public class LineEnd {
         return new LineSegment(begin,end);
     }
 
+    /**
+     * Get end line segment of {@link Isoline_attributed}
+     * @param iso {@link Isoline_attributed} to extract {@link LineEnd} from
+     * @param end_index index of end. 1: start, -1: end.
+     * @return {@link LineSegment} whose p1 is firs coordinate of ls (when end_index = 1) or last (when end_index = -1)
+     * and p0 is Vertex of iso, incident with p1.
+     */
     public static LineEnd fromIsoline(Isoline_attributed iso, int end_index) {
         if (end_index == 1) {
             return iso.begin;
@@ -65,9 +94,18 @@ public class LineEnd {
         return null;
     }
 
+    /**
+     * Reset cached value of line end being near map edge
+     */
     public void isWithinEdgeCacheReset() {
         isWithinEdge_cached_id = -1;
     }
+
+    /**
+     * Determine, whether line end is near edge or points to it
+     * @param edge
+     * @return true if line end is too close to edge or points to it
+     */
     public boolean isWithinEdge(MapEdge edge) {
         if (isWithinEdge_cached_id == edge.getID())
             return isWithinEdge;
@@ -76,6 +114,16 @@ public class LineEnd {
         return isWithinEdge;
     }
 
+    /**
+     * Valid Line end satisfies following conditions:
+     *
+     * isoline, which current {@link LineEnd} refers to is not null
+     * this.other not equals null
+     * other.other equals this
+     * other.isoline equals this.isoline
+     *
+     * @return
+     */
     public boolean isValid() {
         if (this.isoline != null && this.other != null && other.isoline == this.isoline && other.other == this)
             return true;

@@ -9,6 +9,8 @@ import java.util.Collection;
 
 /**
  * Used to determine, whether the specific lineEnd is near steep
+ *
+ * (Line ends near steeps should be skipped during connection extraction algorithm to avoid corrupted connections)
  */
 public class SteepDetector {
 

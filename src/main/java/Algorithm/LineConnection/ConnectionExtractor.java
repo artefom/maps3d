@@ -9,8 +9,11 @@ import java.util.ArrayList;
 import java.util.function.Function;
 
 /**
- * Created by Artem on 20.07.2016.
  * Extracts valid connections from line ends.
+ *
+ * Valid connections should not intersect with any geometry, defined in {@link Intersector} passed to this class.
+ * Valid connections should not intersect each other.
+ *
  */
 public class ConnectionExtractor implements Function<ArrayList<Isoline_attributed>,ArrayList<Connection>> {
 

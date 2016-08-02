@@ -74,6 +74,11 @@ public class LineConnector {
         return new Pair<>(ls,result_ss);
     }
 
+    /**
+     * Connect last point of {@link LineString} with first to be able to create {@link com.vividsolutions.jts.geom.LinearRing}
+     * @param is
+     * @return
+     */
     private static CoordinateSequence getLoopedCoordinates(Isoline_attributed is) {
         Coordinate[] al = new Coordinate[is.getGeometry().getNumPoints()+1];
         for (int i = 0; i != is.getLineString().getNumPoints(); ++i) {
