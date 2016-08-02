@@ -1,10 +1,9 @@
 package Algorithm.LineConnection;
 
-import Algorithm.EdgeDetection.Edge;
 import Utils.Constants;
+import Utils.Intersector;
 import Utils.Tracer;
 import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.triangulate.quadedge.TraversalVisitor;
 
 import java.util.ArrayList;
 import java.util.function.Function;
@@ -19,10 +18,10 @@ public class ConnectionExtractor implements Function<ArrayList<Isoline_attribute
     private GeometryFactory gf;
     private ConnectionEvaluator evaluator;
     private SteepDetector steepDetector;
-    private Edge edge;
+    private MapEdge edge;
 
     public ConnectionExtractor(Intersector intersector, SteepDetector steepDetector, ConnectionEvaluator evaluator,
-                               GeometryFactory gf,Edge edge) {
+                               GeometryFactory gf,MapEdge edge) {
         this.intersector = intersector;
         this.edge = edge;
         this.gf = gf;
@@ -70,24 +69,43 @@ public class ConnectionExtractor implements Function<ArrayList<Isoline_attribute
     @Override
     public ArrayList<Connection> apply(ArrayList<Isoline_attributed> isolines) {
 
-        ArrayList<Connection> ret = new ArrayList<>(isolines.size()*4);
+        // pre-return container. Remove all conflicting(intersecting) connections before return
+        ArrayList<Connection> pre_ret = new ArrayList<>(isolines.size()*4);
         Intersector self_intersector;
 
         for (int i = 0; i != isolines.size(); ++i) {
             Isoline_attributed i1 = isolines.get(i);
 
             // Add connection line to itself
-            addIfNotIntersects(ret, i1.begin,i1.end );
+            addIfNotIntersects(pre_ret, i1.begin,i1.end );
 
             for (int j = i+1; j < isolines.size(); ++j) {
                 Isoline_attributed i2 = isolines.get(j);
 
                 if (i2.getType() == i1.getType()) {
-                    addIfNotIntersects(ret, i1.begin, i2.begin);
-                    addIfNotIntersects(ret, i1.begin, i2.end);
-                    addIfNotIntersects(ret, i1.end, i2.begin);
-                    addIfNotIntersects(ret, i1.end, i2.end);
+                    addIfNotIntersects(pre_ret, i1.begin, i2.begin);
+                    addIfNotIntersects(pre_ret, i1.begin, i2.end);
+                    addIfNotIntersects(pre_ret, i1.end, i2.begin);
+                    addIfNotIntersects(pre_ret, i1.end, i2.end);
                 }
+            }
+        }
+
+        pre_ret.sort((lhs,rhs)->Double.compare(rhs.score,lhs.score));
+
+        ArrayList<Connection> ret = new ArrayList<>(pre_ret.size());
+        for (Connection con1 : pre_ret) {
+            // Check for intersection with any of already added connections
+            boolean intersected = false;
+            for (Connection con2 : ret) {
+                // Make padding 0.01 and 0.99 to avoid detecting intersection, when two lines intersect at ends.
+                if (Tracer.intersects(con1.getConnectionSegment(),con2.getConnectionSegment(),0.01,0.99)) {
+                    intersected = true;
+                    break;
+                }
+            }
+            if (!intersected) {
+                ret.add(con1);
             }
         }
 

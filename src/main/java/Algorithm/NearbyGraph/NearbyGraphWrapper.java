@@ -182,47 +182,11 @@ public class NearbyGraphWrapper {
             } else {
                 height_delta = 0;
             }
-//            if (pivot.getSign() == pivot.getIsoline().getIsoline().getSlopeSide()) {
-//                height_delta = -height_delta;
-//            }
+
             target.getIsoline().getIsoline().setHeight(  pivot.getIsoline().getIsoline().getHeight()+height_delta );
             target.getIsoline().height_recovered = true;
         }
     }
 
-//    public static class BreadthFirstPathRecoverable extends BreadthFirstIterator<Isoline_attributed.LineSide,DefaultWeightedEdge> {
-//
-//        Graph<Isoline_attributed.LineSide, DefaultWeightedEdge> g;
-//        public BreadthFirstPathRecoverable( Graph<Isoline_attributed.LineSide, DefaultWeightedEdge> g, Isoline_attributed startLine ) {
-//            super(g, startLine.getSidePositive());
-//            this.g = g;
-//            super.encounterVertex(startLine.getSideNegative(),g.getEdge(startLine.getSidePositive(),startLine.getSideNegative()));
-//            putSeenData(startLine.getSidePositive(),null);
-//            putSeenData(startLine.getSideNegative(),null);
-//        }
-//
-//        @Override
-//        protected void encounterVertex(Isoline_attributed.LineSide vertex, DefaultWeightedEdge edge) {
-//            super.encounterVertex(vertex, edge);
-//            if (edge != null) {
-//                Isoline_attributed.LineSide other = g.getEdgeSource(edge);
-//                if (other == vertex)
-//                    other = g.getEdgeTarget(edge);
-//                putSeenData(vertex, other);
-//            } else {
-//                putSeenData(vertex,null);
-//            }
-//        }
-//
-//        public PathWrapper recoverPath(Isoline_attributed.LineSide node) {
-//            Isoline_attributed.LineSide current = node;
-//            ArrayList<Isoline_attributed.LineSide> path = new ArrayList<>();
-//            do {
-//                path.add(current);
-//            } while ( (current=(Isoline_attributed.LineSide)getSeenData(current)) != null);
-//            PathWrapper ret = PathWrapper.fromPathReversed(path);
-//            return ret;
-//        }
-//    }
 
 }

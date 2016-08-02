@@ -76,37 +76,39 @@ public class NearbyEstimator {
                 Vector2D trace_negative_vec = Vector2D.create(trace_positive_vec).negate();
 
                 // Trace!, retrieve isolines for both sides
-                Tracer<Isoline_attributed>.traceres traced_positive_pair =
+                Tracer<Isoline_attributed>.traceres traceres_positive =
                     tracer.trace(trace_base,trace_positive_vec, Constants.NEARBY_TRACE_OFFSET,Constants.NEARBY_TRACE_LENGTH);
-                Tracer<Isoline_attributed>.traceres  traced_negetive_pair =
+                Tracer<Isoline_attributed>.traceres  traceres_negative =
                     tracer.trace(trace_base,trace_negative_vec, Constants.NEARBY_TRACE_OFFSET,Constants.NEARBY_TRACE_LENGTH);
 
                 // Process  pairs, only if trace did hit something and did nont hit current isoline.
 
-                if (traced_positive_pair.entitiy != null && traced_positive_pair.entitiy != iso && !traced_positive_pair.entitiy.getIsoline().isSteep() ) {
+                if (traceres_positive.entitiy != null && traceres_positive.entitiy != iso && !traceres_positive.entitiy.getIsoline().isSteep() ) {
                     int from_side_index = 1;
-                    int to_side_index = traced_positive_pair.side;
+                    int to_side_index = traceres_positive.side;
                     Isoline_attributed.LineSide from_side = iso.getSideByIndex(from_side_index);
-                    Isoline_attributed.LineSide to_side = traced_positive_pair.entitiy.getSideByIndex(to_side_index);
+                    Isoline_attributed.LineSide to_side = traceres_positive.entitiy.getSideByIndex(to_side_index);
                     DefaultWeightedEdge edge = ret.getEdge(from_side,to_side);
                     if (edge == null) {
                         edge = ret.addEdge(from_side,to_side);
                         ret.setEdgeWeight(edge,0);
                     }
-                    ret.setEdgeWeight(edge,ret.getEdgeWeight(edge)-1);
+                    // Weight of connection is 1/distance, so closer isolines are more likely to be "nearby"
+                    ret.setEdgeWeight(edge,ret.getEdgeWeight(edge)-(1/(traceres_positive.distance+5)));
                 }
 
-                if (traced_negetive_pair.entitiy != null && traced_negetive_pair.entitiy != iso && !traced_negetive_pair.entitiy.getIsoline().isSteep() ) {
+                if (traceres_negative.entitiy != null && traceres_negative.entitiy != iso && !traceres_negative.entitiy.getIsoline().isSteep() ) {
                     int from_side_index = -1;
-                    int to_side_index = traced_negetive_pair.side;
+                    int to_side_index = traceres_negative.side;
                     Isoline_attributed.LineSide from_side = iso.getSideByIndex(from_side_index);
-                    Isoline_attributed.LineSide to_side = traced_negetive_pair.entitiy.getSideByIndex(to_side_index);
+                    Isoline_attributed.LineSide to_side = traceres_negative.entitiy.getSideByIndex(to_side_index);
                     DefaultWeightedEdge edge = ret.getEdge(from_side,to_side);
                     if (edge == null) {
                         edge = ret.addEdge(from_side,to_side);
                         ret.setEdgeWeight(edge,0);
                     }
-                    ret.setEdgeWeight(edge,ret.getEdgeWeight(edge)-1);
+                    // Weight of connection is 1/distance, so closer isolines are more likely to be "nearby"
+                    ret.setEdgeWeight(edge,ret.getEdgeWeight(edge)-(1/(traceres_negative.distance+5)));
                 }
 
             }

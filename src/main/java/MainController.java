@@ -1,6 +1,6 @@
-import Algorithm.EdgeDetection.Edge;
-import Algorithm.Interpolation.InterpolatedContainer;
-import Algorithm.Interpolation.Interpolator;
+import Algorithm.LineConnection.MapEdge;
+import Algorithm.Interpolation.DistanceFieldInterpolation;
+import Algorithm.Interpolation.Serializer;
 import Algorithm.LineConnection.LineWelder;
 import Algorithm.NearbyGraph.NearbyContainer;
 import Algorithm.NearbyGraph.NearbyEstimator;
@@ -26,9 +26,9 @@ public class MainController {
     private GeometryFactory gf;
 
     public IsolineContainer ic;
-    public InterpolatedContainer interp;
+    public DistanceFieldInterpolation interp;
 
-    public Edge edge;
+    public MapEdge edge;
 
     public ArrayList<SlopeMark> slopeMarks;
 
@@ -91,7 +91,7 @@ public class MainController {
     }
 
     public void detectEdge() {
-        edge = Edge.fromIsolines(ic, Constants.EDGE_CONCAVE_THRESHOLD);
+        edge = MapEdge.fromIsolines(ic, Constants.EDGE_CONCAVE_THRESHOLD);
     }
 
     public void buildGraph() {
@@ -106,7 +106,7 @@ public class MainController {
 
     public void interpolate() {
 
-        Interpolator interpolator = new Interpolator(ic,1);
+        Serializer interpolator = new Serializer(ic,1);
         interpolator.writeDataToFile("heights");
 
     }

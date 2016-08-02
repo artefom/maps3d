@@ -1,9 +1,9 @@
 package Algorithm.LineConnection;
 
-import Algorithm.EdgeDetection.Edge;
 import Isolines.IIsoline;
 import Isolines.Isoline;
 import Utils.Constants;
+import Utils.Intersector;
 import Utils.Pair;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
@@ -11,7 +11,6 @@ import com.vividsolutions.jts.geom.LineString;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
 /**
@@ -24,7 +23,7 @@ public class LineWelder {
     ConnectionExtractor extr;
     ConnectionEvaluator eval;
     SteepDetector steepDetector;
-    Edge edge;
+    MapEdge edge;
 
     public LineWelder() {
         this.gf = new GeometryFactory();
@@ -36,7 +35,7 @@ public class LineWelder {
         );
     }
 
-    public LineWelder(GeometryFactory gf, Edge edge) {
+    public LineWelder(GeometryFactory gf, MapEdge edge) {
         this.edge = edge;
         this.gf = gf;
         eval = new ConnectionEvaluator(

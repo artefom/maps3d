@@ -45,6 +45,6 @@ public class Constants {
 
     //Nearby detection
     public static final double NEARBY_TRACE_STEP = 2;
-    public static final double NEARBY_TRACE_LENGTH=10;
+    public static final double NEARBY_TRACE_LENGTH=100;
     public static final double NEARBY_TRACE_OFFSET = 0.01;
 }

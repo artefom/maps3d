@@ -1,6 +1,5 @@
 package Algorithm.LineConnection;
 
-import Algorithm.EdgeDetection.Edge;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineSegment;
 import com.vividsolutions.jts.geom.LineString;
@@ -69,7 +68,7 @@ public class LineEnd {
     public void isWithinEdgeCacheReset() {
         isWithinEdge_cached_id = -1;
     }
-    public boolean isWithinEdge(Edge edge) {
+    public boolean isWithinEdge(MapEdge edge) {
         if (isWithinEdge_cached_id == edge.getID())
             return isWithinEdge;
         isWithinEdge = edge.isWithinEdge(line);

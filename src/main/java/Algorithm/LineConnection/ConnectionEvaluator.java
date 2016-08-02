@@ -16,10 +16,10 @@ import java.util.function.Function;
  */
 public class ConnectionEvaluator implements Function<Connection, Double> {
 
-    double max_angle;
-    double min_angle;
-    double max_length;
-    double weld_dist;
+    private double max_angle;
+    private double min_angle;
+    private double max_length;
+    private double weld_dist;
 
     public ConnectionEvaluator(double min_angle, double max_angle, double max_length, double weld_dist) {
         this.min_angle = min_angle;
@@ -56,8 +56,7 @@ public class ConnectionEvaluator implements Function<Connection, Double> {
             squares_accum += d*d;
         }
 
-        double std = Math.sqrt( squares_accum/count - (accum/count)*(accum/count) );
-        return std;
+        return Math.sqrt( squares_accum/count - (accum/count)*(accum/count) );
     }
 
     private double evaluateLineToPoint(Coordinate l1, Coordinate l2, Coordinate c) {
@@ -75,12 +74,6 @@ public class ConnectionEvaluator implements Function<Connection, Double> {
 
     @Override
     public Double apply(Connection connection) {
-//        if (connection.first().line == connection.second().line) {
-//        }
-//        LineSegment line1 = connection.first().line;
-//        LineSegment line2 = connection.second().line;
-//        if (line1 == null || line2 == null) return -1.0;
-//        return (max_length-connection.first().line.p1.distance(connection.second().line.p1))/max_length;
         LineSegment line1 = connection.first().line;
         LineSegment line2 = connection.second().line;
         if (line1 == null || line2 == null) return -1.0;
@@ -88,16 +81,4 @@ public class ConnectionEvaluator implements Function<Connection, Double> {
                 evaluateLineToPoint(line2.p0,line2.p1,line1.p1))*0.5;
     }
 
-    public void evaluate(Collection<Connection> cons) {
-        for (Connection con: cons) {
-            if (con != null) {
-                if (con.isValid()) {
-                    con.score = apply(con);
-                    //con.score = -1;
-                } else {
-                    con.score = -1;
-                }
-            }
-        }
-    }
 }

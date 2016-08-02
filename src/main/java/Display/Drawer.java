@@ -1,8 +1,7 @@
 package Display;
 
-import Algorithm.EdgeDetection.Edge;
+import Algorithm.LineConnection.MapEdge;
 import Isolines.IIsoline;
-import Isolines.Isoline;
 import Isolines.IsolineContainer;
 import Loader.Interpolation.SlopeMark;
 import Utils.*;
@@ -29,7 +28,7 @@ public class Drawer {
      * @param isolines
      * @return
      */
-    public List<GeometryWrapper> draw(IsolineContainer isolines, Edge edge) {
+    public List<GeometryWrapper> draw(IsolineContainer isolines, MapEdge edge) {
         ArrayList<GeometryWrapper> geom = new ArrayList<>();
 
         for (IIsoline i: isolines) {

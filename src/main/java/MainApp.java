@@ -2,18 +2,14 @@
  * Created by Artyom.Fomenko on 15.07.2016.
  */
 
-import Algorithm.Interpolation.InterpolatedContainer;
-import Algorithm.Interpolation.Isoline_attributed;
+import Algorithm.Interpolation.DistanceFieldInterpolation;
 import Display.Drawer;
 import Display.GeometryWrapper;
 import Display.Renderer;
 import Isolines.IIsoline;
-import Isolines.Isoline;
 import Isolines.IsolineContainer;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineSegment;
-import com.vividsolutions.jts.geom.LineString;
 import javafx.application.Application;
 import javafx.beans.InvalidationListener;
 import javafx.event.ActionEvent;
@@ -35,10 +31,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
@@ -206,7 +199,7 @@ public class MainApp extends Application implements Initializable {
     @FXML void canvasMouseDown(MouseEvent event) {
         mouseIsDown = true;
         if (current_isoline != null) {
-            if (mc.interp == null) mc.interp = new InterpolatedContainer(mc.ic);
+            if (mc.interp == null) mc.interp = new DistanceFieldInterpolation(mc.ic);
 //            Isoline_attributed iso = mc.interp.getByIsoline(current_isoline); //new Isoline_attributed(current_isoline);
 //            mc.interp.match(iso);
 //            List<LineSegment> lines = iso.getMatchingLines(mc.ic.getFactory());
