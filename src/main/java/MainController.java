@@ -98,6 +98,7 @@ public class MainController {
         NearbyContainer cont = new NearbyContainer(ic);
         NearbyEstimator est = new NearbyEstimator(gf);
         NearbyGraphWrapper graph = new NearbyGraphWrapper(est.getRelationGraph(cont));
+        graph.SetHillsSlopeSides();
         graph.ConvertToSpanningTree();
         graph.recoverAllSlopes();
         graph.recoverAllHeights();

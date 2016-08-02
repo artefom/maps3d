@@ -1,5 +1,6 @@
 package Algorithm.Interpolation;
 
+import Utils.Constants;
 import Utils.Intersector;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
@@ -462,10 +463,9 @@ public class DistanceFieldInterpolation {
         calculateHeightIndexes();
 
         // Create cells
-        PointRasterizer rasterizer = new PointRasterizer(0.25,envelope);
+        PointRasterizer rasterizer = new PointRasterizer(Constants.INTERPOLATION_STEP,envelope);
 
         double pivot_height = Math.round(((getMaxHeight()+getMinHeight())))*0.5+0.5;
-
         pixelInfo[][] distanceField = new pixelInfo[rasterizer.getRowCount()][rasterizer.getColumnCount()];
 
         //Initialize pixel info matrix
@@ -519,8 +519,22 @@ public class DistanceFieldInterpolation {
         double[][] result = new double[rasterizer.getRowCount()][rasterizer.getColumnCount()];
         for(int row = 0; row != rasterizer.getRowCount(); ++row) {
             for (int column = 0; column != rasterizer.getColumnCount(); ++column) {
-                double dist1 = distanceField[row][column].distance1;
-                double dist2 = distanceField[row][column].distance2;
+
+                if (distanceField[row][column].height_index1 == -1) {
+                    result[row][column] = 0;
+                    continue;
+                }
+
+
+                double dist1 = distanceField[row][column].distance1*Constants.DRAWING_INTERPOLATION_STEP;
+                double dist2 = distanceField[row][column].distance2*Constants.DRAWING_INTERPOLATION_STEP;
+                // Calculate distance fade
+                if (dist1 > Constants.INTERPOLATION_FADE_DISTANCE) {
+                    dist1 = Constants.INTERPOLATION_FADE_DISTANCE+Math.pow(dist1-Constants.INTERPOLATION_FADE_DISTANCE,Constants.INTERPOLATION_FADE_STRENGTH);
+                }
+                if (dist2 > Constants.INTERPOLATION_FADE_DISTANCE) {
+                    dist2 = Constants.INTERPOLATION_FADE_DISTANCE+Math.pow(dist2-Constants.INTERPOLATION_FADE_DISTANCE,Constants.INTERPOLATION_FADE_STRENGTH);
+                }
                 double w1 = dist2/(dist1+dist2);
                 double w2 = dist1/(dist1+dist2);
                 result[row][column] = distanceField[row][column].height_index1*w1+distanceField[row][column].height_index2*w2;
@@ -551,7 +565,7 @@ public class DistanceFieldInterpolation {
         }
 
         //return
-        return gaussian_buf;
+        return result;
     }
 
 }

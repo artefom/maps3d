@@ -31,6 +31,8 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -116,27 +118,21 @@ public class MainApp extends Application implements Initializable {
         fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
         File f = fileChooser.showOpenDialog(stage);
         if (f != null) {
-//            try {
+            try {
                 mc.openFile(f);
                 statusText.setText("Added " + mc.IsolineCount() + " isolines. Bbox: " + mc.ic.getEnvelope());
                 originalContainer = new IsolineContainer(mc.ic);
-//                mc.ic.connectLines(Constants.CONNECTIONS_MIN_ANGLE_DEG/180.0*Math.PI,
-//                        Constants.CONNECTIONS_MAX_ANGLE_DEG/180.0*Math.PI,
-//                        Constants.CONNECTIONS_MAX_DIST,
-//                        Constants.CONNECTIONS_WELD_DIST);
-
-
                 displayedContainer = mc.ic;
                 redraw();
                 renderer.Fit();
                 render();
-//            } catch (FileNotFoundException ex) {
-//                statusText.setText("File not found");
-//            } catch (IOException ex) {
-//                statusText.setText("File reading error: "+ex.getMessage());
-//            } catch (Exception ex) {
-//                statusText.setText("File parsing error: "+ex.getMessage());
-//            }
+            } catch (FileNotFoundException ex) {
+                statusText.setText("File not found");
+            } catch (IOException ex) {
+                statusText.setText("File reading error: "+ex.getMessage());
+            } catch (Exception ex) {
+                statusText.setText("File parsing error: "+ex.getMessage());
+            }
         }
     }
 
@@ -192,24 +188,10 @@ public class MainApp extends Application implements Initializable {
                 "; Line id = "+il.getID());
 
         UpdateHighLights();
-        //statusText.setText("Mouse position: ("+localmPos.x+", "+localmPos.y+")");
-//        int[] line_ids = ic
     }
 
     @FXML void canvasMouseDown(MouseEvent event) {
         mouseIsDown = true;
-        if (current_isoline != null) {
-            if (mc.interp == null) mc.interp = new DistanceFieldInterpolation(mc.ic);
-//            Isoline_attributed iso = mc.interp.getByIsoline(current_isoline); //new Isoline_attributed(current_isoline);
-//            mc.interp.match(iso);
-//            List<LineSegment> lines = iso.getMatchingLines(mc.ic.getFactory());
-            //renderer.addAll( drawer.drawGeometry( mc.ic.getFactory().createLineString(lines.) lines,Color.RED) );
-            //render();
-
-//            List<GeometryWrapper> gws =  drawer.drawTraces(mc.ic.getIsolinesAsGeometry(),current_isoline.getLineString());
-//            renderer.addAll(gws);
-//            render();
-        }
     }
 
     @FXML void canvasMouseUp(MouseEvent event) {

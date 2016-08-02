@@ -47,4 +47,11 @@ public class Constants {
     public static final double NEARBY_TRACE_STEP = 2;
     public static final double NEARBY_TRACE_LENGTH=100;
     public static final double NEARBY_TRACE_OFFSET = 0.01;
+    public static final double NEARBY_HILL_THRESHOLD_AREA = 100;
+
+    //Interpolation
+    public static final double INTERPOLATION_STEP = 0.25;
+    public static final double INTERPOLATION_FADE_DISTANCE = 5;
+    public static final double INTERPOLATION_FADE_STRENGTH = 3;
+    public static final double INTERPOLATION_HILL_TANGENT = 1;
 }

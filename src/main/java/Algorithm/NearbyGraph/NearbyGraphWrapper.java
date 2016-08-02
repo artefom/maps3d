@@ -2,8 +2,8 @@ package Algorithm.NearbyGraph;
 
 import Algorithm.LineConnection.LineEnd;
 import Isolines.IIsoline;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.LineString;
+import Utils.Constants;
+import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.impl.PackedCoordinateSequence;
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
@@ -29,6 +29,32 @@ public class NearbyGraphWrapper {
     private Set<Isoline_attributed> isolines;
     public NearbyGraphWrapper(SimpleWeightedGraph<Isoline_attributed.LineSide,DefaultWeightedEdge> graph) {
         setGraph(graph);
+    }
+
+    /**
+     * Set empty closed isoline rings slope height, since almost all empty closed isoline rings are hills
+     */
+    public void SetHillsSlopeSides() {
+        LinkedList<Isoline_attributed.LineSide> sides = new LinkedList<>();
+        graph.vertexSet().forEach(sides::add);
+
+        GeometryFactory gf = new GeometryFactory();
+
+        for (Isoline_attributed.LineSide side : sides) {
+            List<Isoline_attributed.LineSide> neighbours = Graphs.neighborListOf(graph,side);
+            // If side have only one neighbour, this neighbour is other side of line. So, we found inside side of empty cirlce.
+            if (neighbours.size() == 1 &&
+                    side.getIsoline().getIsoline().isClosed() &&
+                    side.getIsoline().getIsoline().getSlopeSide() == 0) {
+                LinearRing ring = gf.createLinearRing(side.getIsoline().getIsoline().getLineString().getCoordinateSequence());
+                Polygon poly = gf.createPolygon(ring);
+                double area = poly.getArea();
+                if (area < Constants.NEARBY_HILL_THRESHOLD_AREA) {
+                    int SlopeSide = side.isPositive() ? -1 : 1;
+                    side.getIsoline().getIsoline().setSlopeSide(SlopeSide);
+                }
+            }
+        }
     }
 
     public void ConvertToSpanningTree() {
@@ -100,6 +126,7 @@ public class NearbyGraphWrapper {
 
         LinkedList<DefaultWeightedEdge> edges = new LinkedList<>();
         graph.edgeSet().forEach(edges::add);
+
         edges.sort( (lhs,rhs)-> Double.compare(graph.getEdgeWeight(lhs),graph.getEdgeWeight(rhs)) );
         Iterator<DefaultWeightedEdge> it = edges.iterator();
 
@@ -112,24 +139,7 @@ public class NearbyGraphWrapper {
             Isoline_attributed.LineSide propSide;
             if ( (propSide = propagateSlope(side1,side2,inverted)) != null) {
                 it = edges.iterator();
-//                ArrayDeque<DefaultWeightedEdge> propagating_edges = new ArrayDeque<>();
-//                graph.edgesOf(propSide.getOther()).forEach((x)->{
-//                    if (graph.getEdgeWeight(x) < current_weight)
-//                        propagating_edges.addLast(x);
-//                });
-//                while (propagating_edges.size() != 0) {
-//                    edge = propagating_edges.pollFirst();
-//                    double weight = graph.getEdgeWeight(edge);
-//                    side1 = graph.getEdgeSource(edge);
-//                    side2 = graph.getEdgeTarget(edge);
-//                    inverted = side1.isPositive() == side2.isPositive();
-//                    if ((propSide = propagateSlope(side1,side2,inverted))!=null) {
-//                        graph.edgesOf(propSide.getOther()).forEach((x)->{
-//                            if (weight < current_weight)
-//                                propagating_edges.addLast(x);
-//                        });
-//                    }
-//                }
+                // TODO: optimize
             }
         }
     }
