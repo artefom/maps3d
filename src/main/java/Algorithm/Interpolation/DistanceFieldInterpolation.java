@@ -10,7 +10,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Artyom.Fomenko on 27.07.2016.
+ * This class performs rasterisation and interpolation of isoline map.
+ * Before doing this, make sure isolines have recovered height.
+ *
+ * This algorithm tries to copy the way human does estimation of point height between lines.
+ *
+ * It takes distance to 2 closest isolines and takes a weighted summ of their heights,
+ * where wheights are distances to isolines.
+ *
+ * It uses distance field algorithm to calculate 2 closes isolines sitting on different heights for each pixel
+ * of resulting image. Distance field algorithm implemented using 3x3 kernel as described here: https://habrahabr.ru/post/245729/
  */
 public class DistanceFieldInterpolation {
 
@@ -19,6 +28,10 @@ public class DistanceFieldInterpolation {
     Intersector intersector;
     Envelope envelope;
 
+    /**
+     * Constructor
+     * @param container container of isolines to be interpolated
+     */
     public DistanceFieldInterpolation(IsolineContainer container) {
         envelope = container.getEnvelope();
         this.isolines = new Isoline_attributed[container.size()];
@@ -32,6 +45,10 @@ public class DistanceFieldInterpolation {
         intersector = new Intersector(occluders,gf);
     }
 
+    /**
+     * Get min height of isolines in passed to constructor {@link IsolineContainer}
+     * @return
+     */
     public double getMinHeight() {
         double min_height = isolines[0].getIsoline().getHeight();
         for (int i = 1; i < isolines.length; ++i) {
@@ -40,6 +57,10 @@ public class DistanceFieldInterpolation {
         return min_height;
     }
 
+    /**
+     * Get maximum of isoline heights in passed to constructor {@link IsolineContainer}
+     * @return
+     */
     public double getMaxHeight() {
         double max_height = isolines[0].getIsoline().getHeight();
         for (int i = 1; i < isolines.length; ++i) {
@@ -48,6 +69,14 @@ public class DistanceFieldInterpolation {
         return max_height;
     }
 
+    /**
+     * Convert isoline height to height index.
+     *
+     * Height index should be integer.
+     *
+     * Isolines on different height should have different height index.
+     * Isolines on same height should have same height index.
+     */
     public void calculateHeightIndexes() {
         double min_height = getMinHeight();
         for (int i = 0; i != isolines.length; ++i) {
@@ -56,6 +85,18 @@ public class DistanceFieldInterpolation {
     }
 
 
+    /**
+     * Perfomr a line rasterization algorithm (Paint {@link pixelInfo} buffer with necessery values, extraced from iso)
+     * Following information about isoline is being rasterised to {@link pixelInfo} grid:
+     *  Height index
+     *  distance (equals 0, since pixel lies on isoline)
+     * @param buf buffer to rasterize line to
+     * @param x
+     * @param y
+     * @param x2
+     * @param y2
+     * @param iso Isoline to take rasterization values from
+     */
     public void rasterizeline(pixelInfo[][] buf, int x,int y,int x2, int y2, Isoline_attributed iso) {
         int w = x2 - x ;
         int h = y2 - y ;
@@ -90,6 +131,21 @@ public class DistanceFieldInterpolation {
         }
     }
 
+    /**
+     * Performs rasterization of line into int buffer
+     *
+     * int buffer is used as mask, where value of pixel is
+     * -1 if it does not lie on isoline
+     * height index of isoline, if it does lie on isoline
+     * -2 if pixel lies on steep isoline (see {@link IIsoline#isSteep()})
+     *
+     * @param buf
+     * @param x
+     * @param y
+     * @param x2
+     * @param y2
+     * @param color
+     */
     public void rasterizeline(int[][] buf, int x,int y,int x2, int y2, int color) {
         int w = x2 - x ;
         int h = y2 - y ;
@@ -120,6 +176,9 @@ public class DistanceFieldInterpolation {
         }
     }
 
+    /**
+     * Rasterize isoline to buffer grid. see {@link DistanceFieldInterpolation#rasterizeline(pixelInfo[][], int, int, int, int, Isoline_attributed)}.
+     */
     public void rasterize(pixelInfo[][] buf, Isoline_attributed line, PointRasterizer rasterizer, Isoline_attributed iso) {
         for (int coord_index = 1; coord_index < line.coordinates.length; ++coord_index) {
 
@@ -143,6 +202,11 @@ public class DistanceFieldInterpolation {
         }
     }
 
+    /**
+     * Rasterize isoline to mask buffer grid.
+     * When pixel of mask is not -1, distance can't propagate though it.
+     * see {@link DistanceFieldInterpolation#rasterizeline(int[][], int, int, int, int, int)}
+     */
     public void rasterize(int[][] buf, Isoline_attributed line, PointRasterizer rasterizer, int val) {
         for (int coord_index = 1; coord_index < line.coordinates.length; ++coord_index) {
 
@@ -166,6 +230,14 @@ public class DistanceFieldInterpolation {
         }
     }
 
+    /**
+     * Information about distance to some isoline and it's height
+     *
+     * Currently supposed to measure distances to 2 closes isolines
+     *
+     * Guaranteed: distance1 < distance2
+     * Guaranteed: height_index1 != height_index2
+     */
     private static class pixelInfo {
         public float distance1;
         public float distance2;
@@ -189,6 +261,11 @@ public class DistanceFieldInterpolation {
         }
     }
 
+    /**
+     * Put information about isoline into pixel, if distance to it is less than any of distances contained in pixel.
+     * Ensure distance1 < distance2
+     * Ensure height_index1 != height_index2
+     */
     private void applyDistance(short height_index, float distance, pixelInfo info) {
 
         if (info.height_index1 == -1) {
@@ -225,11 +302,16 @@ public class DistanceFieldInterpolation {
     }
 
     private float squareRootOfTwo = 1.41421356237309504880f;
+
+    /**
+     * Apply first pass distance-field kernel (see {@link DistanceFieldInterpolation})
+     */
     private void applyDownPassKernel3x3(int row, int column, pixelInfo[][] buf, int[][] mask) {
 
         float current_distance = buf[row][column].distance1;
         short current_height_index = buf[row][column].height_index1;
 
+        // Ensure we don't go though another isoline
         boolean canGoLeft=mask[row][column-1] == -1 || mask[row][column-1] == current_height_index;
         boolean canGoRight=mask[row][column+1] == -1 || mask[row][column+1] == current_height_index;
         boolean canGoDown=mask[row+1][column] == -1 || mask[row+1][column] == current_height_index;
@@ -248,6 +330,7 @@ public class DistanceFieldInterpolation {
         current_distance = buf[row][column].distance2;
         current_height_index = buf[row][column].height_index2;
 
+        // Ensure we don't go though another isoline
         canGoLeft=mask[row][column-1] == -1 || mask[row][column-1] == current_height_index;
         canGoRight=mask[row][column+1] == -1 || mask[row][column+1] == current_height_index;
         canGoDown=mask[row+1][column] == -1 || mask[row+1][column] == current_height_index;
@@ -266,11 +349,15 @@ public class DistanceFieldInterpolation {
 
     }
 
+    /**
+     * Apply second pass distance-field kernel (see {@link DistanceFieldInterpolation})
+     */
     private void applyUpPassKernel3x3(int row, int column, pixelInfo[][] buf, int[][] mask) {
 
         float current_distance = buf[row][column].distance1;
         short current_height_index = buf[row][column].height_index1;
 
+        // Ensure we don't go though another isoline
         boolean canGoLeft=mask[row][column-1] == -1 || mask[row][column-1] == current_height_index;
         boolean canGoRight=mask[row][column+1] == -1 || mask[row][column+1] == current_height_index;
         boolean canGoUp=mask[row-1][column] == -1 || mask[row-1][column] == current_height_index;
@@ -289,6 +376,7 @@ public class DistanceFieldInterpolation {
         current_distance = buf[row][column].distance2;
         current_height_index = buf[row][column].height_index2;
 
+        // Ensure we don't go though another isoline
         canGoLeft=mask[row][column-1] == -1 || mask[row][column-1] == current_height_index;
         canGoRight=mask[row][column+1] == -1 || mask[row][column+1] == current_height_index;
         canGoUp=mask[row-1][column] == -1 || mask[row-1][column] == current_height_index;
@@ -305,6 +393,11 @@ public class DistanceFieldInterpolation {
             applyDistance(current_height_index,current_distance+squareRootOfTwo,buf[row-1][column+1]);
     }
 
+    /**
+     * Apply {@link DistanceFieldInterpolation#applyDownPassKernel3x3(int, int, pixelInfo[][], int[][])} to each pixel
+     * @param source Rasterized information about isolines. Pivot pixels (with distance1 = 0) should be rasterized.
+     * @param mask Mask with rasterized isoline heights. Height of isoline with height index x can't propagate through pixels of mask with value y, where x != y
+     */
     private void DistanceCalculationDownPass(pixelInfo[][] source, int[][] mask) {
         int max_row = source.length-1; // Substract kernel size, so no buffer overflows
         int max_column = source[0].length-1;
@@ -316,6 +409,11 @@ public class DistanceFieldInterpolation {
         }
     }
 
+    /**
+     * Apply {@link DistanceFieldInterpolation#applyUpPassKernel3x3(int, int, pixelInfo[][], int[][])} to each pixel
+     * @param source Rasterized information about isolines. Pivot pixels (with distance1 = 0) should be rasterized.
+     * @param mask Mask with rasterized isoline heights. Height of isoline with height index x can't propagate through pixels of mask with value y, where x != y
+     */
     private void DistanceCalculationUpPass(pixelInfo[][] source, int[][] mask) {
         int max_row = source.length-1; // Substract kernel size, so no buffer overflows
         int max_column = source[0].length-1;
@@ -328,6 +426,12 @@ public class DistanceFieldInterpolation {
     }
 
 
+    /**
+     * Applies up and down passes several times, so distance measurements can propagate around conners
+     * (see{@link DistanceFieldInterpolation})
+     * @param source Rasterized information about isolines. Pivot pixels (with distance1 = 0) should be rasterized.
+     * @param mask Mask with rasterized isoline heights. Height of isoline with height index x can't propagate through pixels of mask with value y, where x != y
+     */
     private void maskedDistanceField(pixelInfo[][] source, int[][] mask) {
         DistanceCalculationDownPass(source,mask);
         DistanceCalculationUpPass(source,mask);
@@ -337,12 +441,22 @@ public class DistanceFieldInterpolation {
         DistanceCalculationUpPass(source,mask);
     }
 
+    /**
+     * Applies up and down passes once. Used after performing {@link DistanceFieldInterpolation#maskedDistanceFieldSimple(pixelInfo[][], int[][])} to fill remaining gaps.
+     * @param source Rasterized information about isolines. Pivot pixels (with distance1 = 0) should be rasterized.
+     * @param mask Mask with rasterized isoline heights. Height of isoline with height index x can't propagate through pixels of mask with value y, where x != y
+     */
     private void maskedDistanceFieldSimple(pixelInfo[][] source, int[][] mask) {
         DistanceCalculationDownPass(source,mask);
         DistanceCalculationUpPass(source,mask);
     }
 
     float max_distance = 100000000;
+
+    /**
+     * Retrive height map of isoline container, passed in {@link DistanceFieldInterpolation#DistanceFieldInterpolation(IsolineContainer)}.
+     * @return height map. Heights are not normalized.
+     */
     public double[][] getAllInterpolatingPoints() {
 
         calculateHeightIndexes();
@@ -401,6 +515,7 @@ public class DistanceFieldInterpolation {
 
         maskedDistanceFieldSimple(distanceField,mask);
 
+        // Calculate distance
         double[][] result = new double[rasterizer.getRowCount()][rasterizer.getColumnCount()];
         for(int row = 0; row != rasterizer.getRowCount(); ++row) {
             for (int column = 0; column != rasterizer.getColumnCount(); ++column) {

@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
- * Created by Artyom.Fomenko on 27.07.2016.
+ * Serializes map, calculated by {@link DistanceFieldInterpolation} to various file types
  */
 public class Serializer {
 
