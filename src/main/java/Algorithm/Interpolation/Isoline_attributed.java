@@ -1,6 +1,7 @@
 package Algorithm.Interpolation;
 
 import Isolines.IIsoline;
+import Isolines.Isoline;
 import Utils.LineStringInterpolatedPointIterator;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -21,12 +22,7 @@ public class Isoline_attributed {
 
     public Isoline_attributed(IIsoline isoline) {
         this.isoline = isoline;
-        ArrayList<Coordinate> coordinates_list = new ArrayList<>();
-        LineStringInterpolatedPointIterator it = new LineStringInterpolatedPointIterator(isoline.getLineString(),0.25,0);
-        while (it.hasNext()) {
-            coordinates_list.add(it.next());
-        }
-        coordinates = coordinates_list.toArray(new Coordinate[coordinates_list.size()]);
+        coordinates = isoline.getLineString().getCoordinates();
     }
 
     public IIsoline getIsoline() {

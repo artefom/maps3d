@@ -107,6 +107,10 @@ public class GeomUtils {
         return Math.max(from, Math.min(to,val));
     }
 
+    public static int clamp(int val, int from, int to) {
+        return Math.max(from, Math.min(to,val));
+    }
+
     /**
      * map value from range (inMin-inMax) to range (outMin-outMax)
      * @param value value to be mapped

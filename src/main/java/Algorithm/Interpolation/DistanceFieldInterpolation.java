@@ -1,11 +1,13 @@
 package Algorithm.Interpolation;
 
 import Utils.Constants;
+import Utils.GeomUtils;
 import Utils.Intersector;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
 import Utils.PointRasterizer;
 import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.math.Vector2D;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,7 +100,9 @@ public class DistanceFieldInterpolation {
      * @param y2
      * @param iso Isoline to take rasterization values from
      */
-    public void rasterizeline(pixelInfo[][] buf, int x,int y,int x2, int y2, Isoline_attributed iso) {
+    public void rasterizeline(pixelInfo[][] buf, int x,int y,int x2, int y2, Isoline_attributed iso, Vector2D dir) {
+        float dir_x = (float)dir.getX();
+        float dir_y = (float)dir.getY();
         int w = x2 - x ;
         int h = y2 - y ;
         int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0 ;
@@ -118,9 +122,13 @@ public class DistanceFieldInterpolation {
 
             buf[x  ][y  ].height_index1 = iso.getHeightIndex();
             buf[x  ][y  ].distance1 = 0;
+            buf[x  ][y  ].pivot1_column = (short)y;
+            buf[x  ][y  ].pivot1_row = (short)x;
+            buf[x  ][y  ].dirX = dir_x;
+            buf[x  ][y  ].dirY = dir_y;
+            buf[x  ][y  ].slopeSide = (byte) iso.getIsoline().getSlopeSide();
 
             numerator += shortest ;
-
             if (!(numerator<longest)) {
                 numerator -= longest ;
                 x += dx1 ;
@@ -131,6 +139,17 @@ public class DistanceFieldInterpolation {
             }
         }
     }
+
+    /*
+                buf[row1  ][column1  ].height_index1 = iso.getHeightIndex();
+            buf[row1  ][column1  ].distance1 = 0;
+            buf[row1  ][column1  ].pivot1_column = (short)column1;
+            buf[row1  ][column1  ].pivot1_row = (short)row1;
+            buf[row1  ][column1  ].dirX = dir_x;
+            buf[row1  ][column1  ].dirY = dir_y;
+            buf[row1  ][column1  ].slopeSide = (byte) iso.getIsoline().getSlopeSide();
+     */
+
 
     /**
      * Performs rasterization of line into int buffer
@@ -178,16 +197,21 @@ public class DistanceFieldInterpolation {
     }
 
     /**
-     * Rasterize isoline to buffer grid. see {@link DistanceFieldInterpolation#rasterizeline(pixelInfo[][], int, int, int, int, Isoline_attributed)}.
+     * Rasterize isoline to buffer grid. see {@link DistanceFieldInterpolation#rasterizeline(pixelInfo[][], int, int, int, int, Isoline_attributed,Vector2D)}.
      */
     public void rasterize(pixelInfo[][] buf, Isoline_attributed line, PointRasterizer rasterizer, Isoline_attributed iso) {
         for (int coord_index = 1; coord_index < line.coordinates.length; ++coord_index) {
 
-            int row1 = rasterizer.toRow(line.coordinates[coord_index-1].y);
-            int col1 = rasterizer.toColumn(line.coordinates[coord_index-1].x);
+            double x1 = line.coordinates[coord_index-1].x;
+            double y1 = line.coordinates[coord_index-1].y;
+            double x2 = line.coordinates[coord_index].x;
+            double y2 = line.coordinates[coord_index].y;
 
-            int row2 = rasterizer.toRow(line.coordinates[coord_index].y);
-            int col2 = rasterizer.toColumn(line.coordinates[coord_index].x);
+            int row1 = rasterizer.toRow(y1);
+            int col1 = rasterizer.toColumn(x1);
+
+            int row2 = rasterizer.toRow(y2);
+            int col2 = rasterizer.toColumn(x2);
 
             if (row1 == 0) continue;
             if (col1 == 0) continue;
@@ -199,7 +223,9 @@ public class DistanceFieldInterpolation {
             if (row2+1 == rasterizer.getRowCount()) continue;
             if (col2+1 == rasterizer.getColumnCount()) continue;
 
-            rasterizeline(buf,row1,col1,row2,col2,iso);
+            Vector2D dir = Vector2D.create(y2-y1,x2-x1).normalize();
+
+            rasterizeline(buf,row1,col1,row2,col2,iso,dir);
         }
     }
 
@@ -242,21 +268,61 @@ public class DistanceFieldInterpolation {
     private static class pixelInfo {
         public float distance1;
         public float distance2;
+
         public short height_index1;
         public short height_index2;
 
-        public void validate() {
+
+        // Row and column of closest pixel
+        public short pivot1_column;
+        public short pivot1_row;
+
+        // Row and column of closest pixel
+        public short pivot2_column;
+        public short pivot2_row;
+
+
+        //Direction (used only on isoline pixels. can be optimized)
+        public float dirX;
+        public float dirY;
+        //Slope side (used only on isoline pixels. can be optimized)
+        public byte slopeSide;
+
+        //Tangent of slope angle (used only on isoline pixels. can be optimized)
+        public float tangent_cache;
+
+
+        pixelInfo() {
+            distance1 = Constants.INTERPOLATION_MAX_DISTANCE;
+            distance2 = Constants.INTERPOLATION_MAX_DISTANCE;
+            height_index1 = -1;
+            height_index2 = -1;
+            dirX = 0;
+            dirY = 0;
+            slopeSide = 0;
+        }
+
+        public void sort() {
 
             // Swap if distance1 is less than distance2
             if (distance2 < distance1) {
                 float dist_buf = distance1;
                 short index_buf = height_index1;
+                short pivot_column_buf = pivot1_column;
+                short pivot_row_buf = pivot1_row;
 
                 distance1 = distance2;
-                height_index1 = height_index2;
-
                 distance2 = dist_buf;
+
+                height_index1 = height_index2;
                 height_index2 = index_buf;
+
+                pivot1_column = pivot2_column;
+                pivot2_column = pivot_column_buf;
+
+                pivot1_row = pivot2_row;
+                pivot2_row = pivot_row_buf;
+
             }
 
         }
@@ -267,36 +333,38 @@ public class DistanceFieldInterpolation {
      * Ensure distance1 < distance2
      * Ensure height_index1 != height_index2
      */
-    private void applyDistance(short height_index, float distance, pixelInfo info) {
+    private void applyDistance(short height_index, float distance, short pivot_column, short pivot_row, pixelInfo info) {
 
-        if (info.height_index1 == -1) {
-            info.height_index1 = height_index;
-            info.distance1 = distance;
-            return;
-        }
-
-        if (info.height_index2 == -1) {
-            info.height_index2 = height_index;
-            info.distance2 = height_index;
-            info.validate();
-            return;
-        }
-
+        // update old values to ensure info.height_index1 != info.height_index2
         if (info.height_index1 == height_index) {
-            info.distance1 = Math.min(distance,info.distance1);
+            if (info.distance1 > distance) {
+                info.distance1 = distance;
+                info.pivot1_column = pivot_column;
+                info.pivot1_row = pivot_row;
+            }
             return;
         }
 
+        // update old values to ensure info.height_index1 != info.height_index2
         if (info.height_index2 == height_index) {
-            info.distance2 = Math.min(distance,info.distance2);
-            info.validate();
+            if (info.distance2 > distance) {
+                info.distance2 = distance;
+                info.pivot2_column = pivot_column;
+                info.pivot2_row = pivot_row;
+                info.sort();
+            }
             return;
         }
 
+        // finally, if distance is less than info's distance2 put new value to height_index2 and sort values
         if (distance < info.distance2) {
             info.distance2 = distance;
             info.height_index2 = height_index;
-            info.validate();
+            info.pivot2_column = pivot_column;
+            info.pivot2_row = pivot_row;
+
+            // Sort to ensure distance1 < distance2
+            info.sort();
             return;
         }
 
@@ -318,16 +386,19 @@ public class DistanceFieldInterpolation {
         boolean canGoDown=mask[row+1][column] == -1 || mask[row+1][column] == current_height_index;
         boolean canGoDownLeft = (canGoDown || canGoLeft) && mask[row+1][column-1] == -1 || mask[row+1][column-1] == current_height_index;
         boolean canGoDownRight = (canGoDown || canGoRight) && mask[row+1][column+1] == -1 || mask[row+1][column+1] == current_height_index;
+        short pivot_column = buf[row][column].pivot1_column;
+        short pivot_row = buf[row][column].pivot1_row;
 
         if (canGoRight)
-            applyDistance(current_height_index,current_distance+1,buf[row][column+1]);
+            applyDistance(current_height_index,current_distance+1,pivot_column,pivot_row,buf[row][column+1]);
         if (canGoDown)
-            applyDistance(current_height_index,current_distance+1,buf[row+1][column]);
+            applyDistance(current_height_index,current_distance+1,pivot_column,pivot_row,buf[row+1][column]);
         if (canGoDownRight)
-            applyDistance(current_height_index,current_distance+squareRootOfTwo,buf[row+1][column+1]);
+            applyDistance(current_height_index,current_distance+squareRootOfTwo,pivot_column,pivot_row,buf[row+1][column+1]);
         if (canGoDownLeft)
-            applyDistance(current_height_index,current_distance+squareRootOfTwo,buf[row+1][column-1]);
+            applyDistance(current_height_index,current_distance+squareRootOfTwo,pivot_column,pivot_row,buf[row+1][column-1]);
 
+        /* Do the second time for second values */
         current_distance = buf[row][column].distance2;
         current_height_index = buf[row][column].height_index2;
 
@@ -337,15 +408,17 @@ public class DistanceFieldInterpolation {
         canGoDown=mask[row+1][column] == -1 || mask[row+1][column] == current_height_index;
         canGoDownLeft = (canGoDown || canGoLeft) && (mask[row+1][column-1] == -1 || mask[row+1][column-1] == current_height_index);
         canGoDownRight = (canGoDown || canGoRight) && (mask[row+1][column+1] == -1 || mask[row+1][column+1] == current_height_index);
+        pivot_column = buf[row][column].pivot2_column;
+        pivot_row = buf[row][column].pivot2_row;
 
         if (canGoRight)
-            applyDistance(current_height_index,current_distance+1,buf[row][column+1]);
+            applyDistance(current_height_index,current_distance+1,pivot_column,pivot_row,buf[row][column+1]);
         if (canGoDown)
-            applyDistance(current_height_index,current_distance+1,buf[row+1][column]);
+            applyDistance(current_height_index,current_distance+1,pivot_column,pivot_row,buf[row+1][column]);
         if (canGoDownRight)
-            applyDistance(current_height_index,current_distance+squareRootOfTwo,buf[row+1][column+1]);
+            applyDistance(current_height_index,current_distance+squareRootOfTwo,pivot_column,pivot_row,buf[row+1][column+1]);
         if (canGoDownLeft)
-            applyDistance(current_height_index,current_distance+squareRootOfTwo,buf[row+1][column-1]);
+            applyDistance(current_height_index,current_distance+squareRootOfTwo,pivot_column,pivot_row,buf[row+1][column-1]);
 
 
     }
@@ -364,15 +437,17 @@ public class DistanceFieldInterpolation {
         boolean canGoUp=mask[row-1][column] == -1 || mask[row-1][column] == current_height_index;
         boolean canGoUpLeft= (canGoUp || canGoLeft) && (mask[row-1][column-1] == -1 || mask[row-1][column-1] == current_height_index);
         boolean canGoUpRight=(canGoUp || canGoRight) && (mask[row-1][column+1] == -1 || mask[row-1][column+1] == current_height_index);
+        short pivot_column = buf[row][column].pivot1_column;
+        short pivot_row = buf[row][column].pivot1_row;
 
         if (canGoLeft)
-            applyDistance(current_height_index,current_distance+1,buf[row][column-1]);
+            applyDistance(current_height_index,current_distance+1,pivot_column,pivot_row,buf[row][column-1]);
         if (canGoUp)
-            applyDistance(current_height_index,current_distance+1,buf[row-1][column]);
+            applyDistance(current_height_index,current_distance+1,pivot_column,pivot_row,buf[row-1][column]);
         if (canGoUpLeft)
-            applyDistance(current_height_index,current_distance+squareRootOfTwo,buf[row-1][column-1]);
+            applyDistance(current_height_index,current_distance+squareRootOfTwo,pivot_column,pivot_row,buf[row-1][column-1]);
         if (canGoUpRight)
-            applyDistance(current_height_index,current_distance+squareRootOfTwo,buf[row-1][column+1]);
+            applyDistance(current_height_index,current_distance+squareRootOfTwo,pivot_column,pivot_row,buf[row-1][column+1]);
 
         current_distance = buf[row][column].distance2;
         current_height_index = buf[row][column].height_index2;
@@ -383,15 +458,17 @@ public class DistanceFieldInterpolation {
         canGoUp=mask[row-1][column] == -1 || mask[row-1][column] == current_height_index;
         canGoUpLeft= (canGoUp || canGoLeft) && (mask[row-1][column-1] == -1 || mask[row-1][column-1] == current_height_index);
         canGoUpRight=(canGoUp || canGoRight) && (mask[row-1][column+1] == -1 || mask[row-1][column+1] == current_height_index);
+        pivot_column = buf[row][column].pivot2_column;
+        pivot_row = buf[row][column].pivot2_row;
 
         if (canGoLeft)
-            applyDistance(current_height_index,current_distance+1,buf[row][column-1]);
+            applyDistance(current_height_index,current_distance+1,pivot_column,pivot_row,buf[row][column-1]);
         if (canGoUp)
-            applyDistance(current_height_index,current_distance+1,buf[row-1][column]);
+            applyDistance(current_height_index,current_distance+1,pivot_column,pivot_row,buf[row-1][column]);
         if (canGoUpLeft)
-            applyDistance(current_height_index,current_distance+squareRootOfTwo,buf[row-1][column-1]);
+            applyDistance(current_height_index,current_distance+squareRootOfTwo,pivot_column,pivot_row,buf[row-1][column-1]);
         if (canGoUpRight)
-            applyDistance(current_height_index,current_distance+squareRootOfTwo,buf[row-1][column+1]);
+            applyDistance(current_height_index,current_distance+squareRootOfTwo,pivot_column,pivot_row,buf[row-1][column+1]);
     }
 
     /**
@@ -404,7 +481,7 @@ public class DistanceFieldInterpolation {
         int max_column = source[0].length-1;
         for (int row = 1; row != max_row; ++row) {
             for (int column = 1; column != max_column; ++column) {
-                if (source[row][column].distance1 < max_distance)
+                if (source[row][column].distance1 < Constants.INTERPOLATION_MAX_DISTANCE)
                     applyDownPassKernel3x3(row,column,source,mask);
             }
         }
@@ -452,7 +529,233 @@ public class DistanceFieldInterpolation {
         DistanceCalculationUpPass(source,mask);
     }
 
-    float max_distance = 100000000;
+
+    /**
+     * Used to calculate smooth transition between isolines, taking in account slope angle and make hills.
+     * Based on bezier curves.
+     * @param t1 first slope angle (positive - hill)
+     * @param t2 second slope angle (positive - hill)
+     * @param h1 height of first isoline
+     * @param h2 height of second isoline
+     * @param d1 distance from first isoline
+     * @param d2 distance from second isoline
+     * @return height of point between isolines
+     */
+    public double heightCalc(double t1,double t2,double h1,double h2,double d1,double d2) {
+        t2 = -t2;
+
+        double x1 = 0;
+        double y1 = h1;
+
+        double x2 = d1+d2;
+        double y2 = h2;
+
+        double strength = 0.5;
+
+        double b1x = 1;
+        double b1y = t1*(b1x);
+        double b1_len = Math.sqrt(b1x*b1x+b1y*b1y);
+        b1x=b1x/b1_len*strength;
+        b1y=b1y/b1_len*strength;
+
+        double b2x = -1;
+        double b2y = t2*(b2x);
+        double b2_len = Math.sqrt(b2x*b2x+b2y*b2y);
+        b2x=b2x/b2_len*strength;
+        b2y=b2y/b2_len*strength;
+
+        b1x = b1x+0;
+        b1y = b1y+h1;
+
+        b2x = b2x+d1+d2;
+        b2y = b2y+h2;
+
+        //Do binary search
+
+        double pos_beg = 0;
+        double pos_end = 1;
+        double pos = (pos_beg+pos_end)*0.5;
+        double pos2 = 1-pos;
+
+        double x = ((x1*pos2+b1x*pos)*pos2+(b1x*pos2+b2x*pos)*pos)*pos2+
+                ((b1x*pos2+b2x*pos)*pos2+(b2x*pos2+x2*pos)*pos)*pos;
+
+        for (int i = 0; i != 15; ++i) {
+            if (x > d1) {
+                pos_end = pos;
+            } else {
+                pos_beg = pos;
+            }
+            pos = (pos_beg+pos_end)*0.5;
+            pos2 = 1-pos;
+            x = ((x1*pos2+b1x*pos)*pos2+(b1x*pos2+b2x*pos)*pos)*pos2+
+                    ((b1x*pos2+b2x*pos)*pos2+(b2x*pos2+x2*pos)*pos)*pos;
+        }
+        double y = ((y1*pos2+b1y*pos)*pos2+(b1y*pos2+b2y*pos)*pos)*pos2+
+                ((b1y*pos2+b2y*pos)*pos2+(b2y*pos2+y2*pos)*pos)*pos;
+        return y;
+    }
+
+    /**
+     * Used to determine, weather the given point is higher or lower than it's closest isoline.
+     * Based on cross product.
+     * Negative values - given point is lower
+     * Positive values - given point is higher
+     * When a perpendicular can be drawn to closest isoline, absolute return value is between 0.85-1.0
+     * Usie absolute value for calculating smooth transitions between downside or upside of isoline.
+     * @param buf
+     * @param row
+     * @param column
+     * @return cross product of vector(row-pivot_row,column-pivot_column) and vector(buf[pivot_row][pivot_column].dirX,buf[pivot_row][pivot_column].dirY)
+     * multiplied by isoline's slope side.
+     * where pivot_row is uf[row][column].pivot1_row and pivot_column is buf[row][column].pivot1_column.
+     */
+    public double crossProductSideDetect(pixelInfo[][] buf, int row, int column) {
+
+        int pivot_row = buf[row][column].pivot1_row;
+        int pivot_column = buf[row][column].pivot1_column;
+        Vector2D vec = Vector2D.create(buf[pivot_row][pivot_column].dirX,buf[pivot_row][pivot_column].dirY);
+
+        double v1x = buf[pivot_row][pivot_column].dirX;
+        double v1y = buf[pivot_row][pivot_column].dirY;
+        double v2x = row-pivot_row;
+        double v2y = column-pivot_column;
+        double v2Len = Math.sqrt(v2x*v2x+v2y*v2y);
+        v2x = v2x/v2Len;
+        v2y = v2y/v2Len;
+        return (v1x*v2y - v1y*v2x)*buf[pivot_row][pivot_column].slopeSide;
+
+    }
+
+    public double[][] sobel(double[][] buf) {
+        double[][] result = new double[buf.length][buf[0].length];
+
+        for (int row = 1; row < buf.length-1; ++ row) {
+            for (int column = 1; column < buf[row].length-1; ++column) {
+                double val1 = 0;
+                val1+=buf[row-1][column-1]*+3;
+                val1+=buf[row-1][column  ]*+10;
+                val1+=buf[row-1][column+1]*+3;
+                //val1+=buf[row  ][column-1]*0;
+                //val1+=buf[row  ][column  ]*0;
+                //val1+=buf[row  ][column+1]*0;
+                val1+=buf[row+1][column-1]*-3;
+                val1+=buf[row+1][column  ]*-10;
+                val1+=buf[row+1][column+1]*-3;
+                val1 = Math.abs(val1/16);
+
+                double val2 = 0;
+                val2+=buf[row-1][column-1]*+3;
+                //val2+=buf[row-1][column  ]*0;
+                val2+=buf[row-1][column+1]*-3;
+                val2+=buf[row  ][column-1]*+10;
+                //val2+=buf[row  ][column  ]*0;
+                val2+=buf[row  ][column+1]*-10;
+                val2+=buf[row+1][column-1]*+3;
+                //val2+=buf[row+1][column  ]*0;
+                val2+=buf[row+1][column+1]*-3;
+                val2 = Math.abs(val2/16);
+                result [row][column] = Math.sqrt(val1*val1+val2*val2);
+            }
+        }
+        return result;
+    }
+
+    public void gauss(double[][] result, int blurSize, int iterations) {
+        int rowCount = result.length;
+        int columnCount = result[0].length;
+        for (int i = 0; i != iterations; ++i) {
+            for (int row = 0; row != rowCount; ++row) {
+                double[] gaussian_buf = new double[columnCount];
+                for (int column = 0; column != columnCount; ++column) {
+                    int startcolumn = GeomUtils.clamp(column-blurSize,0,columnCount-1);
+                    int endColumn = GeomUtils.clamp(column+blurSize,0,columnCount-1)+1;
+                    int size = endColumn-startcolumn;
+                    gaussian_buf[column] = 0;
+                    for (int i2 = startcolumn; i2 < endColumn;++i2) {
+                        gaussian_buf[column] += result[row][i2]/size;
+                    }
+                }
+                // Put buf to resukt
+                for (int column = 0; column != columnCount; ++column) {
+                    result[row][column] = gaussian_buf[column];
+                }
+            }
+
+            for (int column = 0; column != columnCount; ++column) {
+                double[] gaussian_buf = new double[rowCount];
+                for (int row = 1; row != rowCount - 1; ++row) {
+                    int startRow = GeomUtils.clamp(row-blurSize,0,rowCount-1);
+                    int endRow = GeomUtils.clamp(row+blurSize,0,rowCount-1)+1;
+                    int size = endRow-startRow;
+                    gaussian_buf[row] = 0;
+                    for (int i2 = startRow; i2 < endRow;++i2) {
+                        gaussian_buf[row] += result[i2][column]/size;
+                    }
+                }
+                // Put buf to result
+                for (int row = 0; row != rowCount; ++row) {
+                    result[row][column] = gaussian_buf[row];
+                }
+            }
+        }
+    }
+
+    public double[][] gauss(double[][] result, int[][] sizeMatrix, int iterations) {
+        int rowCount = result.length;
+        int columnCount = result[0].length;
+        for (int i = 0; i != iterations; ++i) {
+            for (int row = 0; row != rowCount; ++row) {
+                double[] gaussian_buf = new double[columnCount];
+                for (int column = 0; column != columnCount; ++column) {
+                    int blurSize = sizeMatrix[row][column];
+                    int startcolumn = GeomUtils.clamp(column-blurSize,0,columnCount-1);
+                    int endColumn = GeomUtils.clamp(column+blurSize,0,columnCount-1)+1;
+                    int size = endColumn-startcolumn;
+                    gaussian_buf[column] = 0;
+                    for (int i2 = startcolumn; i2 < endColumn;++i2) {
+                        gaussian_buf[column] += result[row][i2]/size;
+                    }
+                }
+                // Put buf to resukt
+                for (int column = 0; column != columnCount; ++column) {
+                    result[row][column] = gaussian_buf[column];
+                }
+            }
+
+            for (int column = 0; column != columnCount; ++column) {
+                double[] gaussian_buf = new double[rowCount];
+                for (int row = 1; row != rowCount - 1; ++row) {
+                    int blurSize = sizeMatrix[row][column];
+                    int startRow = GeomUtils.clamp(row-blurSize,0,rowCount-1);
+                    int endRow = GeomUtils.clamp(row+blurSize,0,rowCount-1)+1;
+                    int size = endRow-startRow;
+                    gaussian_buf[row] = 0;
+                    for (int i2 = startRow; i2 < endRow;++i2) {
+                        gaussian_buf[row] += result[i2][column]/size;
+                    }
+                }
+                // Put buf to result
+                for (int row = 0; row != rowCount; ++row) {
+                    result[row][column] = gaussian_buf[row];
+                }
+            }
+        }
+        return result;
+    }
+
+    double calcRealDistance(double pixelDist) {
+        double result = pixelDist*Constants.INTERPOLATION_STEP;
+        return result;
+    }
+
+    double calcRealDistanceWithFade(double pixelDist) {
+        double result = pixelDist*Constants.INTERPOLATION_STEP;
+        if (result > Constants.INTERPOLATION_FADE_DISTANCE) {
+            result = Constants.INTERPOLATION_FADE_DISTANCE+Math.pow(result-Constants.INTERPOLATION_FADE_DISTANCE,Constants.INTERPOLATION_FADE_STRENGTH);
+        }
+        return result;
+    }
 
     /**
      * Retrive height map of isoline container, passed in {@link DistanceFieldInterpolation#DistanceFieldInterpolation(IsolineContainer)}.
@@ -465,15 +768,12 @@ public class DistanceFieldInterpolation {
         // Create cells
         PointRasterizer rasterizer = new PointRasterizer(Constants.INTERPOLATION_STEP,envelope);
 
-        double pivot_height = Math.round(((getMaxHeight()+getMinHeight())))*0.5+0.5;
         pixelInfo[][] distanceField = new pixelInfo[rasterizer.getRowCount()][rasterizer.getColumnCount()];
 
         //Initialize pixel info matrix
         for (int row = 0; row != rasterizer.getRowCount(); ++row) {
             for (int column = 0; column != rasterizer.getColumnCount(); ++column) {
                 distanceField[row][column] = new pixelInfo();
-                distanceField[row][column].distance1 = max_distance;
-                distanceField[row][column].distance2 = max_distance;
             }
         }
 
@@ -495,13 +795,16 @@ public class DistanceFieldInterpolation {
                 rasterize(mask, iso, rasterizer, -2);
         }
 
+
+        // Calculate distance field
         maskedDistanceField(distanceField,mask);
 
+        // Fill gaps
         mask = rasterizer.createIntBuffer(-2);
 
         for(int row = 0; row != rasterizer.getRowCount(); ++row) {
             for (int column = 0; column != rasterizer.getColumnCount(); ++column) {
-                if (distanceField[row][column].height_index1 == -1 || distanceField[row][column].distance1 == max_distance) {
+                if (distanceField[row][column].height_index1 == -1 || distanceField[row][column].distance1 == Constants.INTERPOLATION_MAX_DISTANCE) {
                     mask[row][column] = -1;
                 }
             }
@@ -515,54 +818,75 @@ public class DistanceFieldInterpolation {
 
         maskedDistanceFieldSimple(distanceField,mask);
 
-        // Calculate distance
+        // Calculate height for each pixel
         double[][] result = new double[rasterizer.getRowCount()][rasterizer.getColumnCount()];
         for(int row = 0; row != rasterizer.getRowCount(); ++row) {
             for (int column = 0; column != rasterizer.getColumnCount(); ++column) {
-
-                if (distanceField[row][column].height_index1 == -1) {
+                pixelInfo p = distanceField[row][column];
+                if (p.height_index1 == -1) {
                     result[row][column] = 0;
                     continue;
                 }
+                double dist1 = calcRealDistanceWithFade(p.distance1);
+                double dist2 = calcRealDistanceWithFade(p.distance2);
 
+                double w1 = dist2 / (dist1 + dist2);
+                double w2 = dist1 / (dist1 + dist2);
+                double h1 = p.height_index1 * w1 + p.height_index2 * w2;
 
-                double dist1 = distanceField[row][column].distance1*Constants.DRAWING_INTERPOLATION_STEP;
-                double dist2 = distanceField[row][column].distance2*Constants.DRAWING_INTERPOLATION_STEP;
-                // Calculate distance fade
-                if (dist1 > Constants.INTERPOLATION_FADE_DISTANCE) {
-                    dist1 = Constants.INTERPOLATION_FADE_DISTANCE+Math.pow(dist1-Constants.INTERPOLATION_FADE_DISTANCE,Constants.INTERPOLATION_FADE_STRENGTH);
-                }
-                if (dist2 > Constants.INTERPOLATION_FADE_DISTANCE) {
-                    dist2 = Constants.INTERPOLATION_FADE_DISTANCE+Math.pow(dist2-Constants.INTERPOLATION_FADE_DISTANCE,Constants.INTERPOLATION_FADE_STRENGTH);
-                }
-                double w1 = dist2/(dist1+dist2);
-                double w2 = dist1/(dist1+dist2);
-                result[row][column] = distanceField[row][column].height_index1*w1+distanceField[row][column].height_index2*w2;
+                result[row][column] = h1;
             }
         }
 
-        // gaussian blur
-        double[][] gaussian_buf = new double[rasterizer.getRowCount()][rasterizer.getColumnCount()];
+        //Calculate heights for hills
+        //gauss(result,1,2);
+        double[][] sobel = sobel(result);
 
-        for (int i = 0; i != 2; ++i) {
-            for (int row = 0; row != rasterizer.getRowCount(); ++row) {
-                for (int column = 1; column != rasterizer.getColumnCount() - 1; ++column) {
-                    gaussian_buf[row][column] = (result[row][column - 1]+result[row][column]+result[row][column + 1])/3;
-                }
-                for (int column = 0; column != rasterizer.getColumnCount(); ++column) {
-                    result[row][column] = gaussian_buf[row][column];
-                }
-            }
-
+        for(int row = 0; row != rasterizer.getRowCount(); ++row) {
             for (int column = 0; column != rasterizer.getColumnCount(); ++column) {
-                for (int row = 1; row != rasterizer.getRowCount() - 1; ++row) {
-                    gaussian_buf[row][column] = (result[row-1][column]+result[row][column]+result[row+1][column])/3;
+                pixelInfo p = distanceField[row][column];
+                double dist1 = calcRealDistance(p.distance1);
+                double dist2 = calcRealDistance(p.distance2);
+
+                // Calculate hills
+                if (dist2>Constants.INTERPOLATION_FADE_DISTANCE && p.distance1 != 0) {
+                    //result[row][column] = 0;
+                    double h2 = 0;
+                    // Use tangent of slope of closest isoline. Retrieve it from previously calculated sobel
+                    double tangent = sobel[p.pivot1_row][p.pivot1_column]/Constants.INTERPOLATION_STEP*0.8;
+
+                    // When tangent is almost 0, but we want a hill to be visible on the map. Assign high value to tangent, so it will
+                    // We could use conditional expression, like tangent = tangent < 0.2 ? 5 : tangent, but it's better to use
+                    // this function for calulation of smooth transition.
+                    // This function is only significant at low tangent values ( < 0.2 ) and otherwise almost equals tangent
+                    tangent = (1-1/(1+Math.exp(-tangent*40+2)))*3+tangent;
+                    // Just make sure everything goes fine and no extreme values are encountered.
+                    tangent = GeomUtils.clamp(tangent,0.05,5.7);
+
+                    double ss = crossProductSideDetect(distanceField, row, column);
+                    h2 = 1 - 1.0 / (tangent * p.distance1*Constants.INTERPOLATION_STEP + 1);
+                    if (ss <= 0) h2 = -h2;
+                    h2 = GeomUtils.clamp(h2, -1, 1);
+                    h2 = h2 * GeomUtils.clamp(GeomUtils.map(dist2, Constants.INTERPOLATION_FADE_DISTANCE, Constants.INTERPOLATION_FADE_DISTANCE * 2, 0, 1), 0, 1);
+                    h2 = GeomUtils.clamp(h2, -1, 1);
+                    result[row][column] += h2;
                 }
-                for (int row = 0; row != rasterizer.getRowCount(); ++row) {
-                    result[row][column] = gaussian_buf[row][column];
-                }
+
             }
         }
+
+        int[][] gaussian_blur_mask = rasterizer.createIntBuffer(1);
+
+        for (int row = 0; row != rasterizer.getRowCount(); ++row) {
+            for (int column = 1; column != rasterizer.getColumnCount() - 1; ++column) {
+                gaussian_blur_mask[row][column] = (int)Math.floor(distanceField[row][column].distance1*0.3);
+                //if (gaussian_blur_mask[row][column] < 1) gaussian_blur_mask[row][column] = 1;
+                //if (gaussian_blur_mask[row][column] > 50) gaussian_blur_mask[row][column] = 50;
+            }
+        }
+
+        gauss(result,1,1);
+        gauss(result,gaussian_blur_mask,3);
 
         //return
         return result;
