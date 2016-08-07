@@ -3,6 +3,7 @@ package Algorithm.Interpolation;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
 import Utils.GeomUtils;
+import Utils.RasterUtils;
 import Utils.Tracer;
 import com.vividsolutions.jts.geom.Envelope;
 
@@ -82,6 +83,20 @@ public class Serializer {
         } catch (IOException e) {
             throw new RuntimeException("Could not save " + path + ".png");
         }
+
+        //Saving .obj file
+        Triangulation tri = new Triangulation(heights, RasterUtils.sobel( RasterUtils.sobel(heights) ));
+        tri.writeToFile(path);
+
+    }
+
+    public void saveAsObj(String path) {
+
+        DistanceFieldInterpolation interp = new DistanceFieldInterpolation(cont);
+        double[][] heightmap = interp.getAllInterpolatingPoints();
+
+        Triangulation tri = new Triangulation(heightmap, RasterUtils.sobel( RasterUtils.sobel(heightmap) ));
+        tri.writeToFile(path);
 
     }
 
