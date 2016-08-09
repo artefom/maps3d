@@ -1,9 +1,117 @@
 package Utils;
 
+import Isolines.IIsoline;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 /**
  * Created by Artyom.Fomenko on 05.08.2016.
  */
 public class RasterUtils {
+
+    /**
+     * Performs rasterization of line into double buffer
+     *
+     * @param buf
+     * @param x
+     * @param y
+     * @param x2
+     * @param y2
+     * @param color
+     */
+    public static void rasterizeline(double[][] buf, int x,int y,int x2, int y2, double color) {
+        int w = x2 - x ;
+        int h = y2 - y ;
+        int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0 ;
+        if (w<0) dx1 = -1 ; else if (w>0) dx1 = 1 ;
+        if (h<0) dy1 = -1 ; else if (h>0) dy1 = 1 ;
+        if (w<0) dx2 = -1 ; else if (w>0) dx2 = 1 ;
+        int longest = Math.abs(w) ;
+        int shortest = Math.abs(h) ;
+        if (!(longest>shortest)) {
+            longest = Math.abs(h) ;
+            shortest = Math.abs(w) ;
+            if (h<0) dy2 = -1 ; else if (h>0) dy2 = 1 ;
+            dx2 = 0 ;
+        }
+        int numerator = longest >> 1 ;
+        for (int i=0;i<=longest;i++) {
+            buf[x  ][y  ] = color;
+            numerator += shortest ;
+            if (!(numerator<longest)) {
+                numerator -= longest ;
+                x += dx1 ;
+                y += dy1 ;
+            } else {
+                x += dx2 ;
+                y += dy2 ;
+            }
+        }
+    }
+
+    public static void flush(double[][] target, double value) {
+        int columns_number = target[0].length;
+        for (int row = 0; row != target.length; ++row) {
+            for (int column = 0; column != columns_number; ++column) {
+                target[row][column] = value;
+            }
+        }
+    }
+
+    public static void flush(int[][] target, int value) {
+        int columns_number = target[0].length;
+        for (int row = 0; row != target.length; ++row) {
+            for (int column = 0; column != columns_number; ++column) {
+                target[row][column] = value;
+            }
+        }
+    }
+
+    /**
+     * Performs rasterization of line into int buffer
+     *
+     * @param buf
+     * @param x
+     * @param y
+     * @param x2
+     * @param y2
+     * @param color
+     */
+    public static void rasterizeline(int[][] buf, int x,int y,int x2, int y2, int color) {
+        int w = x2 - x ;
+        int h = y2 - y ;
+        int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0 ;
+        if (w<0) dx1 = -1 ; else if (w>0) dx1 = 1 ;
+        if (h<0) dy1 = -1 ; else if (h>0) dy1 = 1 ;
+        if (w<0) dx2 = -1 ; else if (w>0) dx2 = 1 ;
+        int longest = Math.abs(w) ;
+        int shortest = Math.abs(h) ;
+        if (!(longest>shortest)) {
+            longest = Math.abs(h) ;
+            shortest = Math.abs(w) ;
+            if (h<0) dy2 = -1 ; else if (h>0) dy2 = 1 ;
+            dx2 = 0 ;
+        }
+        int numerator = longest >> 1 ;
+        for (int i=0;i<=longest;i++) {
+            buf[x  ][y  ] = color;
+            numerator += shortest ;
+            if (!(numerator<longest)) {
+                numerator -= longest ;
+                x += dx1 ;
+                y += dy1 ;
+            } else {
+                x += dx2 ;
+                y += dy2 ;
+            }
+        }
+    }
+
     public static double[][] sobel(double[][] buf) {
         double[][] result = new double[buf.length][buf[0].length];
 
@@ -117,6 +225,59 @@ public class RasterUtils {
                     result[row][column] = gaussian_buf[row];
                 }
             }
+        }
+    }
+
+    public static void saveAsTxt(double[][] buffer, String path) {
+        PrintWriter out;
+        try {
+            out = new PrintWriter(path + ".txt");
+        } catch (FileNotFoundException ex){
+            throw new RuntimeException("Could not save " + path + ".txt");
+        }
+        int y_steps = buffer.length;
+        int x_steps = buffer[0].length;
+
+        System.out.println("Writing to file");
+        for (int i = y_steps-1; i >= 0; --i) {
+            for (int j = 0; j != x_steps; ++j) {
+                out.print(buffer[i][j]+" ");
+            }
+            out.println();
+        }
+        out.close();
+
+    }
+
+    public static void saveAsPng(double[][] buffer, String path) {
+
+        int y_steps = buffer.length;
+        int x_steps = buffer[0].length;
+
+        //getting bounds of possible height values
+        double minHeight = buffer[0][0], maxHeight = buffer[0][0];
+        for (int i = y_steps-1; i >= 0; --i) {
+            for (int j = 0; j != x_steps; ++j) {
+                minHeight = Math.min(minHeight, buffer[i][j]);
+                maxHeight = Math.max(maxHeight, buffer[i][j]);
+            }
+        }
+
+        //creating visual heightmap
+        BufferedImage image = new BufferedImage(x_steps, y_steps, BufferedImage.TYPE_INT_RGB);
+        for (int i = y_steps-1; i >= 0; --i) {
+            for (int j = 0; j != x_steps; ++j) {
+                int grey = 255-(int)GeomUtils.map(buffer[i][j], minHeight, maxHeight, 255, 0);
+                image.setRGB(j, y_steps-i-1, (((grey << 8) + (int)(grey)) << 8) + (int)(grey));
+            }
+        }
+
+        //writing it to file
+        try {
+            File png = new File(path + ".png");
+            ImageIO.write(image, "png", png);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not save " + path + ".png");
         }
     }
 }
