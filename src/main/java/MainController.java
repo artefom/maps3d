@@ -5,7 +5,8 @@ import Algorithm.LineConnection.LineWelder;
 import Algorithm.NearbyGraph.NearbyContainer;
 import Algorithm.NearbyGraph.NearbyEstimator;
 import Algorithm.NearbyGraph.NearbyGraphWrapper;
-import Deserialization.OcadDeserialization;
+import Algorithm.Texture.TextureGenerator;
+import Deserialization.DeserializedOCAD;
 import Isolines.IsolineContainer;
 
 import java.io.*;
@@ -15,6 +16,7 @@ import java.util.stream.Stream;
 import Isolines.*;
 import Deserialization.Interpolation.SlopeMark;
 import Utils.Constants;
+import Utils.PointRasterizer;
 import com.vividsolutions.jts.geom.*;
 
 /**
@@ -31,6 +33,8 @@ public class MainController {
     public MapEdge edge;
 
     public ArrayList<SlopeMark> slopeMarks;
+
+    public DeserializedOCAD dser;
 
     MainController() {
         gf = new GeometryFactory();
@@ -64,7 +68,7 @@ public class MainController {
 //    }
 
     public void openFile(File f) throws Exception {
-        OcadDeserialization dser = new OcadDeserialization();
+        dser = new DeserializedOCAD();
         dser.DeserializeMap(f.getPath());
         ArrayList<IIsoline> isos = dser.toIsolines(1,gf);
         slopeMarks = new ArrayList<>();
@@ -110,6 +114,11 @@ public class MainController {
         Serializer interpolator = new Serializer(ic,1);
         interpolator.writeDataToFile("heights");
 
+    }
+
+    public void generateTexture(String output_path) {
+        TextureGenerator gen = new TextureGenerator(dser);
+        gen.writeToFile("texture",new PointRasterizer(0.1,ic.getEnvelope()));
     }
 
 }
