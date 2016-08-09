@@ -36,8 +36,8 @@ public class Constants {
     public static final Color DRAWING_COLOR_SLOPE_ORIGINAL = Color.BLUE;
 
     //Map parsing
-    public static final int[] isoline_ids = new int[] {1,2,3};
-    public static final int[] slope_ids = new int[] {1,2,3};
+//    public static final int[] isoline_ids = new int[] {1,2,3};
+//    public static final int[] slope_ids = new int[] {1,2,3};
     public static final double slope_near_dist = 0.2;
     public static final double slope_length = 1;
     public static final double tangent_precision = 0.6;
