@@ -12,19 +12,18 @@ import com.vividsolutions.jts.geom.*;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * Created by Artem on 21.07.2016.
  */
-public class OcadDeserialization {
+public class DeserializedOCAD {
 
-    public OcadDeserialization() {
-
+    public DeserializedOCAD() {
     }
 
     public ArrayList<TOcadObject> objects;
+    public Set<Integer> symbol_ids;
 
     public void DeserializeMap( String path ) throws Exception {
 
@@ -36,12 +35,11 @@ public class OcadDeserialization {
         if ( header.OCADMark != 3245 ) throw new Exception("invalid format");
         if ( header.Version != 11 ) throw new Exception("invalid format");
 
-        int previb = 0;
         int nextib = header.ObjectIndexBlock;
         TObjectIndexBlock ib = new TObjectIndexBlock();
 
-        ArrayList<TOcadObject> lines = new ArrayList<>();
         objects = new ArrayList<>(2048);
+        symbol_ids = new HashSet<>();
 
         int hash = 0;
         int count = 0;
@@ -50,22 +48,22 @@ public class OcadDeserialization {
 
             ib.Deserialize(ch,nextib);
 
-            previb = nextib;
             nextib = ib.NextObjectIndexBlock;
 
             for (int i = 0; i != 256; ++i) {
                 TObjectIndex oi = ib.Table[i];
                 if (!( oi.ObjType >= 0 && oi.ObjType <= 7 )) throw new Exception("invalid format");
-                if (oi.ObjType == 2 || oi.ObjType == 1) {
-                    //hash += oi.Pos;
-                    //count += 1;
-                    //ifile.seekg(oi.Pos);
-                    //int len = oi.Len;
-                    //lines.emplace_back( ifile );
-                    TOcadObject obj = new TOcadObject();
-                    obj.Deserialize(ch,oi.Pos);
-                    objects.add(obj);
-                }
+//                if (oi.ObjType == 2 || oi.ObjType == 1) {
+//                    hash += oi.Pos;
+//                    count += 1;
+//                    ifile.seekg(oi.Pos);
+//                    int len = oi.Len;
+//                    lines.emplace_back(ifile);
+//                }
+                TOcadObject obj = new TOcadObject();
+                obj.Deserialize(ch,oi.Pos);
+                objects.add(obj);
+                symbol_ids.add(obj.Sym);
             };
         };
         return;
@@ -132,6 +130,16 @@ public class OcadDeserialization {
                 } else {
                     System.out.println("Found invalid line string");
                 }
+            }
+        }
+        return ret;
+    }
+
+    public List<TOcadObject> getObjectsByID(int symbol_id) {
+        List<TOcadObject> ret = new ArrayList<TOcadObject>();
+        for (TOcadObject obj : objects) {
+            if (obj.Sym == symbol_id) {
+                ret.add(obj);
             }
         }
         return ret;
