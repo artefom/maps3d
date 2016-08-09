@@ -51,7 +51,8 @@ public class Constants {
 
     //Interpolation
     public static final double INTERPOLATION_STEP = 0.25;
-    public static final double INTERPOLATION_FADE_DISTANCE = 5;
+    public static final double INTERPOLATION_FADE_DISTANCE = 6.25;
     public static final double INTERPOLATION_FADE_STRENGTH = 3;
     public static final double INTERPOLATION_HILL_TANGENT = 1;
+    public static final float INTERPOLATION_MAX_DISTANCE = 100000000;
 }
