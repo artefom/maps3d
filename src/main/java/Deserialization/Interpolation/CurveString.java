@@ -23,6 +23,12 @@ public class CurveString {
     }
 
     public Coordinate pointAlong(double pos) {
+        if (pos <= 0) {
+            return curves.get(0).pointAlong(0);
+        }
+        if (pos >= 1) {
+            return curves.get(curves.size()-1).pointAlong(1);
+        }
         int seg = (int)Math.floor(pos*curves.size());
         if (seg < 0)
             return curves.get(0).pointAlong(0);
@@ -45,11 +51,16 @@ public class CurveString {
     }
 
     public CoordinateSequence getCoordinateSequence(int steps, GeometryFactory gf) {
+        if (steps < 4) steps = 4; // Handle rings.
         double step = 1.0/steps;
         Coordinate[] coords = new Coordinate[steps+1];
-        for (int i = 0; i <= steps; ++i) {
+
+        // Manually set start and endpoint, because due to precision loss linarRing's end and begin can deviate after interpolation
+        coords[0] = pointAlong(0);
+        for (int i = 1; i != steps; ++i) {
             coords[i] = pointAlong(i*step);
         }
+        coords[steps] = pointAlong(1);
         return gf.getCoordinateSequenceFactory().create(coords);
     }
 
@@ -97,7 +108,7 @@ public class CurveString {
                 i+=1;
             } else {
                 i += 1;
-//                throw new Exception("Invalid poly array");
+                throw new Exception("Invalid poly array");
             }
         }
         return cs;
