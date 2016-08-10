@@ -1,6 +1,9 @@
 package Algorithm.BuildingIndex;
 
-import toxi.geom.*;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.geom.Polygon;
 
 import java.util.ArrayList;
 
@@ -8,8 +11,9 @@ import java.util.ArrayList;
  * Created by fdl on 8/4/16.
  */
 public class QTree {
-    private final int CONTAINMENT_THRESHOLD;// = 4;//TODO research this const
-    private final int MAXIMAL_DEPTH;// = 30;//239; //TODO and this one too
+    private static final GeometryFactory gf = new GeometryFactory();
+    private final int CONTAINMENT_THRESHOLD;
+    private final int MAXIMAL_DEPTH;
 
     public class Node {
         private final Node parent;
@@ -18,7 +22,7 @@ public class QTree {
 
         private boolean isSplit = false;
         private final Node[] quarters = new Node[4];
-        private final ArrayList<WrappedTriangle> containment = new ArrayList<>();
+        private final ArrayList<Polygon> containment = new ArrayList<>();
 
         private Node(Box ownBox, Node parent, int depth) {
             this.parent = parent;
@@ -42,11 +46,11 @@ public class QTree {
             isSplit = true;
         }
 
-        protected void assign(WrappedTriangle wTriangle) {
+        protected void assign(Polygon triangle) {
             if (isSplit) {
                 for (Node node : quarters) {
-                    if (node.ownBox.intersects(wTriangle.triFlat)) {
-                        node.assign(wTriangle);
+                    if (node.ownBox.intersects(triangle)) {
+                        node.assign(triangle);
                     }
                 }
 //                int qc = 0, lq = 0;
@@ -57,21 +61,20 @@ public class QTree {
 //                }
                 return;
             }
-            containment.add(wTriangle);
-            if (depth < MAXIMAL_DEPTH && containment.size() >= CONTAINMENT_THRESHOLD) { //TODO somewhere over-density should be checked. Is max depth ok?
+            containment.add(triangle);
+            if (depth < MAXIMAL_DEPTH && containment.size() >= CONTAINMENT_THRESHOLD) { //FIXME somewhere over-density should be checked in proper way. Max depth is not ok
                 split();
                 containment.forEach(this::assign);
                 containment.clear();
             }
-//            if (depth == MAXIMAL_DEPTH) System.err.println("got maximal depth"); //FIXME
+//            if (depth == MAXIMAL_DEPTH) System.err.println("got maximal depth");
         }
 
-        protected ArrayList<WrappedTriangle> query(Vec3D p) {
-            assert p.getComponent(1) == 0f : "query point should lay in XZ surface"; //TODO test and remove
+        protected ArrayList<Polygon> query(double x, double z) {
             if (isSplit) {
                 for (Node node : quarters) {
-                    if (node.ownBox.containsPoint(p)) {
-                        return node.query(p);
+                    if (node.ownBox.contains(x, z)) {
+                        return node.query(x, z);
                     }
                 }
             } else {
@@ -81,7 +84,7 @@ public class QTree {
         }
 
         @Override
-        public String toString(){
+        public String toString() {
 //            StringBuilder sb = new StringBuilder();
 //            for (int i = 0; i < depth; i++) sb.append(" ");
 //            if (isSplit) {
@@ -99,7 +102,7 @@ public class QTree {
                 sb.append("splits:\n");
                 for (Node node : quarters) sb.append(node.toString());
             } else {
-                sb.append("represents: ").append(FlatUtils.toString(ownBox)).append('\n');
+                sb.append("represents: ").append(ownBox).append('\n');
             }
             return sb.toString();
 //            StringBuilder sb = new StringBuilder();
@@ -115,7 +118,7 @@ public class QTree {
 //            return sb.toString();
         }
 
-        protected int cnt(){
+        protected int cnt() {
             int ans = 0;
             if (isSplit) {
                 for (Node node : quarters) {
@@ -129,27 +132,39 @@ public class QTree {
     }
 
     private final Node root;
+    private final BaseMesh mesh;
 
-    public QTree(Box coverageArea, int CONTAINMENT_THRESHOLD, int MAXIMAL_DEPTH) {
+    public QTree(BaseMesh mesh, int CONTAINMENT_THRESHOLD, int MAXIMAL_DEPTH) {
         this.CONTAINMENT_THRESHOLD = CONTAINMENT_THRESHOLD;
         this.MAXIMAL_DEPTH = MAXIMAL_DEPTH;
-        root = new Node(coverageArea);
+        this.mesh = mesh;
+        root = new Node(mesh.boxXZ);
+        mesh.trianglesXZ.forEach(root::assign);
     }
 
-    public QTree(Box coverageArea) {
-        this(coverageArea, 10, 10);
+    public QTree(BaseMesh mesh) {
+        this(mesh, 10, 10); //TODO research this constants in browser. Depends on fixing QTree redundancy
     }
 
-    public void add(WrappedTriangle wTri){
-        root.assign(wTri);
-    }
-
-    public ArrayList<WrappedTriangle> query(Vec3D p) {
-        return root.query(p);
+    public double query(Coordinate point) {
+        ArrayList<Polygon> list = root.query(point.x, point.y);
+        assert list.size() != 0 : "Queried non-covered with mesh point, or an error occurred in QTree: queried list is empty";
+        Point geometryPoint = gf.createPoint(point);
+        Polygon response = null;
+        for (Polygon triangle : list) {
+            if (triangle.covers(geometryPoint)) {
+                response = triangle;
+                break;
+            }
+        }
+        if (response == null) throw new RuntimeException("An error seems to be occurred in QTree");
+        Mesh.Triplet t = mesh.faceIndices.get((Integer) response.getUserData());
+        double A = mesh.vertexesY.get(t.a), B = mesh.vertexesY.get(t.b), C = mesh.vertexesY.get(t.c);
+        return BarycentricCoordinate.fromCartesian2D(point, response).getWeightedHeightIn3D(A, B, C);
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         System.out.println("generating string view...");
         return "Tree view, note CONT_THR is " + CONTAINMENT_THRESHOLD + " and MAX_DPTH is " + MAXIMAL_DEPTH + "\n" +
                 "main box is: " + root.ownBox.toString() + '\n' +
