@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane id="AnchorPane" fx:id="ap" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="612.0" prefWidth="844.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="MainApp">
+<AnchorPane id="AnchorPane" fx:id="ap" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="860.0" prefWidth="1183.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="MainApp">
   <children>
     <GridPane hgap="10.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" vgap="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <children>
@@ -22,14 +22,15 @@
         <CheckBox fx:id="original_ch_b" mnemonicParsing="false" onAction="#onShowOriginalCHBAction" text="Show original" GridPane.columnIndex="0" GridPane.columnSpan="1" GridPane.halignment="LEFT" GridPane.rowIndex="2" />
         <FlowPane columnHalignment="CENTER" depthTest="INHERIT" orientation="HORIZONTAL" prefHeight="200.0" prefWidth="200.0" rowValignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="2">
           <children>
-            <Button onAction="#onBtnEdgesClick" fx:id="btn_edges" mnemonicParsing="false" text="Detect Edge" />
-            <Button onAction="#onBtnLinesClick" fx:id="btn_lines" mnemonicParsing="false" text="Connect Lines">
+            <Button fx:id="btn_edges" mnemonicParsing="false" onAction="#onBtnEdgesClick" text="Detect Edge" />
+            <Button fx:id="btn_lines" mnemonicParsing="false" onAction="#onBtnLinesClick" text="Connect Lines">
               <FlowPane.margin>
                 <Insets left="10.0" fx:id="x1" />
               </FlowPane.margin>
             </Button>
-            <Button onAction="#onBtnGraphClick" fx:id="btn_graph" mnemonicParsing="false" text="Build Graph" FlowPane.margin="$x1" />
-            <Button onAction="#onBtnInterpolateClick" fx:id="btn_interpolate" maxWidth="-1.0" mnemonicParsing="false" text="Interpolate" FlowPane.margin="$x1" />
+            <Button fx:id="btn_graph" mnemonicParsing="false" onAction="#onBtnGraphClick" text="Build Graph" FlowPane.margin="$x1" />
+            <Button fx:id="btn_interpolate" maxWidth="-1.0" mnemonicParsing="false" onAction="#onBtnInterpolateClick" text="Interpolate" FlowPane.margin="$x1" />
+            <Button fx:id="texBtn" mnemonicParsing="false" text="Write Texture" FlowPane.margin="$x1" onAction="#onTextureGenereateClick"/>
           </children>
         </FlowPane>
       </children>
@@ -43,10 +44,10 @@
       <rowConstraints>
         <RowConstraints maxHeight="22.0" minHeight="-Infinity" prefHeight="22.0" vgrow="NEVER" />
         <RowConstraints maxHeight="0.0" prefHeight="0.0" vgrow="NEVER" />
-        <RowConstraints maxHeight="15.0" minHeight="-Infinity" prefHeight="15.0" vgrow="NEVER" />
-        <RowConstraints maxHeight="1.0" prefHeight="1.0" vgrow="NEVER" />
-        <RowConstraints maxHeight="16.0" minHeight="-Infinity" prefHeight="16.0" vgrow="NEVER" />
-        <RowConstraints maxHeight="513.0" minHeight="10.0" prefHeight="513.0" vgrow="ALWAYS" />
+        <RowConstraints maxHeight="22.0" minHeight="-Infinity" prefHeight="22.0" vgrow="NEVER" />
+        <RowConstraints maxHeight="-1.0" prefHeight="-1.0" vgrow="NEVER" />
+        <RowConstraints maxHeight="22.0" minHeight="-Infinity" prefHeight="22.0" vgrow="NEVER" />
+        <RowConstraints maxHeight="-1.0" minHeight="10.0" prefHeight="-1.0" valignment="TOP" vgrow="ALWAYS" />
       </rowConstraints>
     </GridPane>
   </children>

@@ -1,6 +1,7 @@
 package Utils;
 
 import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.LineSegment;
 
 /**
  * Class for easy converting double coordinates to cell's row and column indexes
@@ -13,6 +14,15 @@ public class PointRasterizer {
     private double y_mult;
     private int x_last_index;
     private int y_last_index;
+
+    public PointRasterizer(int x_cells, int y_cells, Envelope envelope) {
+        x_addition = -envelope.getMinX();
+        y_addition = -envelope.getMinY();
+        x_mult = x_cells/envelope.getWidth();
+        y_mult = y_cells/envelope.getHeight();
+        this.x_last_index = x_cells-1;
+        this.y_last_index = y_cells-1;
+    }
 
     public PointRasterizer(double cellSize, Envelope envelope) {
         int x_cells = (int)Math.ceil(envelope.getWidth()/cellSize);
@@ -47,30 +57,16 @@ public class PointRasterizer {
         return ret;
     }
 
+    public void rasterize(double[][] buf, LineSegment ls, double color) {
+        RasterUtils.rasterizeline(buf, toRow(ls.p0.y), toColumn(ls.p0.x), toRow(ls.p1.y), toColumn(ls.p1.x), color );
+    }
+
     public double toX(int column) {
         return ((double)(column+0.5)/x_mult)-x_addition;
     }
 
     public double toY(int row) {
         return ((double)(row+0.5)/y_mult)-y_addition;
-    }
-
-    public void flush(double[][] target, double value) {
-        int columns_number = target[0].length;
-        for (int row = 0; row != target.length; ++row) {
-            for (int column = 0; column != columns_number; ++column) {
-                target[row][column] = value;
-            }
-        }
-    }
-
-    public void flush(int[][] target, int value) {
-        int columns_number = target[0].length;
-        for (int row = 0; row != target.length; ++row) {
-            for (int column = 0; column != columns_number; ++column) {
-                target[row][column] = value;
-            }
-        }
     }
 
 
@@ -84,13 +80,13 @@ public class PointRasterizer {
 
     public double[][] createDoubleBuffer(double initValue) {
         double[][] buf = new double[getRowCount()][getColumnCount()];
-        flush(buf,initValue);
+        RasterUtils.flush(buf,initValue);
         return buf;
     }
 
     public int[][] createIntBuffer(int initValue) {
         int[][] buf = new int[getRowCount()][getColumnCount()];
-        flush(buf,initValue);
+        RasterUtils.flush(buf,initValue);
         return buf;
     }
 

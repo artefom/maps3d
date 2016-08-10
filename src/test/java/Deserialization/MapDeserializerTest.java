@@ -8,7 +8,7 @@ public class MapDeserializerTest {
 //    @Test
 //    public void mapDeserializeTest() throws Exception {
 //
-//        OcadDeserialization d = new OcadDeserialization();
+//        DeserializedOCAD d = new DeserializedOCAD();
 //
 //        d.DeserializeMap("C:\\Users\\artefom_w10\\Desktop\\ocad_converter\\sample.ocd");
 //

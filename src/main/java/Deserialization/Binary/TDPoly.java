@@ -47,6 +47,14 @@ public class TDPoly {
         return (y >> 4) / Constants.map_scale_factor;
     }
 
+    public int getXOriginal() {
+        return x >> 4;
+    }
+
+    public int getYOriginal() {
+        return y >> 4;
+    }
+
     public boolean isNull() {
         return x == 0 && y == 0;
     }
@@ -56,19 +64,44 @@ public class TDPoly {
     }
 
     public boolean isBezier() {
-        if ( (getFlags() & (BEZIER_FIRST | BEZIER_SECOND)) != 0) return true;
-        return false;
+        return (getFlags() & (BEZIER_FIRST | BEZIER_SECOND)) != 0;
     }
 
     public boolean isConner() {
-        if ( (getFlags() & (CONNER)) != 0) return true;
-        return false;
+        return (getFlags() & (CONNER)) != 0;
     }
 
     public boolean isDash() {
-        if ( (getFlags() & (IS_DASH)) != 0) return true;
-        return false;
+        return (getFlags() & (IS_DASH)) != 0;
     }
 
+    public boolean isEmptyLeft() {
+        return (getFlags() & (EMPTY_LEFT)) != 0;
+    }
 
+    public boolean isEmptyRight() {
+        return (getFlags() & (EMPTY_RIGHT)) != 0;
+    }
+
+    public boolean isAreaBorder() {
+        return (getFlags() & (AREA_BORDER)) != 0;
+    }
+
+    public boolean isHoleFirst() {
+        return (getFlags() & (HOLE_FIRST)) != 0;
+    }
+
+    @Override
+    public String toString() {
+        String flags = "";
+        if (isNull()) flags += "Null ";
+        if (isBezier()) flags += "Bezier ";
+        if (isConner()) flags += "Conner ";
+        if (isDash()) flags += "Dash ";
+        if (isEmptyLeft()) flags += "EmptyLeft ";
+        if (isEmptyRight()) flags += "EmptyRight ";
+        if (isAreaBorder()) flags += "AreaBorder ";
+        if (isHoleFirst()) flags += "HoleFirst ";
+        return "TDPoly( "+getXOriginal()+";"+getYOriginal()+"; " + flags + ")";
+    }
 }

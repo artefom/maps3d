@@ -50,6 +50,7 @@ public class MainApp extends Application implements Initializable {
     @FXML protected Button btn_lines;
     @FXML protected Button btn_graph;
     @FXML protected Button btn_interpolate;
+    @FXML protected Button texBtn;
 
 
     private MainController mc;
@@ -248,6 +249,9 @@ public class MainApp extends Application implements Initializable {
         render();
     }
 
+    @FXML void onTextureGenereateClick() {
+        mc.generateTexture("texture");
+    }
 
 
     @Override

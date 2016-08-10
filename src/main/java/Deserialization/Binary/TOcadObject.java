@@ -1,8 +1,16 @@
 package Deserialization.Binary;
 
+import Deserialization.Interpolation.CurveString;
+import Utils.Constants;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.LinearRing;
+
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Artem on 21.07.2016.
@@ -51,6 +59,48 @@ public class TOcadObject extends ByteDeserializable {
         if (Sym == 103000) return 1;
         if (Sym == 106001 || Sym == 106000 || Sym == 106006) return 4;
         return -1;
+    }
+
+    public Geometry getGeometry(GeometryFactory gf) throws Exception {
+
+        // Split into circles, if succeeded, means that it's polygon
+
+        if (Otp == 3) {// Area object
+            List<LinearRing> rings = new ArrayList<>();
+            List<TDPoly> poly = new ArrayList<>();
+            for (TDPoly p : Poly) {
+                if (!p.isHoleFirst()) {
+                    poly.add(p);
+                } else {
+                    if (poly.size() >= 4) {
+                        poly.add(poly.get(0));
+                        try {
+                            LinearRing r = gf.createLinearRing(CurveString.fromTDPoly(poly).getCoordinateSequence(Constants.DESERIALIZATION_BEZIER_STEP, gf));
+                            rings.add(r);
+                        } catch (Exception ex) {
+                            System.out.println("ERROR: "+ex.getMessage());
+                            throw new Exception(ex.getMessage());
+                        }
+                    }
+                    poly.clear();
+                    poly.add(p);
+                }
+            }
+            if (poly.size() >= 4) {
+                poly.add(poly.get(0));
+                try {
+                    LinearRing r = gf.createLinearRing(CurveString.fromTDPoly(poly).getCoordinateSequence(Constants.DESERIALIZATION_BEZIER_STEP, gf));
+                    rings.add(r);
+                } catch (Exception ex) {
+                    System.out.println("ERROR: "+ex.getMessage());
+                    throw new Exception(ex.getMessage());
+                }
+            }
+
+            return gf.createGeometryCollection(rings.toArray(new LinearRing[rings.size()]));
+        } else {
+            return null;
+        }
     }
 
     @byteoffset( offset = 0)
