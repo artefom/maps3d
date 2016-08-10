@@ -2,7 +2,6 @@
  * Created by Artyom.Fomenko on 15.07.2016.
  */
 
-import Algorithm.Interpolation.DistanceFieldInterpolation;
 import Display.Drawer;
 import Display.GeometryWrapper;
 import Display.Renderer;
@@ -120,9 +119,9 @@ public class MainApp extends Application implements Initializable {
         if (f != null) {
             try {
                 mc.openFile(f);
-                statusText.setText("Added " + mc.IsolineCount() + " isolines. Bbox: " + mc.ic.getEnvelope());
-                originalContainer = new IsolineContainer(mc.ic);
-                displayedContainer = mc.ic;
+                statusText.setText("Added " + mc.IsolineCount() + " isolines. Bbox: " + mc.isolineContainer.getEnvelope());
+                originalContainer = new IsolineContainer(mc.isolineContainer);
+                displayedContainer = mc.isolineContainer;
                 redraw();
                 renderer.Fit();
                 render();
@@ -206,7 +205,7 @@ public class MainApp extends Application implements Initializable {
         if (original_ch_b.isSelected()) {
             displayedContainer = originalContainer;
         } else {
-            displayedContainer = mc.ic;
+            displayedContainer = mc.isolineContainer;
         }
         redraw();
         render();
@@ -232,7 +231,7 @@ public class MainApp extends Application implements Initializable {
     @FXML void onBtnLinesClick() {
         mc.connectLines();
         if (!original_ch_b.isSelected())
-            displayedContainer = mc.ic;
+            displayedContainer = mc.isolineContainer;
         redraw();
         render();
     }

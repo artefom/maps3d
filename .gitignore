@@ -16,3 +16,8 @@ hs_err_pid*
 
 # idea
 /.idea/*
+
+# sample output
+sample*.obj
+sample*.png
+sample*.txt

@@ -1,13 +1,16 @@
 package Algorithm.Interpolation;
 
-import Utils.*;
+import Utils.Constants;
+import Utils.GeomUtils;
+import Utils.RasterUtils;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.triangulate.DelaunayTriangulationBuilder;
-import javafx.scene.canvas.Canvas;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by Artyom.Fomenko on 05.08.2016.
@@ -19,6 +22,9 @@ public class Triangulation {
     public Triangulation(double[][] heightmap, double[][] sobel) {
         this.sobel = sobel;
         this.heightmap = heightmap;
+    }
+    public Triangulation(double[][] heightmap) {
+        this(heightmap, RasterUtils.sobel( RasterUtils.sobel(heightmap) ));
     }
 
     class Cell {
@@ -210,7 +216,28 @@ public class Triangulation {
         return ret;
     }
 
-    public void writeToFile(String path) {
+
+    /** @see #getMeshVertexes() */
+    private Coordinate[] coord_array = null;
+    /**
+     * vertexes of mesh
+     * XYZ of {@link Coordinate} are actually containing XZY
+     */
+    public Coordinate[] getMeshVertexes(){
+        if (tris == null) makeMesh();
+        return coord_array;
+    }
+
+    /** @see #getTrianglesIndices() */
+    private List<int[]> tris = null;
+    /**
+     * triangles, representing mesh by 0-indices in {@link #getTrianglesIndices()}
+     */
+    public List<int[]> getTrianglesIndices() {
+        return tris;
+    }
+
+    private void makeMesh(){
         List<Coordinate> points = ScatterPoints(15);
 
         GeometryFactory gf = new GeometryFactory();
@@ -227,7 +254,7 @@ public class Triangulation {
         HashMap<Coordinate,Integer> coordinates = new HashMap<>();
 
         // sequences of coordinate indexes
-        List<int[]> tris = new ArrayList<>();
+        tris = new ArrayList<>();
 
         // Convert geometry to coordinates and triangles
         for (int i = 0; i != triangles.getNumGeometries(); ++i) {
@@ -244,15 +271,8 @@ public class Triangulation {
             tris.add(tri);
         }
 
-        PrintWriter out;
-        try {
-            out = new PrintWriter(path+".obj");
-        } catch (FileNotFoundException ex){
-            throw new RuntimeException("Could not save " + path + ".obj");
-        }
-
         // Convert hashmap to array
-        Coordinate[] coord_array = new Coordinate[last_index+1];
+        coord_array = new Coordinate[last_index+1];
         coordinates.forEach((c,i)->coord_array[i]=c);
 
         // Normalize coordinates. So map is 0-centered and scaled properly
@@ -261,6 +281,16 @@ public class Triangulation {
             coord_array[i].x = (coord_array[i].x-(envelope.getMaxX()-envelope.getMinX())*0.5)*Constants.INTERPOLATION_STEP;
             // Invert y, so map not looks mirrored.
             coord_array[i].y = -(coord_array[i].y-(envelope.getMaxY()-envelope.getMinY())*0.5)*Constants.INTERPOLATION_STEP;
+        }
+    }
+
+    public void writeToFile(String path) {
+        if (coord_array == null) makeMesh();
+        PrintWriter out;
+        try {
+            out = new PrintWriter(path+".obj");
+        } catch (FileNotFoundException ex){
+            throw new RuntimeException("Could not save " + path + ".obj");
         }
 
         // Write vertexes
