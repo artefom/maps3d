@@ -5,13 +5,15 @@ import Algorithm.LineConnection.MapEdge;
 import Algorithm.NearbyGraph.NearbyContainer;
 import Algorithm.NearbyGraph.NearbyEstimator;
 import Algorithm.NearbyGraph.NearbyGraphWrapper;
+import Algorithm.Texture.TextureGenerator;
 import Deserialization.Interpolation.SlopeMark;
-import Deserialization.OcadDeserialization;
+import Deserialization.DeserializedOCAD;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
 import Utils.CommandLineUtils;
 import Utils.Constants;
 import Utils.OutputUtils;
+import Utils.PointRasterizer;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
@@ -32,6 +34,7 @@ public class MainController {
     public DistanceFieldInterpolation interpolation;
     public Triangulation triangulation;
 //    public Index index;
+    DeserializedOCAD deserializedOCAD;
 
     public MapEdge edge;
 
@@ -69,12 +72,12 @@ public class MainController {
 //    }
 
     public void openFile(File f) throws Exception {
-        OcadDeserialization dser = new OcadDeserialization();
-        dser.DeserializeMap(f.getPath());
-        ArrayList<IIsoline> isos = dser.toIsolines(1,gf);
+        deserializedOCAD = new DeserializedOCAD();
+        deserializedOCAD.DeserializeMap(f.getPath());
+        ArrayList<IIsoline> isos = deserializedOCAD.toIsolines(1,gf);
         slopeMarks = new ArrayList<>();
         isos.forEach(isolineContainer::add);
-        dser.slopeMarks.forEach(slopeMarks::add);
+        deserializedOCAD.slopeMarks.forEach(slopeMarks::add);
         System.out.println(("Added " + IsolineCount() + " isolines, bounding box: " + isolineContainer.getEnvelope()));
         CommandLineUtils.report();
     }
@@ -130,5 +133,11 @@ public class MainController {
 //        index = new Index(interpolation.getAllInterpolatingPoints());
 //        CommandLineUtils.report();
     }
+
+    public void generateTexture(String output_path) {
+        TextureGenerator gen = new TextureGenerator(deserializedOCAD);
+        gen.writeToFile("texture",new PointRasterizer(0.1,isolineContainer.getEnvelope()));
+    }
+
 
 }
