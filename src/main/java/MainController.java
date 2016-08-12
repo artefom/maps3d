@@ -136,7 +136,7 @@ public class MainController {
 
     public void generateTexture(String output_path) {
         TextureGenerator gen = new TextureGenerator(deserializedOCAD);
-        gen.writeToFile("texture",new PointRasterizer(0.1,isolineContainer.getEnvelope()));
+        gen.writeToFile("sample_texture",new PointRasterizer(0.1,isolineContainer.getEnvelope()));
     }
 
 

@@ -1,0 +1,8 @@
+{
+  "name" : "background",
+  "symbol_ids" : "-1",
+  "z_index" : -1,
+  "filled" : true,
+  "color" : "255, 255, 255"
+
+}

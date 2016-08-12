@@ -1,0 +1,8 @@
+{
+  "name" : "water",
+  "symbol_ids" : "309000,310000,311000",
+  "z_index" : 1,
+  "mask_blur" : 5,
+  "filled" : true,
+  "color" : "100, 100, 255"
+}
