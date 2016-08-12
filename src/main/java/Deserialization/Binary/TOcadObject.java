@@ -2,10 +2,7 @@ package Deserialization.Binary;
 
 import Deserialization.Interpolation.CurveString;
 import Utils.Constants;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.LinearRing;
+import com.vividsolutions.jts.geom.*;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
@@ -66,8 +63,8 @@ public class TOcadObject extends ByteDeserializable {
         // Split into circles, if succeeded, means that it's polygon
 
         if (Otp == 3) {// Area object
-            List<LinearRing> rings = new ArrayList<>();
-            List<TDPoly> poly = new ArrayList<>();
+            ArrayList<LinearRing> rings = new ArrayList<>();
+            ArrayList<TDPoly> poly = new ArrayList<>();
             for (TDPoly p : Poly) {
                 if (!p.isHoleFirst()) {
                     poly.add(p);
@@ -96,8 +93,13 @@ public class TOcadObject extends ByteDeserializable {
                     throw new Exception(ex.getMessage());
                 }
             }
-
-            return gf.createGeometryCollection(rings.toArray(new LinearRing[rings.size()]));
+            // Rings gathered. Now transform them into polygon
+            if (rings.size() > 1) {
+                return gf.createPolygon(rings.get(0),rings.subList(1,rings.size()).toArray(new LinearRing[rings.size()-1]));
+            } else if (rings.size() == 1) {
+                return gf.createPolygon(rings.get(0));
+            };
+            return null;
         } else {
             return null;
         }

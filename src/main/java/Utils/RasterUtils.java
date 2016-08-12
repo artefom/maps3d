@@ -1,6 +1,8 @@
 package Utils;
 
 import Isolines.IIsoline;
+import com.vividsolutions.jts.algorithm.InteriorPointArea;
+import com.vividsolutions.jts.geom.*;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -8,6 +10,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Created by Artyom.Fomenko on 05.08.2016.
@@ -54,7 +59,40 @@ public class RasterUtils {
         }
     }
 
-    public static void flush(double[][] target, double value) {
+    public static void applyAlong(Consumer<Pair<Integer,Integer>> cons, int x, int y, int x2, int y2) {
+        int w = x2 - x ;
+        int h = y2 - y ;
+        int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0 ;
+        if (w<0) dx1 = -1 ; else if (w>0) dx1 = 1 ;
+        if (h<0) dy1 = -1 ; else if (h>0) dy1 = 1 ;
+        if (w<0) dx2 = -1 ; else if (w>0) dx2 = 1 ;
+        int longest = Math.abs(w) ;
+        int shortest = Math.abs(h) ;
+        if (!(longest>shortest)) {
+            longest = Math.abs(h) ;
+            shortest = Math.abs(w) ;
+            if (h<0) dy2 = -1 ; else if (h>0) dy2 = 1 ;
+            dx2 = 0 ;
+        }
+        int numerator = longest >> 1 ;
+        Pair<Integer,Integer> consumerPair = new Pair<>(0,0);
+        for (int i=0;i<=longest;i++) {
+            consumerPair.v1 = x;
+            consumerPair.v2 = y;
+            cons.accept(consumerPair);
+            numerator += shortest ;
+            if (!(numerator<longest)) {
+                numerator -= longest ;
+                x += dx1 ;
+                y += dy1 ;
+            } else {
+                x += dx2 ;
+                y += dy2 ;
+            }
+        }
+    }
+
+        public static void flush(double[][] target, double value) {
         int columns_number = target[0].length;
         for (int row = 0; row != target.length; ++row) {
             for (int column = 0; column != columns_number; ++column) {

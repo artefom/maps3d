@@ -1,7 +1,10 @@
 {
   "name" : "gound",
   "symbol_id" : 450000,
+
   "fill" : {
-    "texture" : "sample_gray.jpg"
+    "texture" : "sample_gray.jpg",
+    "color" : "50, 50, 50"
   }
+
 }

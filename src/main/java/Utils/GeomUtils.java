@@ -1,10 +1,12 @@
 package Utils;
 
+import Deserialization.Interpolation.Line;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -101,6 +103,69 @@ public class GeomUtils {
             }
         }
         return closest_point;
+    }
+
+    public static Coordinate getInteriorPoint(Polygon p) {
+        Envelope e = p.getEnvelopeInternal();
+        LineSegment bisector = new LineSegment(new Coordinate(e.getMinX(),(e.getMinY()+e.getMaxY())*0.5), new Coordinate(e.getMaxX(),(e.getMinY()+e.getMaxY())*0.5));
+
+        List<Double> intersectionPoints = getAllIntersectionProjectionFactors(bisector,p.getExteriorRing(),0,1);
+        for (int i = 0; i != p.getNumInteriorRing(); ++i) {
+            intersectionPoints.addAll( getAllIntersectionProjectionFactors(bisector,p.getInteriorRingN(i),0,1) );
+        }
+        intersectionPoints.sort((lhs,rhs)->Double.compare(lhs,rhs));
+        if (intersectionPoints.size()%2 != 0) throw new RuntimeException("Invalid polygon");
+        double maxDist = 0;
+        double pfactor1 = 0;
+        double pfactor2 = 0;
+        for (int i = 0; i < intersectionPoints.size(); i+=2) {
+            double projFactor1 = intersectionPoints.get(i);
+            double projFactor2 = intersectionPoints.get(i+1);
+            double dist = projFactor2-projFactor1;
+            if (dist > maxDist) {
+                maxDist = dist;
+                pfactor1 = projFactor1;
+                pfactor2 = projFactor2;
+            }
+        }
+        return bisector.pointAlong((pfactor1+pfactor2)*0.5);
+    }
+
+    public static List<Double> getAllIntersectionProjectionFactors(LineSegment vec, LineString ls, double min, double max) {
+        double x0 = vec.p0.x;
+        double y0 = vec.p0.y;
+        double vx = vec.p1.x-x0;
+        double vy = vec.p1.y-y0;
+        double a;
+        double b;
+        double c;
+        double t;
+        int side;
+        int prev_side;
+        Coordinate coord1;
+        Coordinate coord2;
+        Coordinate[] ls_coords;
+        List<Double> result = new ArrayList<>();
+
+        /*TEST FOR INTERSECTION WITH LINE STRING*/
+
+        ls_coords = ls.getCoordinates();
+        coord1 = ls_coords[0];
+        prev_side = getSide(vec,coord1);
+        for (int i = 1; i < ls_coords.length; ++i) {
+            coord2 = ls_coords[i];
+            side = getSide(vec,coord2);
+            if (prev_side != side) {
+                a = coord1.y-coord2.y;
+                b = coord2.x-coord1.x;
+                c = coord1.x*coord2.y-coord2.x*coord1.y;
+                t = -(c+a*x0+b*y0)/(a*vx+b*vy);
+                result.add(t);
+            }
+            prev_side = side;
+            coord1 = coord2;
+        }
+        return result;
     }
 
     public static double clamp(double val, double from, double to) {
