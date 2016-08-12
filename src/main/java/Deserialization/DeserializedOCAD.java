@@ -145,4 +145,18 @@ public class DeserializedOCAD {
         return ret;
     }
 
+    public List<TOcadObject> getObjectsByIDs(List<Integer> symbol_ids) {
+        List<TOcadObject> ret = new ArrayList<TOcadObject>();
+        for (TOcadObject obj : objects) {
+            for (int i = 0; i != symbol_ids.size(); ++i) {
+                if ( obj.Sym == symbol_ids.get(i) ) {
+                    ret.add(obj);
+                    break;
+                }
+            }
+        }
+        return ret;
+    }
+
+
 }

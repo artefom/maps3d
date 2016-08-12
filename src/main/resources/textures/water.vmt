@@ -1,9 +1,8 @@
 {
   "name" : "water",
-  "symbol_id" : 301000,
-
-  "fill" : {
-    "texture" : "sample_orange.jpg",
-    "color" : "0, 0, 255"
-  }
+  "symbol_ids" : "301000,305000,306000,308000",
+  "z_index" : 1,
+  "mask_blur" : 5,
+  "filled" : true,
+  "color" : "0, 0, 255"
 }

@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 
 /**
  * Created by fdl on 8/10/16.
@@ -73,5 +74,15 @@ public class OutputUtils {
             throw new RuntimeException("Could not save " + name + ".png");
         }
         CommandLineUtils.report(" file dumped");
+    }
+
+    public static String getExtension(String fpath) {
+        String extension = "";
+        int i = fpath.lastIndexOf('.');
+        int p = Math.max(fpath.lastIndexOf('/'), fpath.lastIndexOf('\\'));
+        if (i > p) {
+            extension = fpath.substring(i+1);
+        }
+        return extension;
     }
 }

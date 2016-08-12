@@ -192,7 +192,7 @@ public class PointRasterizer {
         }
     }
 
-    private void fillPrepass(int[][] buf, Polygon p) {
+    public void fillPrepass(short[][] buf, Polygon p) {
         LineString exteriorRing = (LineString)p.getExteriorRing().reverse();
         fillPrepassRing(buf,exteriorRing,false);
         for (int i = 0; i != p.getNumInteriorRing(); ++i) {
@@ -201,7 +201,7 @@ public class PointRasterizer {
         }
     }
 
-    private void fillPrepassRing(int[][] buf, LineString ring, boolean hole) {
+    public void fillPrepassRing(short[][] buf, LineString ring, boolean hole) {
 
         final int mult = ( (CGAlgorithms.signedArea(ring.getCoordinateSequence()) < 0) ^ hole ? -1 : 1);
 
@@ -231,39 +231,39 @@ public class PointRasterizer {
         }
     }
 
-    private void fillFinalPass(double[][] buf, int[][] mask, double insideColor) {
+    private void fillFinalPass(float[][] buf, short[][] mask, float insideColor) {
         for (int row = 0; row != getRowCount(); ++row) {
             int counter = 0;
             for (int column = 0; column != getColumnCount(); ++column) {
                 if (mask[row][column] > 0)
                     counter+=mask[row][column];
-                if (counter != 0) buf[row][column] = 1;
+                if (counter != 0) buf[row][column] = insideColor;
                 if (mask[row][column] < 0)
                     counter+=mask[row][column];
             }
         }
     }
 
-    public void fillPolygons(double[][] buf, List<Polygon> polygons, double color) {
+    public void fillPolygons(float[][] buf, List<Polygon> polygons, float color) {
 
-        int[][] mask = createIntBuffer();
+        short[][] mask = createShortBuffer();
         for (Polygon p : polygons) {
             fillPrepass(mask,p);
         }
         fillFinalPass(buf,mask,color);
     }
 
-    public void fillPolygons(double[][] buf, Geometry polygons, double color) {
+    public void fillPolygons(float[][] buf, Geometry polygons, float color) {
 
-        int[][] mask = createIntBuffer();
+        short[][] mask = createShortBuffer();
         for (int i = 0; i != polygons.getNumGeometries(); ++i) {
             Polygon p = (Polygon)polygons.getGeometryN(i);
             fillPrepass(mask,p);
         }
-        //fillFinalPass(buf,mask,color);
+        fillFinalPass(buf,mask,color);
     }
 
-    public void putPoint(double[][] buf, Coordinate p, double color) {
+    public void putPoint(float[][] buf, Coordinate p, float color) {
         int column = toColumn(p.x);
         int row = toRow(p.y);
         if (column < 0 || column >= getColumnCount()) return;
@@ -298,8 +298,23 @@ public class PointRasterizer {
         return buf;
     }
 
+    public float[][] createFloatBuffer() {
+        return new float[getRowCount()][getColumnCount()];
+    }
+
     public int[][] createIntBuffer(int initValue) {
         int[][] buf = new int[getRowCount()][getColumnCount()];
+        RasterUtils.flush(buf,initValue);
+        return buf;
+    }
+
+
+    public short[][] createShortBuffer() {
+        return new  short[getRowCount()][getColumnCount()];
+    }
+
+    public short[][] createShortBuffer(short initValue) {
+        short[][] buf = new short[getRowCount()][getColumnCount()];
         RasterUtils.flush(buf,initValue);
         return buf;
     }

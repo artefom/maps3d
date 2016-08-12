@@ -100,6 +100,9 @@ public class TOcadObject extends ByteDeserializable {
                 return gf.createPolygon(rings.get(0));
             };
             return null;
+        } else if (Otp == 2) { // Line Object
+            CurveString cs = CurveString.fromTDPoly(Poly);
+            return cs.interpolate(Constants.DRAWING_INTERPOLATION_STEP,gf);
         } else {
             return null;
         }
