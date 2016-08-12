@@ -1,23 +1,26 @@
-import Algorithm.LineConnection.MapEdge;
 import Algorithm.Interpolation.DistanceFieldInterpolation;
-import Algorithm.Interpolation.Serializer;
+import Algorithm.Interpolation.Triangulation;
 import Algorithm.LineConnection.LineWelder;
+import Algorithm.LineConnection.MapEdge;
 import Algorithm.NearbyGraph.NearbyContainer;
 import Algorithm.NearbyGraph.NearbyEstimator;
 import Algorithm.NearbyGraph.NearbyGraphWrapper;
 import Algorithm.Texture.TextureGenerator;
+import Deserialization.Interpolation.SlopeMark;
 import Deserialization.DeserializedOCAD;
+import Isolines.IIsoline;
 import Isolines.IsolineContainer;
+import Utils.CommandLineUtils;
+import Utils.Constants;
+import Utils.OutputUtils;
+import Utils.PointRasterizer;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.Point;
 
-import java.io.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.stream.Stream;
-
-import Isolines.*;
-import Deserialization.Interpolation.SlopeMark;
-import Utils.Constants;
-import Utils.PointRasterizer;
-import com.vividsolutions.jts.geom.*;
 
 /**
  * Created by Artyom.Fomenko on 15.07.2016.
@@ -27,18 +30,19 @@ public class MainController {
 
     private GeometryFactory gf;
 
-    public IsolineContainer ic;
-    public DistanceFieldInterpolation interp;
+    public IsolineContainer isolineContainer;
+    public DistanceFieldInterpolation interpolation;
+    public Triangulation triangulation;
+//    public Index index;
+    DeserializedOCAD deserializedOCAD;
 
     public MapEdge edge;
 
     public ArrayList<SlopeMark> slopeMarks;
 
-    public DeserializedOCAD dser;
-
     MainController() {
         gf = new GeometryFactory();
-        ic = new IsolineContainer(gf);
+        isolineContainer = new IsolineContainer(gf);
         edge = null;
     }
 
@@ -63,21 +67,23 @@ public class MainController {
 //            CoordinateSequence cs = gf.getCoordinateSequenceFactory().create(carr);
 //            Isoline is = new Isoline( type, side, cs, gf);
 //            id += 1;
-//            ic.add( is );
+//            isolineContainer.add( is );
 //        }
 //    }
 
     public void openFile(File f) throws Exception {
-        dser = new DeserializedOCAD();
-        dser.DeserializeMap(f.getPath());
-        ArrayList<IIsoline> isos = dser.toIsolines(1,gf);
+        deserializedOCAD = new DeserializedOCAD();
+        deserializedOCAD.DeserializeMap(f.getPath());
+        ArrayList<IIsoline> isos = deserializedOCAD.toIsolines(1,gf);
         slopeMarks = new ArrayList<>();
-        isos.forEach(ic::add);
-        dser.slopeMarks.forEach(slopeMarks::add);
+        isos.forEach(isolineContainer::add);
+        deserializedOCAD.slopeMarks.forEach(slopeMarks::add);
+        System.out.println(("Added " + IsolineCount() + " isolines, bounding box: " + isolineContainer.getEnvelope()));
+        CommandLineUtils.report();
     }
 
     public int IsolineCount() {
-        return ic.size();
+        return isolineContainer.size();
     }
 
     public Stream<IIsoline> getIsolinesInCircle(double x, double y, double radius, IsolineContainer ic) {
@@ -90,16 +96,18 @@ public class MainController {
     public void connectLines() {
         if (edge == null) return;
         LineWelder lw = new LineWelder(gf,edge);
-        //lw.WeldAll(ic);
-        ic = new IsolineContainer(gf,lw.WeldAll(ic));
+        //lw.WeldAll(isolineContainer);
+        isolineContainer = new IsolineContainer(gf,lw.WeldAll(isolineContainer));
+        CommandLineUtils.report();
     }
 
     public void detectEdge() {
-        edge = MapEdge.fromIsolines(ic, Constants.EDGE_CONCAVE_THRESHOLD);
+        edge = MapEdge.fromIsolines(isolineContainer, Constants.EDGE_CONCAVE_THRESHOLD);
+        CommandLineUtils.report();
     }
 
     public void buildGraph() {
-        NearbyContainer cont = new NearbyContainer(ic);
+        NearbyContainer cont = new NearbyContainer(isolineContainer);
         NearbyEstimator est = new NearbyEstimator(gf);
         NearbyGraphWrapper graph = new NearbyGraphWrapper(est.getRelationGraph(cont));
         graph.SetHillsSlopeSides();
@@ -107,18 +115,29 @@ public class MainController {
         graph.recoverAllSlopes();
         graph.recoverAllHeights();
         System.out.println("Graph built successfully");
+        CommandLineUtils.report();
     }
 
     public void interpolate() {
+        interpolation = new DistanceFieldInterpolation(isolineContainer);
+        double [][] heightmap = interpolation.getAllInterpolatingPoints();
+        OutputUtils.saveAsTXT(heightmap);
+        OutputUtils.saveAsPNG(heightmap);
 
-        Serializer interpolator = new Serializer(ic,1);
-        interpolator.writeDataToFile("heights");
+        triangulation = new Triangulation(heightmap);
+        OutputUtils.saveAsOBJ(triangulation);
+        CommandLineUtils.report();
+    }
 
+    public void buildIndex(){
+//        index = new Index(interpolation.getAllInterpolatingPoints());
+//        CommandLineUtils.report();
     }
 
     public void generateTexture(String output_path) {
-        TextureGenerator gen = new TextureGenerator(dser);
-        gen.writeToFile("texture",new PointRasterizer(0.1,ic.getEnvelope()));
+        TextureGenerator gen = new TextureGenerator(deserializedOCAD);
+        gen.writeToFile("texture",new PointRasterizer(0.1,isolineContainer.getEnvelope()));
     }
+
 
 }
