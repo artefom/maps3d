@@ -1,4 +1,4 @@
-package Deserialization.Interpolation;
+package Utils.Curves;
 
 import Deserialization.Binary.TDPoly;
 
@@ -10,6 +10,8 @@ import com.vividsolutions.jts.geom.LineString;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Artem on 22.07.2016.
@@ -82,11 +84,35 @@ public class CurveString {
         return gf.createLineString(resultCoords.toArray(new Coordinate[resultCoords.size()]));
     }
 
-
     public LineString interpolate(double step, GeometryFactory gf) {
         int steps = (int)Math.ceil(getLength()/step);
         if (steps < 4) steps = 4;
         return interpolate(steps,gf);
+    }
+
+    public static CurveString fromCoordinates(Coordinate[] coordinates) {
+        CurveString cs = new CurveString();
+        if (coordinates.length == 2) {
+            cs.curves.add(new Line(coordinates[0],coordinates[1]));
+            return cs;
+        }
+        if (coordinates.length == 3) {
+            cs.curves.add(new BezierCubicCurve(coordinates[0],coordinates[1],coordinates[2]));
+            return cs;
+        }
+        if ( coordinates.length % 3 != 1) return null;
+        for (int i = 0; i < (coordinates.length-1); i += 3) {
+            cs.curves.add(new BezierQuadraticCurve(
+                    coordinates[i],
+                    coordinates[i+1],
+                    coordinates[i+2],
+                    coordinates[i+3]));
+        }
+        return cs;
+    }
+
+    public static CurveString fromCoordinates(ArrayList<Coordinate> coordinates) {
+        return fromCoordinates(coordinates.toArray(new Coordinate[coordinates.size()]));
     }
 
     public static CurveString fromTDPoly( TDPoly[] poly ) throws Exception {

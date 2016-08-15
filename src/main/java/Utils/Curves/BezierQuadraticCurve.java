@@ -1,4 +1,4 @@
-package Deserialization.Interpolation;
+package Utils.Curves;
 
 import Deserialization.Binary.TDPoly;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -14,13 +14,14 @@ public class BezierQuadraticCurve extends Curve {
         p1 = new Coordinate();
         p2 = new Coordinate();
         b1 = new Coordinate();
+        b2 = new Coordinate();
     }
 
     public BezierQuadraticCurve(Coordinate begin, Coordinate bezier1, Coordinate bezier2, Coordinate end) {
-        p1 = begin;
-        b1 = bezier1;
-        b2 = bezier2;
-        p2 = end;
+        p1 = new Coordinate(begin);
+        b1 = new Coordinate(bezier1);
+        b2 = new Coordinate(bezier2);
+        p2 = new Coordinate(end);
     }
 
     public static BezierQuadraticCurve fromTDPoly(TDPoly begin, TDPoly bezier1, TDPoly bezier2, TDPoly end) {

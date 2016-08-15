@@ -1,4 +1,4 @@
-package Deserialization.Interpolation;
+package Utils.Curves;
 
 import com.vividsolutions.jts.geom.Coordinate;
 

@@ -1,4 +1,4 @@
-package Deserialization.Interpolation;
+package Utils.Curves;
 
 import Deserialization.Binary.TDPoly;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -17,9 +17,9 @@ public class BezierCubicCurve extends Curve {
     }
 
     public BezierCubicCurve(Coordinate begin, Coordinate bezier, Coordinate end) {
-        p1 = begin;
-        b1 = bezier;
-        p2 = end;
+        p1 = new Coordinate(begin);
+        b1 = new Coordinate(bezier);
+        p2 = new Coordinate(end);
     }
 
     public static BezierCubicCurve fromTDPoly(TDPoly begin, TDPoly bezier, TDPoly end) {

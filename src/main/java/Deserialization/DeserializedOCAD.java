@@ -3,7 +3,7 @@ package Deserialization;
 import Isolines.IIsoline;
 import Isolines.Isoline;
 import Deserialization.Binary.*;
-import Deserialization.Interpolation.CurveString;
+import Utils.Curves.CurveString;
 import Deserialization.Interpolation.SlopeMark;
 import Utils.Constants;
 import Utils.GeomUtils;

@@ -1,13 +1,9 @@
 package Utils;
 
-import Deserialization.Interpolation.Line;
 import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.math.Vector2D;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * Class, containing static 2D geometry functions

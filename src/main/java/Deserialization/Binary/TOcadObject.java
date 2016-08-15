@@ -1,13 +1,12 @@
 package Deserialization.Binary;
 
-import Deserialization.Interpolation.CurveString;
+import Utils.Curves.CurveString;
 import Utils.Constants;
 import com.vividsolutions.jts.geom.*;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Artem on 21.07.2016.

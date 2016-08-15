@@ -18,7 +18,10 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.stream.Stream;
 
@@ -118,9 +121,10 @@ public class MainController {
         CommandLineUtils.report();
     }
 
+    double [][] heightmap = null;
     public void interpolate() {
         interpolation = new DistanceFieldInterpolation(isolineContainer);
-        double [][] heightmap = interpolation.getAllInterpolatingPoints();
+        heightmap = interpolation.getAllInterpolatingPoints();
         OutputUtils.saveAsTXT(heightmap);
         OutputUtils.saveAsPNG(heightmap);
 
@@ -135,8 +139,25 @@ public class MainController {
     }
 
     public void generateTexture(String output_path) {
+
+        BufferedImage img = null;
+        try {
+            img = ImageIO.read(new File("sample.png"));
+        } catch (IOException e) {
+            throw new RuntimeException("Could not load heightmap!");
+        }
+        int rowCount = img.getHeight();
+        int columnCount = img.getWidth();
+        PointRasterizer rast = new PointRasterizer(columnCount,rowCount,isolineContainer.getEnvelope());
+        float[] heightmap = new float[rowCount*columnCount];
+        for (int row = 0; row != rowCount; ++row) {
+            for (int column = 0; column != columnCount; ++column) {
+                heightmap[ row*columnCount + column] = (float)(img.getRGB(column,row)&0x000000ff)/255;
+            }
+        }
+
         TextureGenerator gen = new TextureGenerator(deserializedOCAD);
-        gen.writeToFile("sample_texture",new PointRasterizer(0.1,isolineContainer.getEnvelope()));
+        gen.writeToFile("sample_texture",rast,heightmap);
     }
 
 

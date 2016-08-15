@@ -1,4 +1,4 @@
-package Deserialization.Interpolation;
+package Utils.Curves;
 
 import Deserialization.Binary.TDPoly;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -16,8 +16,8 @@ public class Line extends Curve {
     }
 
     public Line(Coordinate begin, Coordinate end) {
-        p1 = begin;
-        p2 = end;
+        p1 = new Coordinate(begin);
+        p2 = new Coordinate(end);
     }
 
     public static Line fromTDPoly(TDPoly begin, TDPoly end) {
