@@ -69,6 +69,8 @@ public class Drawer {
         if (edge != null) {
             LineString ls = edge.outerBound;
             geom.add( new GeometryWrapper(ls, Constants.DRAWING_COLOR_CONCAVEHULL,1) );
+            LineString outerRectangle = edge.outerRectangle;
+            geom.add( new GeometryWrapper(outerRectangle, Constants.DRAWING_COLOR_BORDER,1));
         }
 
         return geom;

@@ -215,7 +215,7 @@ public class MainApp extends Application implements Initializable {
 
     @FXML
     public void canvasScroll(ScrollEvent event) {
-        // Allign map on scrolling opration
+        // Align map on scrolling operation
         double delta = event.getDeltaY()+event.getDeltaX();
         Coordinate localMousePos = new Coordinate(mousePos);
         renderer.screenToLocal(localMousePos, display.getWidth(), display.getHeight());

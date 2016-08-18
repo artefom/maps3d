@@ -106,6 +106,7 @@ public class MainController {
 
     public void detectEdge() {
         edge = MapEdge.fromIsolines(isolineContainer, Constants.EDGE_CONCAVE_THRESHOLD);
+
         CommandLineUtils.report();
     }
 
