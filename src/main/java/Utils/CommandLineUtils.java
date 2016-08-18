@@ -42,7 +42,7 @@ public class CommandLineUtils {
 
     public static void reportProgress(int current, int total) {
         if (!progress_reporting) return;
-        int newMarksCount = current/total*totalMarks;
+        int newMarksCount = current*totalMarks/total;
         while(currentMarksCount < newMarksCount) {
             currentMarksCount += 1;
             System.out.print(".");

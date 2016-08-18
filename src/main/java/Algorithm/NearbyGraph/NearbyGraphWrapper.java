@@ -24,10 +24,10 @@ import java.util.function.Predicate;
  */
 public class NearbyGraphWrapper {
 
-    private SimpleWeightedGraph<Isoline_attributed.LineSide,DefaultWeightedEdge> graph;
-    private Graph<Isoline_attributed.LineSide,DefaultWeightedEdge> graph_unweighted;
+    private SimpleWeightedGraph<Isoline_attributed.LineSide,NearbyEstimator.EdgeAttributed> graph;
+    private Graph<Isoline_attributed.LineSide,NearbyEstimator.EdgeAttributed> graph_unweighted;
     private Set<Isoline_attributed> isolines;
-    public NearbyGraphWrapper(SimpleWeightedGraph<Isoline_attributed.LineSide,DefaultWeightedEdge> graph) {
+    public NearbyGraphWrapper(SimpleWeightedGraph<Isoline_attributed.LineSide,NearbyEstimator.EdgeAttributed> graph) {
         setGraph(graph);
     }
 
@@ -61,23 +61,23 @@ public class NearbyGraphWrapper {
 
         System.out.println("Creating spanning tree...");
 
-        SimpleWeightedGraph<Isoline_attributed.LineSide,DefaultWeightedEdge> new_graph =
-                new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
-        KruskalMinimumSpanningTree<Isoline_attributed.LineSide,DefaultWeightedEdge> spanningTree =
+        SimpleWeightedGraph<Isoline_attributed.LineSide,NearbyEstimator.EdgeAttributed> new_graph =
+                new SimpleWeightedGraph<>(NearbyEstimator.EdgeAttributed.class);
+        KruskalMinimumSpanningTree<Isoline_attributed.LineSide,NearbyEstimator.EdgeAttributed> spanningTree =
                 new KruskalMinimumSpanningTree<>(graph);
 
         for (Isoline_attributed.LineSide side : graph.vertexSet()) {
             new_graph.addVertex(side);
         }
 
-        for (DefaultWeightedEdge edge : spanningTree.getMinimumSpanningTreeEdgeSet()) {
-            DefaultWeightedEdge new_edge = new_graph.addEdge(graph.getEdgeSource(edge),graph.getEdgeTarget(edge));
+        for (NearbyEstimator.EdgeAttributed edge : spanningTree.getMinimumSpanningTreeEdgeSet()) {
+            NearbyEstimator.EdgeAttributed new_edge = new_graph.addEdge(graph.getEdgeSource(edge),graph.getEdgeTarget(edge));
             new_graph.setEdgeWeight(new_edge, graph.getEdgeWeight(edge));
         }
         setGraph(new_graph);
     }
 
-    private void setGraph(SimpleWeightedGraph<Isoline_attributed.LineSide,DefaultWeightedEdge> graph) {
+    private void setGraph(SimpleWeightedGraph<Isoline_attributed.LineSide,NearbyEstimator.EdgeAttributed> graph) {
         this.graph = graph;
         this.graph_unweighted = new AsUnweightedGraph<>(this.graph);
         isolines = new HashSet<>();
@@ -87,7 +87,7 @@ public class NearbyGraphWrapper {
 
     }
 
-    public SimpleWeightedGraph<Isoline_attributed.LineSide,DefaultWeightedEdge> getGraph() {
+    public SimpleWeightedGraph<Isoline_attributed.LineSide,NearbyEstimator.EdgeAttributed> getGraph() {
         return graph;
     }
 
@@ -124,14 +124,14 @@ public class NearbyGraphWrapper {
 
         System.out.println("Recovering slopes...");
 
-        LinkedList<DefaultWeightedEdge> edges = new LinkedList<>();
+        LinkedList<NearbyEstimator.EdgeAttributed> edges = new LinkedList<>();
         graph.edgeSet().forEach(edges::add);
 
         edges.sort( (lhs,rhs)-> Double.compare(graph.getEdgeWeight(lhs),graph.getEdgeWeight(rhs)) );
-        Iterator<DefaultWeightedEdge> it = edges.iterator();
+        Iterator<NearbyEstimator.EdgeAttributed> it = edges.iterator();
 
         while (it.hasNext()) {
-            DefaultWeightedEdge edge = it.next();
+            NearbyEstimator.EdgeAttributed edge = it.next();
             double current_weight = graph.getEdgeWeight(edge);
             Isoline_attributed.LineSide side1 = graph.getEdgeSource(edge);
             Isoline_attributed.LineSide side2 = graph.getEdgeTarget(edge);
@@ -158,10 +158,10 @@ public class NearbyGraphWrapper {
         System.out.println("success.");
     }
 
-    public static class BreadthFirstHeightRoceveryIterator extends BreadthFirstIterator<Isoline_attributed.LineSide,DefaultWeightedEdge> {
+    public static class BreadthFirstHeightRoceveryIterator extends BreadthFirstIterator<Isoline_attributed.LineSide,NearbyEstimator.EdgeAttributed> {
 
-        Graph<Isoline_attributed.LineSide, DefaultWeightedEdge> g;
-        public BreadthFirstHeightRoceveryIterator( Graph<Isoline_attributed.LineSide, DefaultWeightedEdge> g, Isoline_attributed startLine ) {
+        Graph<Isoline_attributed.LineSide, NearbyEstimator.EdgeAttributed> g;
+        public BreadthFirstHeightRoceveryIterator(Graph<Isoline_attributed.LineSide, NearbyEstimator.EdgeAttributed> g, Isoline_attributed startLine ) {
             super(g, startLine.getSidePositive());
             this.g = g;
             super.encounterVertex(startLine.getSideNegative(),g.getEdge(startLine.getSidePositive(),startLine.getSideNegative()));
@@ -170,7 +170,7 @@ public class NearbyGraphWrapper {
         }
 
         @Override
-        protected void encounterVertex(Isoline_attributed.LineSide target, DefaultWeightedEdge edge) {
+        protected void encounterVertex(Isoline_attributed.LineSide target, NearbyEstimator.EdgeAttributed edge) {
             super.encounterVertex(target, edge);
             if (target.getIsoline().height_recovered || edge == null) return;
             Isoline_attributed.LineSide pivot = Graphs.getOppositeVertex(getGraph(),edge,target);

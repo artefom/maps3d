@@ -1,3 +1,4 @@
+import Algorithm.DatasetGenerator.Datagen;
 import Algorithm.Interpolation.DistanceFieldInterpolation;
 import Algorithm.Interpolation.Triangulation;
 import Algorithm.LineConnection.LineWelder;
@@ -117,7 +118,9 @@ public class MainController {
         graph.ConvertToSpanningTree();
         graph.recoverAllSlopes();
         graph.recoverAllHeights();
-        System.out.println("Graph built successfully");
+        isolineContainer.serialize("cached_isolines.json");
+
+        CommandLineUtils.report("Graph was built successfully");
         CommandLineUtils.report();
     }
 

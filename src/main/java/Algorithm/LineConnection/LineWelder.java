@@ -5,6 +5,7 @@ import Isolines.Isoline;
 import Utils.Constants;
 import Utils.Intersector;
 import Utils.Pair;
+import Utils.RandomForestRegressor;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 
@@ -101,18 +102,22 @@ public class LineWelder {
 
         Intersector intersector = new Intersector(isos.stream().map((x) -> x.getGeometry()).collect(Collectors.toList()), gf);
         SteepDetector steepDetector = new SteepDetector(steeps, Constants.CONNECTIONS_NEAR_STEEP_THRESHOLD, gf);
-        ConnectionExtractor extr = new ConnectionExtractor(intersector, steepDetector, eval, gf, edge);
 
-        ArrayList<Connection> cons_array = extr.apply(isos);
+        RandomForestEvaluator rf_eval = new RandomForestEvaluator();
+        rf_eval.intersector = intersector;
+        //rf_eval.getConnections(isos,gf);
+        //ConnectionExtractor extr = new ConnectionExtractor(intersector, steepDetector, eval, gf, edge);
 
+        ArrayList<Connection> cons_array = rf_eval.getConnections(isos,gf);
 
+        //Sort by descending order
         cons_array.sort((lhs,rhs)->Double.compare(rhs.score,lhs.score));
 
         LinkedList<Isoline_attributed> welded_lines = new LinkedList<>();
         for (Connection con : cons_array) {
-            if (con.score > 0) {
+            //if (con.score > RandomForestEvaluator.finalSocre95PercentPrecisionThreshold) {
                 welded_lines.add( Weld(con) );
-            };
+            //};
         }
         LinkedList<IIsoline> ret = new LinkedList<>();
         for (Isoline_attributed iso: isos)

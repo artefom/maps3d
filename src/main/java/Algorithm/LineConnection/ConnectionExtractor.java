@@ -1,8 +1,6 @@
 package Algorithm.LineConnection;
 
-import Utils.Constants;
-import Utils.Intersector;
-import Utils.Tracer;
+import Utils.*;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
 import java.util.ArrayList;
@@ -15,7 +13,7 @@ import java.util.function.Function;
  * Valid connections should not intersect each other.
  *
  */
-public class ConnectionExtractor implements Function<ArrayList<Isoline_attributed>,ArrayList<Connection>> {
+public class ConnectionExtractor {
 
     private Intersector intersector;
     private GeometryFactory gf;
@@ -50,7 +48,6 @@ public class ConnectionExtractor implements Function<ArrayList<Isoline_attribute
             if (!intersector.intersects(buffer.getConnectionSegment()) || buffer.connectionSegment.getLength() < 0.001) {
                 if ( (buffer.connectionSegment.getLength() < Constants.CONNECTIONS_WELD_DIST ) ||
                         !steepDetector.isNearSteep(buffer)) {
-                    buffer.score += ConnectionEvaluator.parallelScore(buffer) / 2;
 
                     if (buffer.first().isWithinEdge(edge))
                         buffer.score -= 0.7;
@@ -69,14 +66,15 @@ public class ConnectionExtractor implements Function<ArrayList<Isoline_attribute
         }
     }
 
-    @Override
     public ArrayList<Connection> apply(ArrayList<Isoline_attributed> isolines) {
 
         // pre-return container. Remove all conflicting(intersecting) connections before return
         ArrayList<Connection> pre_ret = new ArrayList<>(isolines.size()*4);
         Intersector self_intersector;
 
+        CommandLineUtils.reportProgressBegin("Extracting minimal connections");
         for (int i = 0; i != isolines.size(); ++i) {
+            CommandLineUtils.reportProgress(i,isolines.size());
             Isoline_attributed i1 = isolines.get(i);
 
             // Add connection line to itself
@@ -93,11 +91,17 @@ public class ConnectionExtractor implements Function<ArrayList<Isoline_attribute
                 }
             }
         }
+        CommandLineUtils.reportProgressEnd();
 
         pre_ret.sort((lhs,rhs)->Double.compare(rhs.score,lhs.score));
 
         ArrayList<Connection> ret = new ArrayList<>(pre_ret.size());
+
+        CommandLineUtils.reportProgressBegin("Removing intersecting connections");
+        int count = 0;
         for (Connection con1 : pre_ret) {
+            count += 1;
+            CommandLineUtils.reportProgress(count, pre_ret.size());
             // Check for intersection with any of already added connections
             boolean intersected = false;
             for (Connection con2 : ret) {
@@ -111,6 +115,7 @@ public class ConnectionExtractor implements Function<ArrayList<Isoline_attribute
                 ret.add(con1);
             }
         }
+        CommandLineUtils.reportProgressEnd();
 
         return ret;
     }

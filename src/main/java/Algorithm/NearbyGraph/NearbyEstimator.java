@@ -10,8 +10,11 @@ import com.vividsolutions.jts.math.Vector2D;
 import javafx.scene.paint.Color;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
+import sun.security.util.Length;
 
+import java.lang.reflect.Array;
 import java.util.*;
+import java.util.function.DoubleFunction;
 
 /**
  * Finds out all nearby lines of specific line with specified precision
@@ -28,16 +31,29 @@ public class NearbyEstimator {
     private double step;
     private double precision;
 
-    public SimpleWeightedGraph<Isoline_attributed.LineSide,DefaultWeightedEdge> getRelationGraph(NearbyContainer cont) {
+    public static class EdgeAttributed extends DefaultWeightedEdge {
 
-        SimpleWeightedGraph<Isoline_attributed.LineSide,DefaultWeightedEdge> ret = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
+        ArrayList<Double> traces = new ArrayList<>();
+
+        public void addTrace(double length) {
+            traces.add(length);
+        }
+
+        public ArrayList<Double> getTraces() {
+            return traces;
+        }
+    }
+
+    public SimpleWeightedGraph<Isoline_attributed.LineSide,EdgeAttributed> getRelationGraph(NearbyContainer cont) {
+
+        SimpleWeightedGraph<Isoline_attributed.LineSide,EdgeAttributed> ret = new SimpleWeightedGraph<>(EdgeAttributed.class);
 
         //Add vertecies to graph;
-        System.out.println("Recovering edges...");
+
         for (Isoline_attributed iso : cont.getIsolines()) {
             ret.addVertex(iso.getSideNegative());
             ret.addVertex(iso.getSidePositive());
-            DefaultWeightedEdge edge = ret.addEdge(iso.getSideNegative(),iso.getSidePositive());
+            EdgeAttributed edge = ret.addEdge(iso.getSideNegative(),iso.getSidePositive());
             ret.setEdgeWeight(edge,-100000000);
         }
 
@@ -46,18 +62,13 @@ public class NearbyEstimator {
         Tracer<Isoline_attributed> tracer = new Tracer<Isoline_attributed>(cont.getIsolines(),(iso)->iso.getIsoline().getLineString(),gf);
         LineSegment buf = new LineSegment();
 
-        System.out.println("Tracing perpendiculars");
         int total = cont.getIsolines().size();
         int current = 0;
-        int percent_prev = -1;
         //Iterate through isolines to calculate all neighbours for each isoline
+        CommandLineUtils.reportProgressBegin("Tracing perpendiculars");
         for (Isoline_attributed iso : cont.getIsolines()) {
             current += 1;
-            int percent = (int)Math.round((double)current/total*100);
-            if (percent_prev != percent) {
-                System.out.println(percent+"%, "+current+" of "+total);
-                percent_prev = percent;
-            }
+            CommandLineUtils.reportProgress(current,total);
 
             if ( iso.getIsoline().isSteep() ) continue;
             LineString ls = iso.getIsoline().getLineString();
@@ -88,12 +99,13 @@ public class NearbyEstimator {
                     int to_side_index = traceres_positive.side;
                     Isoline_attributed.LineSide from_side = iso.getSideByIndex(from_side_index);
                     Isoline_attributed.LineSide to_side = traceres_positive.entitiy.getSideByIndex(to_side_index);
-                    DefaultWeightedEdge edge = ret.getEdge(from_side,to_side);
-                    if (edge == null) {
+                    EdgeAttributed edge = ret.getEdge(from_side,to_side);
+                    if (edge == null) { // Create and initialize new edge
                         edge = ret.addEdge(from_side,to_side);
                         ret.setEdgeWeight(edge,0);
                     }
                     // Weight of connection is 1/distance, so closer isolines are more likely to be "nearby"
+                    edge.addTrace(traceres_positive.distance);
                     ret.setEdgeWeight(edge,ret.getEdgeWeight(edge)-(1/(traceres_positive.distance+5)));
                 }
 
@@ -102,18 +114,20 @@ public class NearbyEstimator {
                     int to_side_index = traceres_negative.side;
                     Isoline_attributed.LineSide from_side = iso.getSideByIndex(from_side_index);
                     Isoline_attributed.LineSide to_side = traceres_negative.entitiy.getSideByIndex(to_side_index);
-                    DefaultWeightedEdge edge = ret.getEdge(from_side,to_side);
-                    if (edge == null) {
+                    EdgeAttributed edge = ret.getEdge(from_side,to_side);
+                    if (edge == null) { // Create and initialize new edge
                         edge = ret.addEdge(from_side,to_side);
                         ret.setEdgeWeight(edge,0);
                     }
                     // Weight of connection is 1/distance, so closer isolines are more likely to be "nearby"
+                    edge.addTrace(traceres_negative.distance);
                     ret.setEdgeWeight(edge,ret.getEdgeWeight(edge)-(1/(traceres_negative.distance+5)));
                 }
 
             }
 
         }
+        CommandLineUtils.reportProgressEnd();
 
         return ret;
 

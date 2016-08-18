@@ -23,15 +23,6 @@ public class NearbyContainer {
         }
     }
 
-    public Set<Isoline_attributed.LineSide> getSideSet() {
-        Set<Isoline_attributed.LineSide> ret = new HashSet<>();
-        for (Isoline_attributed iso : isolines) {
-            ret.add(iso.getSideNegative());
-            ret.add(iso.getSidePositive());
-        }
-        return ret;
-    }
-
     public ArrayList<Isoline_attributed> getIsolines() {
         return isolines;
     }
