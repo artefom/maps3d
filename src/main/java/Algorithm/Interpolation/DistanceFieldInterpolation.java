@@ -630,6 +630,7 @@ public class DistanceFieldInterpolation {
     }
 
     double calcRealDistanceWithFade(double pixelDist) {
+        pixelDist/=3;
         double result = pixelDist*Constants.INTERPOLATION_STEP;
         if (result > Constants.INTERPOLATION_FADE_DISTANCE) {
             result = Constants.INTERPOLATION_FADE_DISTANCE+Math.pow(result-Constants.INTERPOLATION_FADE_DISTANCE,Constants.INTERPOLATION_FADE_STRENGTH);
@@ -733,7 +734,7 @@ public class DistanceFieldInterpolation {
                     //result[row][column] = 0;
                     double h2 = 0;
                     // Use tangent of slope of closest isoline. Retrieve it from previously calculated sobel
-                    double tangent = sobel[p.pivot1_row][p.pivot1_column]/Constants.INTERPOLATION_STEP*0.8;
+                    double tangent = sobel[p.pivot1_row][p.pivot1_column]/Constants.INTERPOLATION_STEP/Constants.INTERPOLATION_STEP*0.2;
 
                     // When tangent is almost 0, but we want a hill to be visible on the map. Assign high value to tangent, so it will
                     // We could use conditional expression, like tangent = tangent < 0.2 ? 5 : tangent, but it's better to use
