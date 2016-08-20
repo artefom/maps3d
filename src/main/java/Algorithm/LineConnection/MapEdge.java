@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class MapEdge {
 
     public LinearRing outerBound;
+    public LinearRing outerRectangle;
     public GeometryFactory gf;
     public Intersector intersector;
     public double max_dist;
@@ -26,10 +27,11 @@ public class MapEdge {
     private MapEdge(GeometryCollection gc, double threshold, GeometryFactory gf, Intersector intersector) {
         this.gf = gf;
         this.intersector = intersector;
-        Polygon chull = (Polygon)(new ConcaveHull(gc,threshold).getConcaveHull());
-        outerBound = (LinearRing) chull.getExteriorRing();
-        double height = chull.getEnvelopeInternal().getHeight();
-        double width = chull.getEnvelopeInternal().getWidth();
+        Polygon concaveHull = (Polygon)(new ConcaveHull(gc,threshold).getConcaveHull());
+        outerBound = (LinearRing) concaveHull.getExteriorRing();
+        outerRectangle = (LinearRing) ((Polygon) concaveHull.getEnvelope()).getExteriorRing();
+        double height = concaveHull.getEnvelopeInternal().getHeight();
+        double width = concaveHull.getEnvelopeInternal().getWidth();
         max_dist = Math.sqrt(height*height+width*width);
         id = edge_id++;
     }

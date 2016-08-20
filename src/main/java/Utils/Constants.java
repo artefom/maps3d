@@ -31,6 +31,7 @@ public class Constants {
     public static final Color DRAWING_COLOR_EGDE_TO_EDGE = Color.GREEN;
     public static final Color DRAWING_COLOR_ISOLINE_CLOSED = Color.GREEN;
     public static final Color DRAWING_COLOR_CONCAVEHULL = Color.GRAY;
+    public static final Color DRAWING_COLOR_BORDER = Color.LIGHTPINK;
     public static final Color DRAWING_COLOR_ISOLINE = Color.BLACK;
     public static final Color DRAWING_COLOR_SLOPE_DETECTED = Color.BLACK;
     public static final Color DRAWING_COLOR_SLOPE_ORIGINAL = Color.BLUE;
