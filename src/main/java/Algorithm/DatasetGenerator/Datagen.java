@@ -43,7 +43,10 @@ public class Datagen {
         ArrayList<Polygon> circles = new ArrayList<>();
     }
 
-    public static ArrayList<IIsoline> cutCircle(ArrayList<IIsoline> isolines, ArrayList<LineString> cutted_lines, Polygon cirlce) {
+
+    //private static
+
+    public static ArrayList<IIsoline> cutCircle(ArrayList<IIsoline> isolines, ArrayList<LineString> cutted_lines, Geometry cirlce) {
         ArrayList<IIsoline> result = new ArrayList<>();
         for (int i = isolines.size()-1; i >= 0; --i) {
             IIsoline iso = isolines.get(i);
@@ -62,8 +65,9 @@ public class Datagen {
             }
 
             for (int geom_num = 0; geom_num != intersection.getNumGeometries(); ++geom_num) {
-                LineString ls = (LineString)intersection.getGeometryN(geom_num);
-                if (ls.getNumPoints() > 1) cutted_lines.add(ls);
+                Geometry ls = intersection.getGeometryN(geom_num);
+                if (ls instanceof LineString)
+                    if (ls.getNumPoints() > 1) cutted_lines.add((LineString)ls);
             }
         }
 
@@ -100,14 +104,14 @@ public class Datagen {
         ArrayList<LineString> cuttedLines = new ArrayList<>();
 
 
-        CommandLineUtils.reportProgressBegin("Curring circles");
+        CommandLineUtils.reportProgressBegin("Cutting squares");
         for (int i = 0; i != 500; ++i) {
             CommandLineUtils.reportProgress(i,500);
             //System.out.println(i);
             double x = genRandom(env.getMinX(),env.getMaxX());
             double y = genRandom(env.getMinY(),env.getMaxY());
             double aspect = genRandom(0.1,10);
-            double area = genRandom(10,40);
+            double area = genRandom(10,30);
             double height = Math.sqrt(area/aspect);
             double width = height*aspect;
             double rotation = genRandom(-Math.PI,Math.PI);
@@ -117,6 +121,18 @@ public class Datagen {
             gsf.setRotation(rotation);
             Polygon rect = gsf.createRectangle();
             isolines = cutCircle(isolines,cuttedLines,rect);
+        }
+        CommandLineUtils.reportProgressEnd();
+
+        CommandLineUtils.reportProgressBegin("Cutting lines");
+        for (int i = 0; i != 100; ++i) {
+            CommandLineUtils.reportProgress(i,100);
+            LineString ls = gf.createLineString(new Coordinate[]{
+                    new Coordinate( genRandom(env.getMinX(),env.getMaxX()), genRandom(env.getMinY(),env.getMaxY())),
+                    new Coordinate( genRandom(env.getMinX(),env.getMaxX()), genRandom(env.getMinY(),env.getMaxY()))
+            });
+
+            isolines = cutCircle(isolines,null,ls);
         }
         CommandLineUtils.reportProgressEnd();
 
@@ -188,23 +204,6 @@ public class Datagen {
     }
 
 
-    public static class sourceDataRes {
-        public int connections_count = 0;
-        public double max_score = -1000;
-        public double min_score = 1000;
-        public double mean_score = 0;
-        public boolean isMax = false;
-
-        public double intersecting_max_score = -1000;
-        public double intersecting_min_score = 1000;
-        public double intersecting_mean_score = 0;
-        public boolean intersecting_isMax = false;
-
-        public sourceDataRes() {
-        }
-
-    }
-
 //    public static sourceDataRes gatherSourceData(Connection con, ArrayList<Connection> cons) {
 //
 //        sourceDataRes res = new sourceDataRes();
@@ -241,10 +240,38 @@ public class Datagen {
 //        return res;
 //    }
 
+    public static void applyNoize() {
+
+    }
+
     public static void main(String[] args) {
 
+
+
+        SimplexNoise noise = new SimplexNoise(0.01,0,1, 7, 0.5, 123223);
+
+        double[][] result = new double[1024][1024];
+
+        double min = 1000;
+        double max = -1000;
+        for (int x = 0; x != 1024; ++x) {
+            for (int y = 0; y != 1024; ++y) {
+                double n = noise.getNoise((float) x / 1024, (float) y / 1024);
+                min = Double.min(min, n);
+                max = Double.max(max, n);
+                result[x][y] = n;
+            }
+        }
+
+        //System.out.println("["+min+", "+max+"],\\");
+
+
+        RasterUtils.saveAsPng(result,"noise_test.png");
+
+        if (true) return;
+
         int data_gen_size = 1;
-        boolean skip_gendata = true;
+        boolean skip_gendata = false;
 
         for (int i = 0; i != data_gen_size; ++i) {
 
@@ -331,7 +358,7 @@ public class Datagen {
             int counter = 0;
 
 
-            writer.write("Y,");
+            writer.write("Y,x1,y1,x2,y2");
             for (int fi = 0; fi != RandomForestEvaluator.feature_names.length; ++fi) {
                 writer.print(RandomForestEvaluator.feature_names[fi]);
                 if (fi < RandomForestEvaluator.feature_names.length-1) {
@@ -352,8 +379,11 @@ public class Datagen {
                 int y = (isValid(con.getConnectionSegment(), cutted_lines, 0.000001)) ? 1 : 0;
 
                 //sourceDataRes additional_data = gatherSourceData(con, cons_array);
-                writer.print(y);
-                writer.print(",");
+                writer.print(y+","+
+                        con.first().line.p1.x+","+
+                        con.first().line.p1.y+","+
+                        con.second().line.p1.x+","+
+                        con.second().line.p1.y+",");
                 for (int fi = 0; fi != f.length;++fi) {
                     writer.print(f[fi]);
                     if (fi != f.length-1) writer.print(",");

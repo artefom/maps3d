@@ -58,12 +58,8 @@ public class RandomForestRegressor {
 
     private Tree[] trees;
 
-    public void loadModelFromFile(String path) throws IOException {
-        loadModelFromFile(Paths.get(path).toFile());
-    }
-
-    public void loadModelFromFile(File f) throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(f));
+    public void loadModelFromFile(InputStream f) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(f));
 
         int features_num = Integer.parseInt(br.readLine());
         int forest_size = Integer.parseInt(br.readLine());

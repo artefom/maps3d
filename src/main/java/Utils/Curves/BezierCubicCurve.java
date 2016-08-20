@@ -1,6 +1,6 @@
 package Utils.Curves;
 
-import Deserialization.Binary.TDPoly;
+import Deserialization.Binary.OcadVertex;
 import com.vividsolutions.jts.geom.Coordinate;
 
 /**
@@ -22,13 +22,10 @@ public class BezierCubicCurve extends Curve {
         p2 = new Coordinate(end);
     }
 
-    public static BezierCubicCurve fromTDPoly(TDPoly begin, TDPoly bezier, TDPoly end) {
+    public static BezierCubicCurve fromOcadVertices(OcadVertex begin, OcadVertex bezier, OcadVertex end) {
         if (begin.isBezier() || !bezier.isBezier() || end.isBezier())
             return null;
-        Coordinate p1 = begin.toCoordinate();
-        Coordinate b1 = bezier.toCoordinate();
-        Coordinate p2 = end.toCoordinate();
-        return new BezierCubicCurve(p1,b1,p2);
+        return new BezierCubicCurve(begin,bezier,end);
     }
 
     @Override

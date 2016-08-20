@@ -49,7 +49,7 @@ public class Drawer {
 
             if (i.getSlopeSide() != 0) {
                 LineSegment buf = new LineSegment();
-                Iterator<LineSegment> it = new LineStringInterpolatedLineIterator(i.getLineString(), buf, 5,0.5);
+                Iterator<LineSegment> it = new LineStringInterpolatedLineIterator(i.getLineString(), buf, 50,0.5);
                 while (it.hasNext()) {
                     buf = it.next();
                     Vector2D vec = Vector2D.create(buf.p0, buf.p1).normalize().rotateByQuarterCircle(1).

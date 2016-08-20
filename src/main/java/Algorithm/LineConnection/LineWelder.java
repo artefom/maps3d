@@ -46,7 +46,7 @@ public class LineWelder {
      * @return
      */
     public Isoline_attributed Weld_copy(Connection con) {
-        Pair<LineString, Integer> pair = LineConnector.connect(con,gf);
+        Pair<LineString, Integer> pair = LineConnector.connect(con,gf,false);
         if (pair == null) return null;
         LineString result_ls = pair.getKey();
         Integer result_ss = pair.getValue();
@@ -68,7 +68,7 @@ public class LineWelder {
      * @return
      */
     public Isoline_attributed Weld(Connection con) {
-        Pair<LineString, Integer> pair = LineConnector.connect(con,gf);
+        Pair<LineString, Integer> pair = LineConnector.connect(con,gf,false);
 
         if (pair == null) return null;
         LineString result_ls = pair.getKey();

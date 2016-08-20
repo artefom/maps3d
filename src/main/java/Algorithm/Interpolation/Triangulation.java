@@ -154,8 +154,8 @@ public class Triangulation {
 
     public List<Coordinate> ScatterPoints(double threshold) {
 
-        final int initCellSize = 100;
-        final int minCellSize = 3;
+        final int initCellSize = 50;
+        final int minCellSize = 1;
         final double divisionThreshold = threshold;
 
         final int rowCount = sobel.length;

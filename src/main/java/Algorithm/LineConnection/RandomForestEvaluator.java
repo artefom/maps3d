@@ -10,6 +10,7 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineSegment;
 import com.vividsolutions.jts.geom.LineString;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -98,7 +99,7 @@ public class RandomForestEvaluator {
         LineSegment line2 = con.core().second().line;
         Pair<Double,Double> scores1 = getLineToPointScores(line1.p0,line1.p1,line2.p1);
         Pair<Double,Double> scores2 = getLineToPointScores(line2.p0,line2.p1,line1.p1);
-        con.features[distance] = (scores1.v2+scores1.v1)*0.5;
+        con.features[distance] = (scores1.v2+scores2.v2)*0.5;
         con.features[angle1] = scores1.v1;
         con.features[angle2] = scores2.v1;
     }
@@ -122,9 +123,8 @@ public class RandomForestEvaluator {
     }
 
 
-    private static Datagen.sourceDataRes gatherSourceData(Connection_attributed con, ArrayList<Connection_attributed> cons) {
+    private static void gatherSourceData(Connection_attributed con, ArrayList<Connection_attributed> cons) {
 
-        Datagen.sourceDataRes res = new Datagen.sourceDataRes();
         ArrayList<Double> scores = new ArrayList<>();
         ArrayList<Double> intersecting_scores = new ArrayList<>();
         LineEnd first = con.core().first();
@@ -157,14 +157,14 @@ public class RandomForestEvaluator {
         if (scores.size() > 0) {
             con.features[cons_score_max] = scores.stream().max(Double::compare).get();
             con.features[cons_score_mean] = scores.stream().reduce((lhs, rhs) -> lhs + rhs).get() / scores.size();
-            con.features[cons_curMax] = res.max_score < getDraftScore(con) ? 1 : 0;
+            con.features[cons_curMax] = con.features[cons_score_max] < getDraftScore(con) ? 1 : 0;
         }
 
         if (intersecting_scores.size() > 0) {
             con.features[inters_score_max] = intersecting_scores.stream().max(Double::compare).get();
             con.features[inters_score_mean] = intersecting_scores.stream().reduce((lhs, rhs) -> lhs + rhs).get() / intersecting_scores.size();
         }
-        return res;
+
     }
 
     /**
@@ -218,9 +218,12 @@ public class RandomForestEvaluator {
 
         RandomForestRegressor regressor = new RandomForestRegressor();
         try {
-            regressor.loadModelFromFile("C:\\Users\\Artyom.Fomenko\\Desktop\\forest.txt");
+            ClassLoader classLoader = getClass().getClassLoader();
+            InputStream is = classLoader.getResourceAsStream("forest.txt");
+            regressor.loadModelFromFile(is);
         } catch (Exception ex) {
-            throw new RuntimeException("Could not load random forest model");
+            CommandLineUtils.reportException(ex);
+            return null;
         }
 
         for (Connection_attributed c_atr : pre_ret) {

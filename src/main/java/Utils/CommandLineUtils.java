@@ -63,4 +63,14 @@ public class CommandLineUtils {
         progress_reporting = false;
         System.out.println();
     }
+
+    public static void reportException(Exception ex) {
+        String message = "Exception: "+ex.getClass()+"\n";
+        message += "message: "+ex.getMessage()+"\n";
+        message += "Stack trace: ";
+        for (int i = ex.getStackTrace().length-1; i >= 0; --i) {
+            message+=ex.getStackTrace()[i]+"\n";
+        }
+        System.out.println("\u001B[31mError: " + message + "\u001B[0m");
+    }
 }

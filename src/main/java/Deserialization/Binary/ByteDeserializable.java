@@ -95,10 +95,13 @@ public class ByteDeserializable {
             int step = sz.step();
             Class comp_type = cls.getComponentType();
             if (long.class.isAssignableFrom(comp_type)) {
+                throw new IllegalAccessException("Not implemented");
                 //field.setLong( obj, readLong(offset) );
             } else if (int.class.isAssignableFrom(comp_type)) {
+                throw new IllegalAccessException("Not implemented");
                 //field.setInt( obj, readInt(offset) );
             } else if (short.class.isAssignableFrom(comp_type)) {
+                throw new IllegalAccessException("Not implemented");
                 //field.setShort( obj, readShort(offset) );
             } else if (byte.class.isAssignableFrom(comp_type)) {
                 field.set(obj, readByteArray(offset, size, step));

@@ -1,6 +1,7 @@
 package Utils;
 
 import Algorithm.Interpolation.Triangulation;
+import Algorithm.Texture.TextureGenerator;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -23,6 +24,16 @@ public class OutputUtils {
         triangulation.writeToFile(name);
         CommandLineUtils.report(" file dumped");
     }
+
+    public static String GetExecutionPath(){
+        String absolutePath = TextureGenerator.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        absolutePath = absolutePath.substring(0, absolutePath.lastIndexOf("/"));
+        absolutePath = absolutePath.replaceAll("%20"," "); // Surely need to do this here
+        String osAppropriatePath = System.getProperty( "os.name" ).contains( "indow" ) ? absolutePath.substring(1) : absolutePath;
+        return osAppropriatePath;
+    }
+
+
 
     public static void saveAsTXT(double [][] heightmap){
         PrintWriter out;
@@ -85,4 +96,5 @@ public class OutputUtils {
         }
         return extension;
     }
+
 }

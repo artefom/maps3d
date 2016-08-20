@@ -15,6 +15,7 @@ import Utils.CommandLineUtils;
 import Utils.Constants;
 import Utils.OutputUtils;
 import Utils.PointRasterizer;
+import com.sun.javafx.scene.shape.PathUtils;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
@@ -77,8 +78,11 @@ public class MainController {
 
     public void openFile(File f) throws Exception {
         deserializedOCAD = new DeserializedOCAD();
-        deserializedOCAD.DeserializeMap(f.getPath());
-        ArrayList<IIsoline> isos = deserializedOCAD.toIsolines(1,gf);
+
+        String f_path = f.getPath();
+        String configPath = f_path.substring(0, f_path.length()-OutputUtils.getExtension(f_path).length())+"ini";
+        deserializedOCAD.DeserializeMap(f_path,configPath);
+        ArrayList<IIsoline> isos = deserializedOCAD.toIsolines(1,true,gf);
         slopeMarks = new ArrayList<>();
         isos.forEach(isolineContainer::add);
         deserializedOCAD.slopeMarks.forEach(slopeMarks::add);

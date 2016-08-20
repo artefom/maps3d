@@ -152,40 +152,41 @@ public class MainApp extends Application implements Initializable {
         current_isoline = null;
         highlighted_yellow = null;
 
-        Coordinate localmPos = new Coordinate(mousePos);
-        renderer.screenToLocal(localmPos,display.getWidth(),display.getHeight());
-        Coordinate localmPos2 = new Coordinate(mousePos);
-        localmPos2.x += 2;
-        localmPos2.y += 2;
-        renderer.screenToLocal(localmPos2,display.getWidth(),display.getHeight());
-        double distance = localmPos.distance(localmPos2);
+
+        Coordinate mp = new Coordinate(mousePos);
+        renderer.screenToLocal(mp,display.getWidth(),display.getHeight());
+
+        Coordinate mp_shifted_top = new Coordinate(mousePos.x-1,mousePos.y-1);
+        renderer.screenToLocal(mp_shifted_top,display.getWidth(),display.getHeight());
+        Coordinate mp_shifted_bottom = new Coordinate(mousePos.x+2,mousePos.y+2);
+        renderer.screenToLocal(mp_shifted_bottom,display.getWidth(),display.getHeight());
+        double distance = mp_shifted_top.distance(mp_shifted_bottom);
 
         if (displayedContainer == null) {
             UpdateHighLights();
             return;
         }
-        List<IIsoline> isolines = mc.getIsolinesInCircle(localmPos.x, localmPos.y, distance, displayedContainer).collect(Collectors.toList());
+        List<IIsoline> isolines = mc.getIsolinesInCircle(mp_shifted_top.x, mp_shifted_top.y, distance, displayedContainer).collect(Collectors.toList());
         if (isolines.size() > 1) {
             statusText.setText("Hover over multiple isolines");
-            UpdateHighLights();
-            return;
         } else if (isolines.size() == 0) {
             statusText.setText("No isolines under mouse");
-            UpdateHighLights();
-            return;
+        } else {
+
+            IIsoline il = isolines.get(0);
+            current_isoline = il;
+            highlighted_yellow = current_isoline;
+
+            statusText.setText("Is closed: " + il.getLineString().isClosed() +
+                    "; Type: " + il.getType() +
+                    "; Slope side: " + il.getSlopeSide() +
+                    "; Height: " + il.getHeight() +
+                    "; Line begin = " + il.getLineString().getCoordinateN(0) +
+                    "; Line end = " + il.getLineString().getCoordinateN(il.getLineString().getNumPoints() - 1) +
+                    "; Line id = " + il.getID());
         }
 
-        IIsoline il = isolines.get(0);
-        current_isoline = il;
-        highlighted_yellow = current_isoline;
-
-        statusText.setText("Is closed: "+il.getLineString().isClosed()+
-                "; Type: "+il.getType()+
-                "; Slope side: "+il.getSlopeSide()+
-                "; Height: "+il.getHeight()+
-                "; Line begin = "+il.getLineString().getCoordinateN(0)+
-                "; Line end = "+il.getLineString().getCoordinateN(il.getLineString().getNumPoints()-1) +
-                "; Line id = "+il.getID());
+        statusText.setText(statusText.getText()+" Mouse position: "+mp.x+" "+mp.y);
 
         UpdateHighLights();
     }

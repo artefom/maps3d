@@ -1,15 +1,20 @@
 package Utils.Curves;
 
-import Deserialization.Binary.TDPoly;
 
+import Deserialization.Binary.OcadVertex;
+import Utils.CommandLineUtils;
+import Utils.GeomUtils;
 import Utils.LineStringInterpolatedPointIterator;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.CoordinateSequence;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineString;
+import Utils.Pair;
+import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.geom.util.GeometryEditor;
+import com.vividsolutions.jts.math.Vector2D;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
+import java.util.function.DoubleFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,6 +44,23 @@ public class CurveString {
         return curves.get(seg).pointAlong(pos*curves.size()-seg);
     }
 
+    public Pair<Curve,Double> localPointAlong(double pos){
+
+        if (pos <= 0) {
+            return new Pair<>(curves.get(0),0.0);
+        }
+        if (pos >= 1) {
+            return new Pair<>(curves.get(curves.size()-1),1.0);
+        }
+        int seg = (int)Math.floor(pos*curves.size());
+        if (seg < 0)
+            return new Pair<>(curves.get(0),0.0);
+        if (seg >= curves.size())
+            return new Pair<>(curves.get(curves.size()-1),1.0);
+
+        return new Pair<>(curves.get(seg),pos*curves.size()-seg);
+    }
+
     public double getLength() {
         double length = 0;
         for (Curve c : curves) {
@@ -47,12 +69,12 @@ public class CurveString {
         return length;
     }
 
-    public CoordinateSequence getCoordinateSequence(double step, GeometryFactory gf) {
+    private CoordinateSequence getCoordinateSequence(double step, GeometryFactory gf) {
         int steps = (int)Math.ceil(getLength()/step);
         return getCoordinateSequence(steps,gf);
     }
 
-    public CoordinateSequence getCoordinateSequence(int steps, GeometryFactory gf) {
+    private CoordinateSequence getCoordinateSequence(int steps, GeometryFactory gf) {
         if (steps < 4) steps = 4; // Handle rings.
         double step = 1.0/steps;
         Coordinate[] coords = new Coordinate[steps+1];
@@ -66,28 +88,114 @@ public class CurveString {
         return gf.getCoordinateSequenceFactory().create(coords);
     }
 
-    public LineString interpolate(int steps, GeometryFactory gf) {
-        int pre_steps = steps*10;
-        double pre_step = 1.0/pre_steps;
-        Coordinate[] coords = new Coordinate[pre_steps+1];
-        for (int i = 0; i <= pre_steps; ++i) {
-            coords[i] = pointAlong(i*pre_step);
-        }
-        LineString pre_ls = gf.createLineString(coords);
-        //return pre_ls;
-        ArrayList<Coordinate> resultCoords = new ArrayList<>();
-        LineStringInterpolatedPointIterator it = new LineStringInterpolatedPointIterator(pre_ls,pre_ls.getLength()/steps,0);
-        while (it.hasNext()) {
-            Coordinate next = it.next();
-            resultCoords.add(next);
-        }
-        return gf.createLineString(resultCoords.toArray(new Coordinate[resultCoords.size()]));
-    }
+
+//    private LineString interpolate(int steps, GeometryFactory gf) {
+//
+////        int pre_steps = steps*10;
+////        double pre_step = 1.0/pre_steps;
+////        Coordinate[] coords = new Coordinate[pre_steps+1];
+////        for (int i = 0; i <= pre_steps; ++i) {
+////            coords[i] = pointAlong(i*pre_step);
+////        }
+////        LineString pre_ls = gf.createLineString(coords);
+////        //return pre_ls;
+////        ArrayList<Coordinate> resultCoords = new ArrayList<>();
+////        LineStringInterpolatedPointIterator it = new LineStringInterpolatedPointIterator(pre_ls,pre_ls.getLength()/steps,0);
+////        while (it.hasNext()) {
+////            Coordinate next = it.next();
+////            resultCoords.add(next);
+////        }
+////        return gf.createLineString(resultCoords.toArray(new Coordinate[resultCoords.size()]));
+//    }
+
 
     public LineString interpolate(double step, GeometryFactory gf) {
-        int steps = (int)Math.ceil(getLength()/step);
-        if (steps < 4) steps = 4;
-        return interpolate(steps,gf);
+
+//        int steps = (int)Math.ceil(getLength()/step);
+//        if (steps < 4) steps = 4;
+
+        int pre_steps = 10;
+        double pre_step = 1.0/pre_steps;
+
+        ArrayList<Coordinate> coords = new ArrayList<>();
+        for (Curve c : curves) {
+            coords.add(c.pointAlong(0));
+
+            if (c instanceof Line)
+                continue;
+            for (int i = 1; i < pre_steps; ++i) {
+                coords.add(c.pointAlong(i*pre_step));
+            }
+        }
+        coords.add(curves.get(curves.size()-1).pointAlong(1));
+
+        //LineString pre_ls = gf.createLineString(coords);
+//        //return pre_ls;
+//        ArrayList<Coordinate> resultCoords = new ArrayList<>();
+//        LineStringInterpolatedPointIterator it = new LineStringInterpolatedPointIterator(pre_ls,pre_ls.getLength()/steps,0);
+//        while (it.hasNext()) {
+//            Coordinate next = it.next();
+//            resultCoords.add(next);
+//        }
+//
+//        Coordinate[] fit_coordinates = resultCoords.toArray(new Coordinate[resultCoords.size()]);
+//
+        ArrayList<Coordinate> result_coordinates = new ArrayList<>();
+        Coordinate[] fit_coordinates = coords.toArray(new Coordinate[coords.size()]);
+        Vector2D prev_vector = Vector2D.create(fit_coordinates[0],fit_coordinates[1]);
+        Coordinate prev_point = fit_coordinates[0];
+        result_coordinates.add(prev_point);
+        int prev_i = 0;
+
+        double angle_accum =  0;
+        for (int i = 1; i < fit_coordinates.length; ++i) {
+            Coordinate cur_point = fit_coordinates[i];
+            Vector2D cur_vector = Vector2D.create(fit_coordinates[i-1],cur_point);
+
+
+            angle_accum += prev_vector.angleTo(cur_vector);
+            if (Math.abs( angle_accum ) > 0.25) {
+                angle_accum = 0;
+                Coordinate p1 = prev_point;
+                Coordinate p2 = cur_point;
+
+                Coordinate max_p3 = null; //fit_coordinates[(prev_i+i)/2];
+                double max_angle = 0;
+
+                for (int j = prev_i; j < i; ++j) {
+
+                    Coordinate p3 = fit_coordinates[j];
+
+                    Vector2D vec1 = Vector2D.create(p1,p3);
+                    Vector2D vec2 = Vector2D.create(p3,p2);
+                    double angle = Math.abs(vec1.angleTo(vec2));
+                    if (angle > max_angle) {
+                        angle = max_angle;
+                        max_p3 = p3;
+                    }
+
+                }
+
+                if (max_p3 != null) {
+                    p2 = max_p3;
+                }
+
+//                if (max_p3 != p1 && max_p3 != p2) {
+//                    prev_point = max_p3;
+//                    result_coordinates.add(max_p3);
+//                }
+
+                result_coordinates.add(p2);
+                //prev_vector = Vector2D.create(prev_point,cur_point); // Vector2D.create(fit_coordinates[i-1],fit_coordinates[i]);
+                prev_point = cur_point;
+                prev_i = i;
+            }
+            prev_vector = cur_vector;
+        }
+
+        result_coordinates.add(fit_coordinates[fit_coordinates.length-1]);
+
+        return gf.createLineString( result_coordinates.toArray(new Coordinate[result_coordinates.size()]) );
     }
 
     public static CurveString fromCoordinates(Coordinate[] coordinates) {
@@ -115,21 +223,21 @@ public class CurveString {
         return fromCoordinates(coordinates.toArray(new Coordinate[coordinates.size()]));
     }
 
-    public static CurveString fromTDPoly( TDPoly[] poly ) throws Exception {
+    public static CurveString fromOcadVertices(OcadVertex[] poly ) throws Exception {
         int i = 0;
         CurveString cs = new CurveString();
         while (i < poly.length-1) {
             Curve c = null;
-            if (i+3 < poly.length && (c=BezierQuadraticCurve.fromTDPoly(poly[i],poly[i+1],poly[i+2],poly[i+3]))!=null) {
+            if (i+3 < poly.length && (c=BezierQuadraticCurve.fromOcadVertices(poly[i],poly[i+1],poly[i+2],poly[i+3]))!=null) {
                 if (cs == null || cs.curves == null) {
                     cs.curves.add(c);
                 }
                 cs.curves.add(c);
                 i += 3;
-            } else if (i+2 < poly.length && (c=BezierCubicCurve.fromTDPoly(poly[i],poly[i+1],poly[i+2]))!=null) {
+            } else if (i+2 < poly.length && (c=BezierCubicCurve.fromOcadVertices(poly[i],poly[i+1],poly[i+2]))!=null) {
                 cs.curves.add(c);
                 i+=2;
-            } else if (i+1 < poly.length && (c=Line.fromTDPoly(poly[i],poly[i+1]))!=null) {
+            } else if (i+1 < poly.length && (c=Line.fromOcadVertices(poly[i],poly[i+1]))!=null) {
                 cs.curves.add(c);
                 i+=1;
             } else {
@@ -139,8 +247,8 @@ public class CurveString {
         }
         return cs;
     }
-    public static CurveString fromTDPoly(Collection<TDPoly> polyCollection) throws Exception {
+    public static CurveString fromOcadVertices(Collection<OcadVertex> polyCollection) throws Exception {
         //Conver to ArrayList for random access
-        return fromTDPoly(polyCollection.toArray(new TDPoly[polyCollection.size()]));
+        return fromOcadVertices(polyCollection.toArray( new OcadVertex[polyCollection.size()]) );
     }
 }

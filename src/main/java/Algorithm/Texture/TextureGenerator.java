@@ -31,16 +31,6 @@ public class TextureGenerator {
         this.map = map;
     }
 
-    private static String GetExecutionPath(){
-        String absolutePath = TextureGenerator.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        absolutePath = absolutePath.substring(0, absolutePath.lastIndexOf("/"));
-        absolutePath = absolutePath.replaceAll("%20"," "); // Surely need to do this here
-        String osAppropriatePath = System.getProperty( "os.name" ).contains( "indow" ) ? absolutePath.substring(1) : absolutePath;
-        return osAppropriatePath;
-    }
-
-
-
     private class Brush {
         public String name = "Unknown";
         public String symbol_ids = "";
@@ -112,7 +102,7 @@ public class TextureGenerator {
         public BufferedImage getTexture() {
             BufferedImage img = null;
             try {
-                String filename = GetExecutionPath()+"/textures/"+this.texture;
+                String filename = OutputUtils.GetExecutionPath()+"/textures/"+this.texture;
                 img = ImageIO.read(new File(filename));
             } catch (IOException ignored) {
             }
@@ -164,7 +154,7 @@ public class TextureGenerator {
 
         float[] sobel = RasterUtils.sobel(heightmap,rast.getColumnCount(),rast.getRowCount());
 
-        String textures_folder = GetExecutionPath()+"/textures";
+        String textures_folder = OutputUtils.GetExecutionPath()+"/textures";
         ArrayList<Path> vmtFiles = new ArrayList<>();
         try {
             Files.walk(Paths.get(textures_folder)).forEach(filePath -> {
