@@ -6,6 +6,7 @@ import Utils.Constants;
 import Utils.Intersector;
 import Utils.Pair;
 import Utils.RandomForestRegressor;
+import com.vividsolutions.jts.geom.CoordinateSequence;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 
@@ -138,4 +139,5 @@ public class LineWelder {
             }
         return ret;
     }
+
 }

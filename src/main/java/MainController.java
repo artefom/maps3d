@@ -1,4 +1,5 @@
 import Algorithm.DatasetGenerator.Datagen;
+import Algorithm.Healing.Healer;
 import Algorithm.Interpolation.DistanceFieldInterpolation;
 import Algorithm.Interpolation.Triangulation;
 import Algorithm.LineConnection.LineWelder;
@@ -82,7 +83,7 @@ public class MainController {
         String f_path = f.getPath();
         String configPath = f_path.substring(0, f_path.length()-OutputUtils.getExtension(f_path).length())+"ini";
         deserializedOCAD.DeserializeMap(f_path,configPath);
-        ArrayList<IIsoline> isos = deserializedOCAD.toIsolines(1,true,gf);
+        ArrayList<IIsoline> isos = deserializedOCAD.toIsolines(1,gf);
         slopeMarks = new ArrayList<>();
         isos.forEach(isolineContainer::add);
         deserializedOCAD.slopeMarks.forEach(slopeMarks::add);
@@ -99,6 +100,11 @@ public class MainController {
         return ic.stream().filter((il)->
                 il.getGeometry().isWithinDistance(p,radius)
         );
+    }
+
+    public void heal() {
+
+        Healer.heal(isolineContainer,isolineContainer.getFactory());
     }
 
     public void connectLines() {

@@ -24,7 +24,6 @@ public class Constants {
     //DRAWING
     public static final double DRAWING_LINE_WIDTH = 0.2;
     public static final double DRAWING_POINT_WIDTH = 0.8;
-    public static final boolean DRAWING_INTERPOLATION = false;
     public static final double DRAWING_INTERPOLATION_STEP = 0.2;
 
     //COLORS

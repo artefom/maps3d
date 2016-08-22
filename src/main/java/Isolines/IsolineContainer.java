@@ -1,8 +1,6 @@
 package Isolines;
 
-import Algorithm.LineConnection.LineEnd;
 import Utils.CommandLineUtils;
-import Utils.GeomUtils;
 import Utils.Interpolator;
 import com.google.gson.*;
 import com.vividsolutions.jts.algorithm.ConvexHull;
@@ -14,8 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.DoubleFunction;
-import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -114,6 +111,28 @@ public class IsolineContainer extends HashSet<IIsoline> {
         } catch (Exception ex) {
             CommandLineUtils.printWarning("could not serialize Isoline Container, reason: "+ex.getMessage());
         }
+    }
+
+    public List<IIsoline> findInCircle(Coordinate center, double radius) {
+        Point p = gf.createPoint( center );
+        return this.stream().filter((il)->
+                il.getGeometry().isWithinDistance(p,radius)
+        ).collect(Collectors.toList());
+    }
+
+    public List<IIsoline> getIntersecting(LineString ls) {
+
+        ArrayList<IIsoline> ret = new ArrayList<>();
+        for (IIsoline iso : this) {
+            if (iso.getLineString().intersects(ls)) ret.add(iso);
+        }
+        return ret;
+    }
+
+
+    public Optional<IIsoline> findClosest(Coordinate center) {
+        Point p = gf.createPoint( center );
+        return this.stream().min((lhs,rhs)-> Double.compare(p.distance(lhs.getGeometry()),p.distance(rhs.getGeometry())));
     }
 
     public static IsolineContainer deserialize(String path) throws Exception{

@@ -197,12 +197,12 @@ public class DistanceFieldInterpolation {
      * Rasterize isoline to buffer grid. see {@link DistanceFieldInterpolation#rasterizeline(pixelInfo[][], int, int, int, int, Isoline_attributed,Vector2D)}.
      */
     public void rasterize(pixelInfo[][] buf, Isoline_attributed line, PointRasterizer rasterizer, Isoline_attributed iso) {
-        for (int coord_index = 1; coord_index < line.coordinates.length; ++coord_index) {
+        for (int coord_index = 1; coord_index < line.coordinates.size(); ++coord_index) {
 
-            double x1 = line.coordinates[coord_index-1].x;
-            double y1 = line.coordinates[coord_index-1].y;
-            double x2 = line.coordinates[coord_index].x;
-            double y2 = line.coordinates[coord_index].y;
+            double x1 = line.coordinates.getX(coord_index-1);
+            double y1 = line.coordinates.getY(coord_index-1);
+            double x2 = line.coordinates.getX(coord_index);
+            double y2 = line.coordinates.getY(coord_index);
 
             int row1 = rasterizer.toRow(y1);
             int col1 = rasterizer.toColumn(x1);
@@ -232,13 +232,13 @@ public class DistanceFieldInterpolation {
      * see {@link DistanceFieldInterpolation#rasterizeline(int[][], int, int, int, int, int)}
      */
     public void rasterize(int[][] buf, Isoline_attributed line, PointRasterizer rasterizer, int val) {
-        for (int coord_index = 1; coord_index < line.coordinates.length; ++coord_index) {
+        for (int coord_index = 1; coord_index < line.coordinates.size(); ++coord_index) {
 
-            int row1 = rasterizer.toRow(line.coordinates[coord_index-1].y);
-            int col1 = rasterizer.toColumn(line.coordinates[coord_index-1].x);
+            int row1 = rasterizer.toRow(line.coordinates.getY(coord_index-1));
+            int col1 = rasterizer.toColumn(line.coordinates.getX(coord_index-1));
 
-            int row2 = rasterizer.toRow(line.coordinates[coord_index].y);
-            int col2 = rasterizer.toColumn(line.coordinates[coord_index].x);
+            int row2 = rasterizer.toRow(line.coordinates.getY(coord_index));
+            int col2 = rasterizer.toColumn(line.coordinates.getX(coord_index));
 
             if (row1 == 0) continue;
             if (col1 == 0) continue;

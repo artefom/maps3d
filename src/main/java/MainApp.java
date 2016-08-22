@@ -7,8 +7,10 @@ import Display.GeometryWrapper;
 import Display.Renderer;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
+import Utils.Pair;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineString;
 import javafx.application.Application;
 import javafx.beans.InvalidationListener;
 import javafx.event.ActionEvent;
@@ -21,18 +23,23 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import mouse.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
@@ -46,11 +53,17 @@ public class MainApp extends Application implements Initializable {
     @FXML protected Canvas display;
     @FXML protected AnchorPane display_ap;
     @FXML protected CheckBox original_ch_b;
+
+    @FXML protected Button btn_heal;
     @FXML protected Button btn_edges;
     @FXML protected Button btn_lines;
     @FXML protected Button btn_graph;
     @FXML protected Button btn_interpolate;
+
     @FXML protected Button texBtn;
+
+    @FXML protected Label action_label;
+    @FXML protected Label info_label;
 
 
     private MainController mc;
@@ -59,10 +72,6 @@ public class MainApp extends Application implements Initializable {
 
     private IIsoline highlighted_yellow_last;
     private IIsoline highlighted_yellow;
-    private IIsoline highlighted_red_last;
-    private IIsoline highlighted_red;
-    private IIsoline highlighted_blue_last;
-    private IIsoline highlighted_blue;
 
     public static void main(String[] args) throws Exception {
         launch(args);
@@ -83,10 +92,13 @@ public class MainApp extends Application implements Initializable {
     public void start(Stage stage) throws Exception {
         this.stage = stage;
         String fxmlFile = "fxml/mainWindow.fxml";
+        String styleFile = "fxml/mainWindow.css";
         FXMLLoader loader = new FXMLLoader();
         Parent root = (Parent) loader.load(getClass().getResourceAsStream(fxmlFile));
-        stage.setTitle("JavaFX and Maven");
-        stage.setScene(new Scene(root));
+        stage.setTitle("3d map builder");
+        Scene scene = new Scene(root);
+        scene.getStylesheets().add(getClass().getResource(styleFile).toExternalForm());
+        stage.setScene(scene);
         stage.show();
     }
 
@@ -100,15 +112,71 @@ public class MainApp extends Application implements Initializable {
 
     }
 
+    MouseActionController mouseActions = new MouseActionController();
+    LineString last_render = null;
+
+    int renderAction_draw_limit = 10;
+    int renderAction_draw_count = 0;
+    private void renderAction( Coordinate new_point) {
+
+        GraphicsContext gc = display.getGraphicsContext2D();
+        if (new_point == null && mouseActions.getCoordinates().size() != 0) {
+            gc.setLineWidth(0.2);
+            gc.setStroke(Color.BLACK);
+            if (last_render != null) renderer.render(last_render, gc, (float) display.getWidth(), (float) display.getHeight());
+            return;
+        }
+        if (mouseActions.getCoordinates().size() == 0) {
+            // Reset last render
+            if (last_render != null) {
+                gc.setLineWidth(2);
+
+                gc.setStroke(Color.WHITE);
+                renderer.render(last_render, gc, (float) display.getWidth(), (float) display.getHeight());
+                last_render = null;
+            }
+            return;
+        }
+        Coordinate[] coordinates = new Coordinate[mouseActions.getCoordinates().size()+1];
+        int i = 0;
+        for (Coordinate c : mouseActions.getCoordinates()) {
+            coordinates[i] = c;
+            ++i;
+        }
+
+        coordinates[i] = new_point;
+
+        GeometryFactory gf = mc.isolineContainer.getFactory();
+        LineString new_line_string = gf.createLineString(coordinates);
+
+        // Redraw highlights
+        ++renderAction_draw_count;
+        if (renderAction_draw_count > renderAction_draw_limit) {
+            render();
+            renderAction_draw_count = 0;
+        }
+
+        if (last_render != null) {
+            gc.setLineWidth(2);
+
+            gc.setStroke(Color.WHITE);
+            renderer.render(last_render, gc, (float) display.getWidth(), (float) display.getHeight());
+        }
+
+        if (new_line_string != null) {
+            gc.setLineWidth(0.2);
+            gc.setStroke(Color.BLACK);
+            renderer.render(new_line_string, gc, (float) display.getWidth(), (float) display.getHeight());
+        }
+        last_render = new_line_string;
+    }
+
     private void render() {
 
         GraphicsContext gc = display.getGraphicsContext2D();
 
         renderer.render(gc,(float)display.getWidth(),(float)display.getHeight());
 
-        if (highlighted_red != null) renderer.render(drawer.draw(highlighted_red, Color.RED,1),gc,(float)display.getWidth(),(float)display.getHeight());
-        if (highlighted_blue != null) renderer.render(drawer.draw(highlighted_blue, Color.BLUE,1),gc,(float)display.getWidth(),(float)display.getHeight());
-        if (highlighted_yellow != null) renderer.render(drawer.draw(highlighted_yellow, Color.YELLOW,1),gc,(float)display.getWidth(),(float)display.getHeight());
     }
 
     @FXML
@@ -163,21 +231,22 @@ public class MainApp extends Application implements Initializable {
         double distance = mp_shifted_top.distance(mp_shifted_bottom);
 
         if (displayedContainer == null) {
-            UpdateHighLights();
+            //UpdateHighLights();
             return;
         }
+
         List<IIsoline> isolines = mc.getIsolinesInCircle(mp_shifted_top.x, mp_shifted_top.y, distance, displayedContainer).collect(Collectors.toList());
         if (isolines.size() > 1) {
-            statusText.setText("Hover over multiple isolines");
+            info_label.setText("Hover over multiple isolines");
         } else if (isolines.size() == 0) {
-            statusText.setText("No isolines under mouse");
+            info_label.setText("No isolines under mouse");
         } else {
 
             IIsoline il = isolines.get(0);
             current_isoline = il;
             highlighted_yellow = current_isoline;
 
-            statusText.setText("Is closed: " + il.getLineString().isClosed() +
+            info_label.setText("Is closed: " + il.getLineString().isClosed() +
                     "; Type: " + il.getType() +
                     "; Slope side: " + il.getSlopeSide() +
                     "; Height: " + il.getHeight() +
@@ -186,13 +255,44 @@ public class MainApp extends Application implements Initializable {
                     "; Line id = " + il.getID());
         }
 
-        statusText.setText(statusText.getText()+" Mouse position: "+mp.x+" "+mp.y);
+        info_label.setText(info_label.getText()+" Mouse position: "+mp.x+" "+mp.y);
 
         UpdateHighLights();
+        renderAction(mp);
     }
 
     @FXML void canvasMouseDown(MouseEvent event) {
-        mouseIsDown = true;
+
+        if (displayedContainer != mc.isolineContainer) return;
+
+        Coordinate local = new Coordinate(event.getX(),event.getY());
+        renderer.screenToLocal(local,display.getWidth(),display.getHeight());
+
+        if (event.getButton() == MouseButton.PRIMARY) {
+            mouseActions.addPoint(local);
+        }
+        if (event.getButton() == MouseButton.SECONDARY) {
+            // Put end point (causes execution of action
+
+            // Calculate distance threshold based on pixels.
+            Coordinate mp_shifted_top = new Coordinate(mousePos.x-1,mousePos.y-1);
+            renderer.screenToLocal(mp_shifted_top,display.getWidth(),display.getHeight());
+            Coordinate mp_shifted_bottom = new Coordinate(mousePos.x+2,mousePos.y+2);
+            renderer.screenToLocal(mp_shifted_bottom,display.getWidth(),display.getHeight());
+            double distance = mp_shifted_top.distance(mp_shifted_bottom);
+
+            try {
+                mouseActions.execute(displayedContainer, distance);
+            } catch (Exception ex) {
+                statusText.setText("Could not perform tool action: " + ex.getMessage());
+            }
+
+            mouseActions.clear();
+            renderAction(null);
+            redraw();
+            render();
+        }
+
     }
 
     @FXML void canvasMouseUp(MouseEvent event) {
@@ -222,42 +322,49 @@ public class MainApp extends Application implements Initializable {
         renderer.screenToLocal(localMousePos, display.getWidth(), display.getHeight());
         renderer.rescale(localMousePos, Math.pow(0.995, delta));
         render();
+
+        renderAction(null);
+        redrawHighlights();
     }
 
-    @FXML void onBtnEdgesClick() {
+    @FXML void algorithm_heal_pressed() {
+        mc.heal();
+        redraw();
+        render();
+    }
+
+    @FXML void algorithm_edge_pressed() {
         mc.detectEdge();
         redraw();
         render();
     }
 
-    @FXML void onBtnLinesClick() {
+    @FXML void algorithm_lines_pressed() {
         mc.connectLines();
-        if (!original_ch_b.isSelected())
-            displayedContainer = mc.isolineContainer;
+        displayedContainer = mc.isolineContainer;
         redraw();
         render();
     }
 
-    @FXML void onBtnGraphClick() {
+    @FXML void algorithm_graph_pressed() {
         mc.buildGraph();
         redraw();
         render();
     }
 
-    @FXML void onBtnInterpolateClick() {
+    @FXML void algorithm_interpolate_pressed() {
         mc.interpolate();
         redraw();
         render();
     }
 
-    @FXML void onTextureGenereateClick() {
+    @FXML void algorithm_texture_pressed() {
         mc.generateTexture("texture");
     }
 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        System.out.println("Initialized!");
 
         //Hook to redraw properly on resizing
         InvalidationListener listener = o -> render();
@@ -267,17 +374,60 @@ public class MainApp extends Application implements Initializable {
 
         display.widthProperty().addListener(listener);
         display.heightProperty().addListener(listener);
+
+        action_label.setText("Current tool: none");
+    }
+
+
+    public void redrawHighlights() {
+        if (highlighted_yellow != null) {
+            GraphicsContext gc = display.getGraphicsContext2D();
+            renderer.render(drawer.draw(highlighted_yellow, Color.YELLOW,5),gc,(float)display.getWidth(),(float)display.getHeight());
+            renderer.render(drawer.draw(highlighted_yellow, Color.RED,1),gc,(float)display.getWidth(),(float)display.getHeight());
+        }
     }
 
     public void UpdateHighLights() {
-        if (!(highlighted_blue != highlighted_blue_last ||
-                highlighted_red != highlighted_red_last ||
-                highlighted_yellow != highlighted_yellow_last)) return;
+        if (highlighted_yellow == highlighted_yellow_last) return;
+
+        GraphicsContext gc = display.getGraphicsContext2D();
+        if (highlighted_yellow_last != null) {
+            renderer.render(drawer.draw(highlighted_yellow_last, Color.WHITE,5),gc,(float)display.getWidth(),(float)display.getHeight());
+            renderer.render(drawer.draw(highlighted_yellow_last, null,1),gc,(float)display.getWidth(),(float)display.getHeight());
+        }
+
+        if (highlighted_yellow != null) {
+            renderer.render(drawer.draw(highlighted_yellow, Color.YELLOW,5),gc,(float)display.getWidth(),(float)display.getHeight());
+            renderer.render(drawer.draw(highlighted_yellow, Color.RED,1),gc,(float)display.getWidth(),(float)display.getHeight());
+        }
+
 
         highlighted_yellow_last = highlighted_yellow;
-        highlighted_red_last = highlighted_red;
-        highlighted_blue_last = highlighted_blue;
-
-        render();
     }
+
+    public void tool_cut_pressed() {
+        mouseActions.setAction(new ActionCut());
+        action_label.setText("Current tool: cut");
+    }
+
+    public void tool_delete_pressed() {
+        mouseActions.setAction(new ActionDelete());
+        action_label.setText("Current tool: delete");
+    }
+
+    public void tool_slope_pressed() {
+        mouseActions.setAction(new ActionSlope());
+        action_label.setText("Current tool: slope");
+    }
+
+    public void tool_connect_pressed() {
+        mouseActions.setAction(new ActionConnect());
+        action_label.setText("Current tool: connect");
+    }
+
+    public void tool_move_pressed() {
+        mouseActions.setAction(new ActionMove());
+        action_label.setText("Current tool: move");
+    }
+
 }

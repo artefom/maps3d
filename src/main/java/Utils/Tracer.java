@@ -56,7 +56,7 @@ public class Tracer<T>{
         LineString boundary;
         Coordinate coord1;
         Coordinate coord2;
-        Coordinate[] ls_coords;
+        CoordinateSequence ls_coords;
         for (T ent : entities) {
             LineString ls = (LineString)geometryFunction.apply(ent);
 
@@ -93,11 +93,11 @@ public class Tracer<T>{
 
             /*TEST FOR INTERSECTION WITH LINE STRING*/
 
-            ls_coords = ls.getCoordinates();
-            coord1 = ls_coords[0];
+            ls_coords = ls.getCoordinateSequence();
+            coord1 = ls_coords.getCoordinate(0);
             prev_side = getSide(vec,coord1);
-            for (int i = 1; i < ls_coords.length; ++i) {
-                coord2 = ls_coords[i];
+            for (int i = 1; i < ls_coords.size(); ++i) {
+                coord2 = ls_coords.getCoordinate(i);
                 side = getSide(vec,coord2);
                 if (prev_side != side) {
                     a = coord1.y-coord2.y;
@@ -138,7 +138,7 @@ public class Tracer<T>{
         LineString boundary;
         Coordinate coord1;
         Coordinate coord2;
-        Coordinate[] line_coords;
+        CoordinateSequence line_coords;
         for (T ent : entities) {
             LineString ls = (LineString)geometryFunction.apply(ent);
 
@@ -173,11 +173,11 @@ public class Tracer<T>{
 
             /*TEST FOR INTERSECTION WITH LINE STRING*/
 
-            line_coords = ls.getCoordinates();
-            coord1 = line_coords[0];
+            line_coords = ls.getCoordinateSequence();
+            coord1 = line_coords.getCoordinate(0);
             prev_side = getSide(vec,coord1);
-            for (int i = 1; i < line_coords.length; ++i) {
-                coord2 = line_coords[i];
+            for (int i = 1; i < line_coords.size(); ++i) {
+                coord2 = line_coords.getCoordinate(i);
                 int side = getSide(vec,coord2);
                 if (prev_side != side) {
                     a = coord1.y-coord2.y;
