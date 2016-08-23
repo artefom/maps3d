@@ -15,7 +15,7 @@ import static Utils.GeomUtils.getSide;
  * Entity collection is passed to tracer constructor alongside with function which extracts {@link Geometry} from generic entity
  * WARNING: Currently Entity's geometry MUST be castable to {@link LineString}
  */
-public class Tracer<T>{
+public class Tracer_Legacy<T>{
 
     public class traceres{
         public T entitiy;
@@ -23,12 +23,17 @@ public class Tracer<T>{
         //Vector2D normal;
         public int side;
         public double distance;
+
+        @Override
+        public String toString() {
+            return "("+entitiy+", "+distance+", "+side+")";
+        }
     }
 
     private Function<T,Geometry> geometryFunction;
     private Collection<T> entities;
     private GeometryFactory gf;
-    public Tracer(Collection<T> entities, Function<T,Geometry> geometryFunction, GeometryFactory gf) {
+    public Tracer_Legacy(Collection<T> entities, Function<T,Geometry> geometryFunction, GeometryFactory gf) {
         this.entities = entities;
         this.geometryFunction = geometryFunction;
         this.gf = gf;
@@ -185,9 +190,6 @@ public class Tracer<T>{
                     c = coord1.x*coord2.y-coord2.x*coord1.y;
                     t = -(c+a*x0+b*y0)/(a*vx+b*vy);
                     if (t > min_length_fraction && t < proj_factor) {
-                        if (t < 0.01) {
-                            System.out.println("ALARM");
-                        }
                         return true;
                     }
                 }
@@ -196,6 +198,26 @@ public class Tracer<T>{
             }
         }
         return false;
+    }
+
+
+    public static boolean intersects(LineSegment s1, LineSegment s2, double min_percent_length, double max_percent_length) {
+        double x0 = s1.p0.x;
+        double y0 = s1.p0.y;
+        double vx = s1.p1.x-x0;
+        double vy = s1.p1.y-y0;
+        double a;
+        double b;
+        double c;
+        double t;
+        double prev_side = getSide(s1,s2.p0);
+        double side = getSide(s1,s2.p1);
+        if (side == prev_side) return false;
+        a = s2.p0.y-s2.p1.y;
+        b = s2.p1.x-s2.p0.x;
+        c = s2.p0.x*s2.p1.y-s2.p1.x*s2.p0.y;
+        t = -(c+a*x0+b*y0)/(a*vx+b*vy);
+        return t > min_percent_length && t < max_percent_length;
     }
 
     public static boolean intersects( LineString ls, LineSegment vec, double min_length_fraction, double max_length_fraction) {
@@ -264,25 +286,6 @@ public class Tracer<T>{
             coord1 = coord2;
         }
         return false;
-    }
-
-    public static boolean intersects(LineSegment s1, LineSegment s2, double min_percent_length, double max_percent_length) {
-        double x0 = s1.p0.x;
-        double y0 = s1.p0.y;
-        double vx = s1.p1.x-x0;
-        double vy = s1.p1.y-y0;
-        double a;
-        double b;
-        double c;
-        double t;
-        double prev_side = getSide(s1,s2.p0);
-        double side = getSide(s1,s2.p1);
-        if (side == prev_side) return false;
-        a = s2.p0.y-s2.p1.y;
-        b = s2.p1.x-s2.p0.x;
-        c = s2.p0.x*s2.p1.y-s2.p1.x*s2.p0.y;
-        t = -(c+a*x0+b*y0)/(a*vx+b*vy);
-        return t > min_percent_length && t < max_percent_length;
     }
 
 

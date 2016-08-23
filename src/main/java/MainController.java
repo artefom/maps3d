@@ -110,7 +110,6 @@ public class MainController {
     public void connectLines() {
         if (edge == null) return;
         LineWelder lw = new LineWelder(gf,edge);
-        //lw.WeldAll(isolineContainer);
         isolineContainer = new IsolineContainer(gf,lw.WeldAll(isolineContainer));
         CommandLineUtils.report();
     }

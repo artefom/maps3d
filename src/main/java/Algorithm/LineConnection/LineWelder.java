@@ -2,11 +2,11 @@ package Algorithm.LineConnection;
 
 import Isolines.IIsoline;
 import Isolines.Isoline;
+import Utils.CachedTracer;
 import Utils.Constants;
-import Utils.Intersector;
 import Utils.Pair;
-import Utils.RandomForestRegressor;
-import com.vividsolutions.jts.geom.CoordinateSequence;
+import Utils.Tracer_Legacy;
+import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 
@@ -90,6 +90,7 @@ public class LineWelder {
      * @return
      */
     public LinkedList<IIsoline> WeldAll(Collection<IIsoline> cont) {
+
         ArrayList<Isoline_attributed> isos = new ArrayList<>(cont.size());
         for (IIsoline i : cont)
             isos.add(new Isoline_attributed(i));
@@ -101,8 +102,9 @@ public class LineWelder {
             }
         }
 
-        Intersector intersector = new Intersector(isos.stream().map((x) -> x.getGeometry()).collect(Collectors.toList()), gf);
-        SteepDetector steepDetector = new SteepDetector(steeps, Constants.CONNECTIONS_NEAR_STEEP_THRESHOLD, gf);
+        CachedTracer<Geometry> intersector = new CachedTracer<>(isos.stream().map((x) -> x.getGeometry()).collect(Collectors.toList()),(x)->x, gf);
+        Tracer_Legacy<Geometry> legacy_tracer = new Tracer_Legacy<>(isos.stream().map((x)->x.getGeometry()).collect(Collectors.toList()), (x)->x,gf);
+        //SteepDetector steepDetector = new SteepDetector(steeps, Constants.CONNECTIONS_NEAR_STEEP_THRESHOLD, gf);
 
         RandomForestEvaluator rf_eval = new RandomForestEvaluator();
         rf_eval.intersector = intersector;
@@ -120,7 +122,9 @@ public class LineWelder {
                 welded_lines.add( Weld(con) );
             //};
         }
+
         LinkedList<IIsoline> ret = new LinkedList<>();
+
         for (Isoline_attributed iso: isos)
             if (iso != null && iso.isValid()) {
                 IIsoline iline = iso.getIsoline();
@@ -129,6 +133,7 @@ public class LineWelder {
                     ret.add(iline);
                 }
             }
+
         for (Isoline_attributed iso: welded_lines)
             if (iso != null && iso.isValid()) {
                 IIsoline iline = iso.getIsoline();
@@ -137,6 +142,7 @@ public class LineWelder {
                     ret.add(iline);
                 }
             }
+
         return ret;
     }
 

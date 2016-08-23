@@ -4,15 +4,14 @@ import Algorithm.DatasetGenerator.Datagen;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
 import Utils.*;
+import Utils.Area.CoordinateAttributed;
+import Utils.Area.PointAreaBuffer;
+
 import com.vividsolutions.jts.algorithm.Angle;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineSegment;
-import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.*;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -67,9 +66,24 @@ public class RandomForestEvaluator {
         public Connection core() {
             return con;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Connection_attributed that = (Connection_attributed) o;
+
+            return con != null ? con.equals(that.con) : that.con == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return con.hashCode();
+        }
     }
 
-    public Intersector intersector;
+    public CachedTracer<Geometry> intersector;
     GeometryFactory gf = null;
 
 
@@ -108,18 +122,21 @@ public class RandomForestEvaluator {
         if (le1 == null || le2 == null) return;
 
         LineSegment seg = new LineSegment(le1.line.p1,le2.line.p1);
-        if (intersector.intersects(seg)) return;
+
 
         Connection_attributed con = new Connection_attributed( Connection.fromLineEnds(le1,le2) );
 
+        if (con == null || con.con == null || !con.con.isValid()) return;
         applyAngleDistanceScores(con);
 
         con.features[score] = getDraftScore(con);
 
-        if (con.features[score] < draftScoreThreshold) return;
+        if (con.features[score] < finalScore95PercentRecallThreshold) return;
+
+        if (con.con.connectionSegment.getLength() > Constants.CONNECTIONS_MAX_DIST) return;
+        if (intersector.intersects(seg,0.01,0.99)) return;
 
         cons.add(con);
-
     }
 
 
@@ -143,7 +160,7 @@ public class RandomForestEvaluator {
 
             }
 
-            if (Tracer.intersects(con.core().getConnectionSegment(),con2.core().getConnectionSegment(),0.01,0.99)) {
+            if (CachedTracer.intersects(con.core().getConnectionSegment(),con2.core().getConnectionSegment(),0.01,0.99)) {
                 intersecting_scores.add(getDraftScore(con2));
             }
         }
@@ -180,8 +197,6 @@ public class RandomForestEvaluator {
 
         this.gf = gf;
 
-        Intersector intersector = new Intersector(isos_attributed.stream().map((x) -> x.getIsoline().getGeometry()).collect(Collectors.toList()), gf);
-
 //        ArrayList<Algorithm.LineConnection.Isoline_attributed> isos_attributed = new ArrayList<>(isolines.size());
 //        for (Isoline_attributed cmap : isolines) {
 //            Algorithm.LineConnection.Isoline_attributed i_attr = new Algorithm.LineConnection.Isoline_attributed(cmap);
@@ -190,31 +205,55 @@ public class RandomForestEvaluator {
 
 
         ArrayList<Connection_attributed> pre_ret = new ArrayList<>();
-        /*Run through all pairs of isolines*/
-        for (int i = 0; i != isos_attributed.size(); ++i) {
-            CommandLineUtils.reportProgress(i,isos_attributed.size());
-            Isoline_attributed i1 = isos_attributed.get(i);
+        ArrayList<CoordinateAttributed<LineEnd>> lineEndPool = new ArrayList<>();
 
-            // Add connection line to itself
-            addIfNotIntersectsAdvanced(pre_ret, i1.begin,i1.end );
+        for (Isoline_attributed iso : isos_attributed) {
+            LineEnd le1 = LineEnd.fromIsoline(iso,-1);
+            LineEnd le2 = LineEnd.fromIsoline(iso,1);
 
-            for (int j = i+1; j < isos_attributed.size(); ++j) {
-                Isoline_attributed i2 = isos_attributed.get(j);
+            if (le1 != null) lineEndPool.add(new CoordinateAttributed<>( le1.line.p1, le1 ));
+            if (le2 != null) lineEndPool.add(new CoordinateAttributed<>( le2.line.p1, le2 ));
+        }
 
-                if (i2.getType() == i1.getType()) {
-                    addIfNotIntersectsAdvanced(pre_ret, i1.begin, i2.begin);
-                    addIfNotIntersectsAdvanced(pre_ret, i1.begin, i2.end);
-                    addIfNotIntersectsAdvanced(pre_ret, i1.end, i2.begin);
-                    addIfNotIntersectsAdvanced(pre_ret, i1.end, i2.end);
+        PointAreaBuffer<LineEnd> lineEndAreaBuffer = new PointAreaBuffer<>();
+        lineEndAreaBuffer.setEnvelope(lineEndPool,100,100);
+        lineEndAreaBuffer.addAll(lineEndPool);
+
+        CommandLineUtils.reportProgressBegin("Collecting connections");
+        int current = 0;
+        for (CoordinateAttributed<LineEnd> coordinate_line_end1 : lineEndPool) {
+            CommandLineUtils.reportProgress(++current,lineEndPool.size());
+            LineEnd le1 = coordinate_line_end1.entity;
+            Collection<CoordinateAttributed<LineEnd>> candidates =
+                    lineEndAreaBuffer.getPossiblyInArea(coordinate_line_end1.x,coordinate_line_end1.y, Constants.CONNECTIONS_MAX_DIST);
+
+            for (CoordinateAttributed<LineEnd> coordinate_line_end2 : candidates)
+            {
+                LineEnd le2 = coordinate_line_end2.entity;
+                if (le1 != le2) {
+                    addIfNotIntersectsAdvanced(pre_ret, le1,le2);
+                    //addIfNotIntersectsAdvanced(pre_ret, le2,le1);
                 }
             }
+
+            if (! lineEndAreaBuffer.remove(coordinate_line_end1) ) {
+                System.out.println("REMOVE FAILED!");
+            }
+
         }
+        CommandLineUtils.reportProgressEnd();
+
+        System.out.println("Gathered "+pre_ret.size()+" possible connections");
 
         ArrayList<Connection> scores = new ArrayList<>();
 
+        CommandLineUtils.reportProgressBegin("Extracting connection features");
+        current = 0;
         for (Connection_attributed con: pre_ret) {
+            CommandLineUtils.reportProgress(++current,pre_ret.size());
             gatherSourceData(con,pre_ret);
         }
+        CommandLineUtils.reportProgressEnd();
 
         RandomForestRegressor regressor = new RandomForestRegressor();
         try {
@@ -226,11 +265,15 @@ public class RandomForestEvaluator {
             return null;
         }
 
+        CommandLineUtils.reportProgressBegin("Evalutating connections");
+        current = 0;
         for (Connection_attributed c_atr : pre_ret) {
+            CommandLineUtils.reportProgress(++current,pre_ret.size());
             Connection core = c_atr.core();
             core.score = regressor.predict(c_atr.features);
             scores.add(core);
         }
+        CommandLineUtils.reportProgressEnd();
 
         return scores;
     }
@@ -243,8 +286,6 @@ public class RandomForestEvaluator {
          */
 
         this.gf = gf;
-
-        Intersector intersector = new Intersector(isos_attributed.stream().map((x) -> x.getIsoline().getGeometry()).collect(Collectors.toList()), gf);
 
 //        ArrayList<Algorithm.LineConnection.Isoline_attributed> isos_attributed = new ArrayList<>(isolines.size());
 //        for (Isoline_attributed cmap : isolines) {

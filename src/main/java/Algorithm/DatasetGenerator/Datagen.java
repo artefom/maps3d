@@ -332,7 +332,7 @@ public class Datagen {
             );
             //MapEdge mapEdge = MapEdge.fromIsolines(cutted_map, Constants.EDGE_CONCAVE_THRESHOLD);
 
-            Intersector intersector = new Intersector(isos.stream().map((x) -> x.getGeometry()).collect(Collectors.toList()), gf);
+            CachedTracer<Geometry> intersector = new CachedTracer<Geometry>(isos.stream().map((x) -> x.getGeometry()).collect(Collectors.toList()),(x)->x, gf);
             //SteepDetector steepDetector = new SteepDetector(steeps, Constants.CONNECTIONS_NEAR_STEEP_THRESHOLD, gf);
 
 

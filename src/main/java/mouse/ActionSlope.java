@@ -2,9 +2,10 @@ package mouse;
 
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
+import Utils.CachedTracer;
 import Utils.GeomUtils;
 import Utils.LineStringIterator;
-import Utils.Tracer;
+
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.LineSegment;
@@ -30,14 +31,14 @@ public class ActionSlope extends  ActionBase {
         HashSet<IIsoline> positive_side = new HashSet<>();
         HashSet<IIsoline> negative_side = new HashSet<>();
 
-        Tracer<IIsoline> tracer = new Tracer<>(intersected_isolines,(x)->x.getLineString(),cont.getFactory());
+        CachedTracer<IIsoline> tracer = new CachedTracer<>(intersected_isolines,(x)->x.getLineString(),cont.getFactory());
         LineSegment buf = new LineSegment();
 
         LineStringIterator it = new LineStringIterator(cut_line,buf);;
         while (it.hasNext()) {
             it.next();
             Vector2D vec = Vector2D.create(buf.p0,buf.p1);
-            Tracer.traceres res = tracer.trace(buf.p0, vec,0,1);
+            CachedTracer.traceres res = tracer.trace(buf.p0, vec,0,1);
             while (res.entitiy != null) {
 
                 if (-res.side > 0) positive_side.add((IIsoline)res.entitiy);

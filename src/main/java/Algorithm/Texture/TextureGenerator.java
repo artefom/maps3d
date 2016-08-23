@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import com.google.gson.*;
 import com.vividsolutions.jts.geom.Polygon;
@@ -213,7 +214,7 @@ public class TextureGenerator {
                     try {
                         col = obj.getGeometry(gf);
                     } catch (Exception ex) {
-                        throw new RuntimeException(ex.getMessage());
+                        throw new RuntimeException("Check texture .vmt files, they are probably invalid");
                     }
                     if (col == null) {
                         continue;

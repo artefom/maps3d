@@ -50,6 +50,22 @@ public class GeomUtils {
         return ( (v1x*v2y - v1y*v2x) > 0) ? 1 : -1;
     }
 
+    /**
+     * Get side of (x3 y3) relative to Line segment( x0 y0, x0+v0x y0+v0y)
+     * @param x0
+     * @param y0
+     * @param x1
+     * @param y1
+     * @param x3
+     * @param y3
+     * @return
+     */
+    public static int getSide( double x0, double y0, double v0x, double v0y, double x3, double y3) {
+        double v2x = x3 - x0;
+        double v2y = y3 - y0;
+        return ( (v0x*v2y - v0y*v2x) > 0) ? 1 : -1;
+    }
+
 
     /**
      * returns length fraction of closest point along {@link LineString} ls to {@link Coordinate} c

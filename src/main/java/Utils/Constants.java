@@ -16,7 +16,7 @@ public class Constants {
     public static final double CONNECTIONS_MIN_ANGLE_DEG=10;
     public static final double CONNECTIONS_MAX_ANGLE_DEG=100;
     public static final double CONNECTIONS_WELD_DIST = 4;
-    public static final double CONNECTIONS_MAX_DIST = 12;
+    public static final double CONNECTIONS_MAX_DIST = 120;
     public static final double CONNECTIONS_NEAR_STEEP_THRESHOLD = 0.5;
     // Don't count intersections within this offset from edges
     public static final double CONNECTIONS_INTERSECTION_OFFSET = 0.1;
@@ -48,12 +48,12 @@ public class Constants {
     public static final double NEARBY_TRACE_STEP = 20;
     public static final double NEARBY_TRACE_LENGTH=1000;
     public static final double NEARBY_TRACE_OFFSET = 0.1;
-    public static final double NEARBY_HILL_THRESHOLD_AREA = 1000;
+    public static final double NEARBY_HILL_THRESHOLD_AREA = 10000;
 
     //Interpolation
-    public static final double INTERPOLATION_STEP = 1;
-    public static final double INTERPOLATION_FADE_DISTANCE = 100;
-    public static final double INTERPOLATION_FADE_STRENGTH = 1.5;
+    public static final double INTERPOLATION_STEP = 2.5;
+    public static final double INTERPOLATION_FADE_DISTANCE = 10;
+    public static final double INTERPOLATION_FADE_STRENGTH = 3;
     public static final double INTERPOLATION_HILL_TANGENT = 1;
     public static final float INTERPOLATION_MAX_DISTANCE = 100000000;
 }

@@ -1,7 +1,9 @@
 package Algorithm.LineConnection;
 
 import Utils.*;
+import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineString;
 
 import java.util.ArrayList;
 import java.util.function.Function;
@@ -15,13 +17,13 @@ import java.util.function.Function;
  */
 public class ConnectionExtractor {
 
-    private Intersector intersector;
+    private CachedTracer<LineString> intersector;
     private GeometryFactory gf;
     private ConnectionEvaluator evaluator;
     private SteepDetector steepDetector;
     private MapEdge edge;
 
-    public ConnectionExtractor(Intersector intersector, SteepDetector steepDetector, ConnectionEvaluator evaluator,
+    public ConnectionExtractor(CachedTracer<LineString> intersector, SteepDetector steepDetector, ConnectionEvaluator evaluator,
                                GeometryFactory gf,MapEdge edge) {
         this.intersector = intersector;
         this.edge = edge;
@@ -45,7 +47,7 @@ public class ConnectionExtractor {
         //if (edge.isWithinEdge(le1.line.p1) || edge.isWithinEdge(le2.line.p1)) return;
         buffer.score = evaluator.apply(buffer);
         if (buffer.score > -0.5) {
-            if (!intersector.intersects(buffer.getConnectionSegment()) || buffer.connectionSegment.getLength() < 0.001) {
+            if (!intersector.intersects(buffer.getConnectionSegment(),0.01,0.99) || buffer.connectionSegment.getLength() < 0.001) {
                 if ( (buffer.connectionSegment.getLength() < Constants.CONNECTIONS_WELD_DIST ) ||
                         !steepDetector.isNearSteep(buffer)) {
 
@@ -54,7 +56,7 @@ public class ConnectionExtractor {
                     if (buffer.second().isWithinEdge(edge))
                         buffer.score -= 0.7;
                     for (Connection con : cons) {
-                        if (Tracer.intersects(buffer.getConnectionSegment(),con.getConnectionSegment(),0.01,0.99)) {
+                        if (CachedTracer.intersects(buffer.getConnectionSegment(),con.getConnectionSegment(),0.01,0.99)) {
                             buffer.score *= 0.5;
                             con.score *= 0.5;
                         }
@@ -70,7 +72,6 @@ public class ConnectionExtractor {
 
         // pre-return container. Remove all conflicting(intersecting) connections before return
         ArrayList<Connection> pre_ret = new ArrayList<>(isolines.size()*4);
-        Intersector self_intersector;
 
         CommandLineUtils.reportProgressBegin("Extracting minimal connections");
         for (int i = 0; i != isolines.size(); ++i) {
@@ -106,7 +107,7 @@ public class ConnectionExtractor {
             boolean intersected = false;
             for (Connection con2 : ret) {
                 // Make padding 0.01 and 0.99 to avoid detecting intersection, when two lines intersect at ends.
-                if (Tracer.intersects(con1.getConnectionSegment(),con2.getConnectionSegment(),0.01,0.99)) {
+                if (CachedTracer.intersects(con1.getConnectionSegment(),con2.getConnectionSegment(),0.01,0.99)) {
                     intersected = true;
                     break;
                 }

@@ -59,7 +59,7 @@ public class NearbyEstimator {
 
         List<GeometryWrapper> gws = new ArrayList<>();
 
-        Tracer<Isoline_attributed> tracer = new Tracer<Isoline_attributed>(cont.getIsolines(),(iso)->iso.getIsoline().getLineString(),gf);
+        CachedTracer<Isoline_attributed> tracer = new CachedTracer<Isoline_attributed>(cont.getIsolines(),(iso)->iso.getIsoline().getLineString(),gf);
         LineSegment buf = new LineSegment();
 
         int total = cont.getIsolines().size();
@@ -87,9 +87,9 @@ public class NearbyEstimator {
                 Vector2D trace_negative_vec = Vector2D.create(trace_positive_vec).negate();
 
                 // Trace!, retrieve isolines for both sides
-                Tracer<Isoline_attributed>.traceres traceres_positive =
+                CachedTracer<Isoline_attributed>.traceres traceres_positive =
                     tracer.trace(trace_base,trace_positive_vec, Constants.NEARBY_TRACE_OFFSET,Constants.NEARBY_TRACE_LENGTH);
-                Tracer<Isoline_attributed>.traceres  traceres_negative =
+                CachedTracer<Isoline_attributed>.traceres  traceres_negative =
                     tracer.trace(trace_base,trace_negative_vec, Constants.NEARBY_TRACE_OFFSET,Constants.NEARBY_TRACE_LENGTH);
 
                 // Process  pairs, only if trace did hit something and did nont hit current isoline.

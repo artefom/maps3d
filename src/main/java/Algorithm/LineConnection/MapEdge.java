@@ -1,8 +1,9 @@
 package Algorithm.LineConnection;
 
 import Isolines.IsolineContainer;
+import Utils.CachedTracer;
 import Utils.Constants;
-import Utils.Intersector;
+
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;
 import org.opensphere.geometry.algorithm.*;
@@ -18,13 +19,13 @@ public class MapEdge {
     public LinearRing outerBound;
     public LinearRing outerRectangle;
     public GeometryFactory gf;
-    public Intersector intersector;
+    public CachedTracer<Geometry> intersector;
     public double max_dist;
     private int id;
 
     private static int edge_id = 0;
 
-    private MapEdge(GeometryCollection gc, double threshold, GeometryFactory gf, Intersector intersector) {
+    private MapEdge(GeometryCollection gc, double threshold, GeometryFactory gf, CachedTracer<Geometry> intersector) {
         this.gf = gf;
         this.intersector = intersector;
         Polygon concaveHull = (Polygon)(new ConcaveHull(gc,threshold).getConcaveHull());
@@ -36,13 +37,13 @@ public class MapEdge {
         id = edge_id++;
     }
 
-    public static MapEdge fromGeometryCollection(Collection<Geometry> gc, GeometryFactory gf, Intersector intersector, double threshold) {
+    public static MapEdge fromGeometryCollection(Collection<Geometry> gc, GeometryFactory gf, CachedTracer<Geometry> intersector, double threshold) {
         GeometryCollection gc2 = new GeometryCollection(gc.toArray(new Geometry[gc.size()]),gf);
         return new MapEdge(gc2,threshold, gf, intersector);
     }
 
     public static MapEdge fromIsolines(IsolineContainer isos, double threshold) {
-        Intersector intersector = new Intersector( isos.getIsolinesAsGeometry(), isos.getFactory());
+        CachedTracer<Geometry> intersector = new CachedTracer<>( isos.getIsolinesAsGeometry(), (x)->x, isos.getFactory());
         return fromGeometryCollection(isos.stream().map((x)->x.getGeometry()).collect(Collectors.toList()),
                 isos.getFactory(), intersector, threshold);
     }
@@ -62,9 +63,9 @@ public class MapEdge {
         if (isWithinEdge(ls.p1)) return true;
         Coordinate begin = ls.p1;
         Vector2D vec = Vector2D.create(ls.p0,ls.p1).normalize();
-        Coordinate traced = intersector.trace(begin,vec,0.01,max_dist);
+        CachedTracer.traceres traced = intersector.trace(begin,vec,0.01,max_dist);
         if (traced == null) return true;
-        if (gf.createLineString(new Coordinate[]{ls.p1, traced}).intersects(outerBound)) {
+        if (gf.createLineString(new Coordinate[]{ls.p1, traced.point}).intersects(outerBound)) {
             return true;
         }
         return  false;

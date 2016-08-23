@@ -25,7 +25,7 @@ public class DistanceFieldInterpolation {
 
     GeometryFactory gf;
     Isoline_attributed[] isolines;
-    Intersector intersector;
+    CachedTracer<Geometry> intersector;
     Envelope envelope;
 
     /**
@@ -42,7 +42,7 @@ public class DistanceFieldInterpolation {
             occluders.add(iso.getLineString());
             i+=1;
         }
-        intersector = new Intersector(occluders,gf);
+        intersector = new CachedTracer<>(occluders,(x)->x,gf);
     }
 
     /**
@@ -625,13 +625,13 @@ public class DistanceFieldInterpolation {
     }
 
     double calcRealDistance(double pixelDist) {
-        double result = pixelDist*Constants.INTERPOLATION_STEP;
+        double result = pixelDist*Constants.INTERPOLATION_STEP/10;
         return result;
     }
 
     double calcRealDistanceWithFade(double pixelDist) {
         pixelDist/=3;
-        double result = pixelDist*Constants.INTERPOLATION_STEP;
+        double result = pixelDist*Constants.INTERPOLATION_STEP/10;
         if (result > Constants.INTERPOLATION_FADE_DISTANCE) {
             result = Constants.INTERPOLATION_FADE_DISTANCE+Math.pow(result-Constants.INTERPOLATION_FADE_DISTANCE,Constants.INTERPOLATION_FADE_STRENGTH);
         }
@@ -734,18 +734,20 @@ public class DistanceFieldInterpolation {
                     //result[row][column] = 0;
                     double h2 = 0;
                     // Use tangent of slope of closest isoline. Retrieve it from previously calculated sobel
-                    double tangent = sobel[p.pivot1_row][p.pivot1_column]/Constants.INTERPOLATION_STEP/Constants.INTERPOLATION_STEP*0.2;
+                    double tangent = sobel[p.pivot1_row][p.pivot1_column]*2;
 
                     // When tangent is almost 0, but we want a hill to be visible on the map. Assign high value to tangent, so it will
                     // We could use conditional expression, like tangent = tangent < 0.2 ? 5 : tangent, but it's better to use
                     // this function for calulation of smooth transition.
                     // This function is only significant at low tangent values ( < 0.2 ) and otherwise almost equals tangent
                     tangent = (1-1/(1+Math.exp(-tangent*40+2)))*3+tangent;
+
+                    //tangent = tangent/Constants.INTERPOLATION_STEP;
                     // Just make sure everything goes fine and no extreme values are encountered.
                     tangent = GeomUtils.clamp(tangent,0.05,5.7);
 
                     double ss = crossProductSideDetect(distanceField, row, column);
-                    h2 = 1 - 1.0 / (tangent * p.distance1*Constants.INTERPOLATION_STEP + 1);
+                    h2 = 1 - 1.0 / (tangent * p.distance1*Constants.INTERPOLATION_STEP/10 + 1);
                     if (ss <= 0) h2 = -h2;
                     h2 = GeomUtils.clamp(h2, -1, 1);
                     h2 = h2 * GeomUtils.clamp(GeomUtils.map(dist2, Constants.INTERPOLATION_FADE_DISTANCE, Constants.INTERPOLATION_FADE_DISTANCE * 2, 0, 1), 0, 1);

@@ -211,8 +211,6 @@ public class Triangulation {
             }
         }
 
-        System.out.println("values.append([ "+threshold+", "+count+"])");
-
         return ret;
     }
 
