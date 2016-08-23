@@ -99,7 +99,7 @@ public class IsolineContainer extends HashSet<IIsoline> {
 
     public void serialize(String path) {
 
-        GsonBuilder gsonBuilder = new GsonBuilder();
+        GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
         gsonBuilder.registerTypeAdapter(LineString.class, new LineStringAdapter(gf));
 
         String result = gsonBuilder.create().toJson(this);

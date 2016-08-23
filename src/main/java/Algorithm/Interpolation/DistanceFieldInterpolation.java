@@ -508,12 +508,15 @@ public class DistanceFieldInterpolation {
      * @param mask Mask with rasterized isoline heights. Height of isoline with height index x can't propagate through pixels of mask with value y, where x != y
      */
     private void maskedDistanceField(pixelInfo[][] source, int[][] mask) {
-        DistanceCalculationDownPass(source,mask);
-        DistanceCalculationUpPass(source,mask);
-        DistanceCalculationDownPass(source,mask);
-        DistanceCalculationUpPass(source,mask);
-        DistanceCalculationDownPass(source,mask);
-        DistanceCalculationUpPass(source,mask);
+
+        CommandLineUtils.reportProgressBegin("Calculating distance field");
+        for (int i = 0; i != 3; ++i) {
+            CommandLineUtils.reportProgress(i*2,6);
+            DistanceCalculationDownPass(source,mask);
+            CommandLineUtils.reportProgress(i*2+1,6);
+            DistanceCalculationUpPass(source,mask);
+        }
+        CommandLineUtils.reportProgressEnd();
     }
 
     /**
@@ -660,8 +663,11 @@ public class DistanceFieldInterpolation {
 
         int[][] mask = rasterizer.createIntBuffer(-1);
 
+        CommandLineUtils.reportProgressBegin("Rasterizing polygons");
         //Populate cells
+        int count = 0;
         for (int isoline_id = 0; isoline_id != isolines.length; ++isoline_id) {
+            CommandLineUtils.reportProgress(++count,isolines.length*2);
             Isoline_attributed iso = isolines[isoline_id];
 
             if (!iso.getIsoline().isSteep()) {
@@ -671,10 +677,12 @@ public class DistanceFieldInterpolation {
         }
 
         for (int isoline_id = 0; isoline_id != isolines.length; ++isoline_id) {
+            CommandLineUtils.reportProgress(++count,isolines.length*2);
             Isoline_attributed iso = isolines[isoline_id];
             if (iso.getIsoline().isSteep())
                 rasterize(mask, iso, rasterizer, -2);
         }
+        CommandLineUtils.reportProgressEnd();
 
 
         // Calculate distance field
@@ -683,13 +691,16 @@ public class DistanceFieldInterpolation {
         // Fill gaps
         mask = rasterizer.createIntBuffer(-2);
 
+        CommandLineUtils.reportProgressBegin("Filling gaps");
         for(int row = 0; row != rasterizer.getRowCount(); ++row) {
+            CommandLineUtils.reportProgress(row,rasterizer.getRowCount());
             for (int column = 0; column != rasterizer.getColumnCount(); ++column) {
                 if (distanceField[row][column].height_index1 == -1 || distanceField[row][column].distance1 == Constants.INTERPOLATION_MAX_DISTANCE) {
                     mask[row][column] = -1;
                 }
             }
         }
+        CommandLineUtils.reportProgressEnd();
 
         for (int isoline_id = 0; isoline_id != isolines.length; ++isoline_id) {
             Isoline_attributed iso = isolines[isoline_id];
@@ -700,8 +711,12 @@ public class DistanceFieldInterpolation {
         maskedDistanceFieldSimple(distanceField,mask);
 
         // Calculate height for each pixel
+
+        CommandLineUtils.reportProgressBegin("Calculating heights");
+
         double[][] result = new double[rasterizer.getRowCount()][rasterizer.getColumnCount()];
         for(int row = 0; row != rasterizer.getRowCount(); ++row) {
+            CommandLineUtils.reportProgress(row,rasterizer.getRowCount());
             for (int column = 0; column != rasterizer.getColumnCount(); ++column) {
                 pixelInfo p = distanceField[row][column];
                 if (p.height_index1 == -1) {
@@ -718,12 +733,17 @@ public class DistanceFieldInterpolation {
                 result[row][column] = h1;
             }
         }
+        CommandLineUtils.reportProgressEnd();
 
         //Calculate heights for hills
         //gauss(result,1,2);
         double[][] sobel = RasterUtils.sobel(result);
 
+
+        CommandLineUtils.reportProgressBegin("Calculating hill heights");
+
         for(int row = 0; row != rasterizer.getRowCount(); ++row) {
+            CommandLineUtils.reportProgress(row,rasterizer.getRowCount());
             for (int column = 0; column != rasterizer.getColumnCount(); ++column) {
                 pixelInfo p = distanceField[row][column];
                 double dist1 = calcRealDistance(p.distance1);
@@ -758,6 +778,8 @@ public class DistanceFieldInterpolation {
             }
         }
 
+        CommandLineUtils.reportProgressEnd();
+
         int[][] gaussian_blur_mask = rasterizer.createIntBuffer(1);
 
         for (int row = 0; row != rasterizer.getRowCount(); ++row) {
@@ -768,8 +790,11 @@ public class DistanceFieldInterpolation {
             }
         }
 
+        CommandLineUtils.reportProgressBegin("Applying gaussian blur");
         RasterUtils.gauss(result,1,1);
+        CommandLineUtils.reportProgress(1,2);
         RasterUtils.gauss(result,gaussian_blur_mask,3);
+        CommandLineUtils.reportProgressEnd();
 
         //return
         return result;

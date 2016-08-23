@@ -16,7 +16,7 @@ public class Constants {
     public static final double CONNECTIONS_MIN_ANGLE_DEG=10;
     public static final double CONNECTIONS_MAX_ANGLE_DEG=100;
     public static final double CONNECTIONS_WELD_DIST = 4;
-    public static final double CONNECTIONS_MAX_DIST = 120;
+    public static final double CONNECTIONS_MAX_DIST = 200;
     public static final double CONNECTIONS_NEAR_STEEP_THRESHOLD = 0.5;
     // Don't count intersections within this offset from edges
     public static final double CONNECTIONS_INTERSECTION_OFFSET = 0.1;

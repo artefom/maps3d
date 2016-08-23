@@ -2,6 +2,7 @@
  * Created by Artyom.Fomenko on 15.07.2016.
  */
 
+import Algorithm.DatasetGenerator.Datagen;
 import Display.Drawer;
 import Display.GeometryWrapper;
 import Display.Renderer;
@@ -353,13 +354,49 @@ public class MainApp extends Application implements Initializable {
     }
 
     @FXML void algorithm_interpolate_pressed() {
-        mc.interpolate();
+
+        FileChooser fileChooser1 = new FileChooser();
+        fileChooser1.setTitle("Save dataset as");
+
+
+        fileChooser1.setInitialFileName("sample");
+        fileChooser1.setInitialDirectory( (new File(".")).getAbsoluteFile() );
+
+        File file = fileChooser1.showSaveDialog(stage);
+
+        if (file == null || file.getAbsolutePath() == null) return;
+
+        String path = file.getAbsolutePath();
+
+        mc.interpolate(path);
         redraw();
         render();
     }
 
     @FXML void algorithm_texture_pressed() {
         mc.generateTexture("texture");
+    }
+
+    @FXML
+    void algorithm_data_pressed() {
+
+        FileChooser fileChooser1 = new FileChooser();
+        fileChooser1.setTitle("Save dataset as");
+
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv");
+        fileChooser1.getExtensionFilters().add(extFilter);
+
+        fileChooser1.setInitialFileName("connections_dataset_0");
+        fileChooser1.setSelectedExtensionFilter(extFilter);
+        fileChooser1.setInitialDirectory( (new File(".")).getAbsoluteFile() );
+
+        File file = fileChooser1.showSaveDialog(stage);
+
+        if (file == null || file.getAbsolutePath() == null) return;
+
+        String path = file.getAbsolutePath();
+
+        Datagen.generateData(mc.isolineContainer,path);
     }
 
 

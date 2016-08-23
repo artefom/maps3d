@@ -29,7 +29,8 @@
         <Button fx:id="btn_lines" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_lines_pressed" prefHeight="10.0" prefWidth="80.0" text="Connect Lines" />
         <Button fx:id="btn_graph" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_graph_pressed" prefHeight="10.0" prefWidth="80.0" text="Build Graph" />
         <Button fx:id="btn_interpolate" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_interpolate_pressed" prefHeight="10.0" prefWidth="80.0" text="Interpolate" />
-        <Button fx:id="texBtn" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_texture_pressed" prefHeight="10.0" prefWidth="80.0" text="Write Texture" />
+        <Button fx:id="texBtn" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_texture_pressed" prefHeight="10.0" prefWidth="80.0" text="Make Texture" />
+        <Button fx:id="btn_data"  maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_data_pressed" prefHeight="10.0" prefWidth="80.0" text="ML Data" />
         <CheckBox fx:id="original_ch_b" mnemonicParsing="false" onAction="#onShowOriginalCHBAction" text="Show original" />
       </items>
     </ToolBar>
@@ -67,7 +68,4 @@
       <RowConstraints maxHeight="30.0" minHeight="-Infinity" prefHeight="30.0" valignment="TOP" vgrow="NEVER" />
     </rowConstraints>
   </GridPane>
-  <stylesheets>
-    <URL value="@/fxml/mainWindow.css" />
-  </stylesheets>
 </AnchorPane>

@@ -51,7 +51,7 @@ public class Healer {
         int not_null_count = 0;
         int welded_count = 0;
 
-        CommandLineUtils.reportProgressBegin("Healing map");
+        CommandLineUtils.reportProgressBegin("Welding points");
         // Connect ends...
         int ret_iter1 = 0;
         while (ret_iter1 < ret.size()) {
@@ -140,6 +140,7 @@ public class Healer {
         }
         CommandLineUtils.reportProgressEnd();
 
+        int intersection_removed_count = 0;
         CommandLineUtils.reportProgressBegin("Removing intersections");
         ret_iter1 = 0;
 
@@ -217,12 +218,15 @@ public class Healer {
                     double residue1_percent_loss = 1-(residue1_length/ls1.getLength());
                     double residue2_percent_loss = 1-(residue2_length/ls2.getLength());
 
+                    intersection_removed_count += 1;
+
                     if (residue1_percent_loss < residue2_percent_loss) {
                         //IIsoline iso_new = new Isoline(iso1.getType(),iso1.getSlopeSide(),ls1.getCoordinateSequence(),gf);
                         //cutted_isolines.add( iso_new );
                         deleted1 = true;
 
                         for (LineString ls : residue1) {
+
                             IIsoline iso_new = new Isoline(iso1.getType(),iso1.getSlopeSide(),ls.getCoordinateSequence(),gf);
 
                             if (iso_new.getLineString().getLength() > Constants.CONNECTIONS_WELD_DIST)
@@ -271,7 +275,7 @@ public class Healer {
 
         ret.forEach(in::add);
 
-        System.out.println("Welded count: "+welded_count);
-        System.out.println("not null count: " + not_null_count);
+        System.out.println("Intersections removed: "+intersection_removed_count);
+        System.out.println("Points welded: "+welded_count);
     }
 }

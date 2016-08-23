@@ -95,23 +95,22 @@ public class LineWelder {
         for (IIsoline i : cont)
             isos.add(new Isoline_attributed(i));
 
-        ArrayList<LineString> steeps = new ArrayList<>();
-        for (IIsoline i: cont) {
-            if (i.getType() == 4){
-                steeps.add(i.getLineString());
-            }
-        }
+//        ArrayList<LineString> steeps = new ArrayList<>();
+//        for (IIsoline i: cont) {
+//            if (i.getType() == 4){
+//                steeps.add(i.getLineString());
+//            }
+//        }
 
-        CachedTracer<Geometry> intersector = new CachedTracer<>(isos.stream().map((x) -> x.getGeometry()).collect(Collectors.toList()),(x)->x, gf);
-        Tracer_Legacy<Geometry> legacy_tracer = new Tracer_Legacy<>(isos.stream().map((x)->x.getGeometry()).collect(Collectors.toList()), (x)->x,gf);
+        CachedTracer<Geometry> intersector = new CachedTracer<>(isos.stream().map(Isoline_attributed::getGeometry).collect(Collectors.toList()),(x)->x, gf);
+        //Tracer_Legacy<Geometry> legacy_tracer = new Tracer_Legacy<>(isos.stream().map(Isoline_attributed::getGeometry).collect(Collectors.toList()), (x)->x,gf);
         //SteepDetector steepDetector = new SteepDetector(steeps, Constants.CONNECTIONS_NEAR_STEEP_THRESHOLD, gf);
 
-        RandomForestEvaluator rf_eval = new RandomForestEvaluator();
-        rf_eval.intersector = intersector;
+        RandomForestEvaluator rf_eval = new RandomForestEvaluator(intersector);
         //rf_eval.getConnections(isos,gf);
         //ConnectionExtractor extr = new ConnectionExtractor(intersector, steepDetector, eval, gf, edge);
 
-        ArrayList<Connection> cons_array = rf_eval.getConnections(isos,gf);
+        ArrayList<Connection> cons_array = RandomForestEvaluator.evaluateConnectionsRandomForest( rf_eval.getConnections(isos,gf), "forest.txt") ;
 
         //Sort by descending order
         cons_array.sort((lhs,rhs)->Double.compare(rhs.score,lhs.score));

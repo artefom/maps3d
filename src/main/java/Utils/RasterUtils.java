@@ -481,7 +481,6 @@ public class RasterUtils {
         int y_steps = buffer.length;
         int x_steps = buffer[0].length;
 
-        System.out.println("Writing to file");
         for (int i = y_steps-1; i >= 0; --i) {
             for (int j = 0; j != x_steps; ++j) {
                 out.print(buffer[i][j]+" ");

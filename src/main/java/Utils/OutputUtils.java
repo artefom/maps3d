@@ -52,7 +52,7 @@ public class OutputUtils {
             out.println();
         }
         out.close();
-        CommandLineUtils.report(" file dumped");
+        CommandLineUtils.report("TXT file dumped");
     }
 
     public static void saveAsPNG(double[][] heightmap){
@@ -84,7 +84,7 @@ public class OutputUtils {
         } catch (IOException e) {
             throw new RuntimeException("Could not save " + name + ".png");
         }
-        CommandLineUtils.report(" file dumped");
+        CommandLineUtils.report("PMG file dumped");
     }
 
     public static String getExtension(String fpath) {

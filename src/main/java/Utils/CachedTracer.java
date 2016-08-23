@@ -9,6 +9,7 @@ import com.vividsolutions.jts.math.Vector2D;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.function.DoubleFunction;
 import java.util.function.Function;
 
 import static Utils.GeomUtils.getSide;
@@ -123,6 +124,65 @@ public class CachedTracer<T>{
         res.point = new Coordinate(x0+vx*res.distance,y0+vy*res.distance);
 
         return res;
+    }
+
+    public void getAllIntersections(Polygon p, ArrayList< Pair<LSWAttributed<T>,Double> > ret ) {
+        LineString exterior_ring = p.getExteriorRing();
+        getAllIntersections(exterior_ring,ret);
+
+        for (int i = 0; i != p.getNumInteriorRing(); ++i) {
+            getAllIntersections(p.getInteriorRingN(i),ret);
+        }
+    }
+
+    public void getAllIntersections(LineString ls, ArrayList< Pair<LSWAttributed<T>,Double> > ret) {
+
+        LineSegment buf = new LineSegment();
+        LineStringIterator it = new LineStringIterator(ls,buf);
+
+        while (it.hasNext()){
+            it.next();
+            getAllIntersections(buf,0,1,ret);
+        }
+    }
+
+    public void getAllIntersections(LineSegment ls, double min, double max, ArrayList< Pair<LSWAttributed<T>,Double> > ret) {
+        double x0 = ls.p0.x;
+        double y0 = ls.p0.y;
+        double vx = ls.p1.x-x0;
+        double vy = ls.p1.y-y0;
+        getAllIntersections(x0,y0,vx,vy,min,max,ret);
+    }
+
+    public void getAllIntersections(double x0,double y0,double vx,double vy, double min, double max, ArrayList< Pair<LSWAttributed<T>,Double> > ret) {
+        double a;
+        double b;
+        double c;
+        double t;
+        int side;
+        int prev_side;
+
+        Collection<LineSegmentWrapper> intersection_candidates = buffer.findPossiblyIntersecting(x0+vx*min,y0+vy*min,x0+vx*max,y0+vy*max);
+
+
+        for (LineSegmentWrapper lsw_raw : intersection_candidates) {
+            LSWAttributed<T> lsw = (LSWAttributed<T>)lsw_raw;
+
+            prev_side = getSide(x0,y0,vx,vy,lsw.getBeginX(),lsw.getBeginY());
+            side = getSide(x0,y0,vx,vy,lsw.getEndX(),lsw.getEndY());
+
+            if (prev_side != side) {
+
+                a = lsw.getBeginY()-lsw.getEndY();
+                b = lsw.getEndX()-lsw.getBeginX();
+                c = lsw.getBeginX()*lsw.getEndY()-lsw.getEndX()*lsw.getBeginY();
+                t = -(c+a*x0+b*y0)/(a*vx+b*vy);
+
+                if (t >= min && t <= max) {
+                    ret.add(new Pair<>(lsw,t));
+                }
+            }
+        }
     }
 
     public boolean intersects( LineSegment vec, double min_length_fraction, double max_length_fraction) {

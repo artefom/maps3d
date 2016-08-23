@@ -12,10 +12,7 @@ import Deserialization.Interpolation.SlopeMark;
 import Deserialization.DeserializedOCAD;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
-import Utils.CommandLineUtils;
-import Utils.Constants;
-import Utils.OutputUtils;
-import Utils.PointRasterizer;
+import Utils.*;
 import com.sun.javafx.scene.shape.PathUtils;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -128,21 +125,28 @@ public class MainController {
         graph.ConvertToSpanningTree();
         graph.recoverAllSlopes();
         graph.recoverAllHeights();
-        isolineContainer.serialize("cached_isolines.json");
+        //isolineContainer.serialize("cached_isolines.json");
 
         CommandLineUtils.report("Graph was built successfully");
         CommandLineUtils.report();
     }
 
     double [][] heightmap = null;
-    public void interpolate() {
+    public void interpolate(String name) {
         interpolation = new DistanceFieldInterpolation(isolineContainer);
         heightmap = interpolation.getAllInterpolatingPoints();
-        OutputUtils.saveAsTXT(heightmap);
-        OutputUtils.saveAsPNG(heightmap);
+
+        //OutputUtils.saveAsTXT(heightmap);
+        //OutputUtils.saveAsPNG(heightmap);
+
+        System.out.println("Dumping png...");
+        RasterUtils.saveAsPng(heightmap,name);
+
+        System.out.println("Dumping txt...");
+        RasterUtils.saveAsTxt(heightmap,name);
 
         triangulation = new Triangulation(heightmap);
-        OutputUtils.saveAsOBJ(triangulation);
+        triangulation.writeToFile(name);
         CommandLineUtils.report();
     }
 

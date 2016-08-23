@@ -9,6 +9,7 @@ import Isolines.IIsoline;
 import Isolines.Isoline;
 import Isolines.IsolineContainer;
 import Utils.*;
+import Utils.Area.LSWAttributed;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -44,12 +45,18 @@ public class Datagen {
     }
 
 
-    //private static
-
     public static ArrayList<IIsoline> cutCircle(ArrayList<IIsoline> isolines, ArrayList<LineString> cutted_lines, Geometry cirlce) {
         ArrayList<IIsoline> result = new ArrayList<>();
+
+        Envelope c_env = cirlce.getEnvelopeInternal();
+
         for (int i = isolines.size()-1; i >= 0; --i) {
             IIsoline iso = isolines.get(i);
+
+            if (!iso.getLineString().getEnvelopeInternal().intersects(c_env)) {
+                result.add(new Isoline(iso));
+                continue;
+            }
 
             Geometry dif = iso.getLineString().difference(cirlce);
             Geometry intersection = iso.getLineString().intersection(cirlce);
@@ -74,9 +81,44 @@ public class Datagen {
         return result;
     }
 
-    private  static Random rand = new Random(42);
+    private  static Random rand = new Random();
     private static double genRandom(double min, double max) {
         return min + (max - min) * rand.nextDouble();
+    }
+
+    public static Pair<ArrayList<LineString>,IsolineContainer> genData(IsolineContainer cont) {
+        GeometricShapeFactory gsf = new GeometricShapeFactory();
+        GeometryFactory gf = cont.getFactory();
+        Envelope env = cont.getEnvelope();
+
+        ArrayList<IIsoline> isolines = new ArrayList<>();
+        for ( IIsoline iso : cont ) {
+            Isoline new_isoline = new Isoline(iso);
+            isolines.add(new_isoline);
+        }
+
+        ArrayList<LineString> cuttedLines = new ArrayList<>();
+        int cut_count = 250;
+        CommandLineUtils.reportProgressBegin("Cutting "+cut_count+" squares");
+        for (int i = 0; i != cut_count; ++i) {
+            CommandLineUtils.reportProgress(i,cut_count);
+            double x = genRandom(env.getMinX(),env.getMaxX());
+            double y = genRandom(env.getMinY(),env.getMaxY());
+            double aspect = genRandom(0.1,10);
+            double area = genRandom(1000,3000);
+            double height = Math.sqrt(area/aspect);
+            double width = height*aspect;
+            double rotation = genRandom(-Math.PI,Math.PI);
+            gsf.setCentre(new Coordinate(x,y));
+            gsf.setWidth(width);
+            gsf.setHeight(height);
+            gsf.setRotation(rotation);
+            Polygon rect = gsf.createRectangle();
+            isolines = cutCircle(isolines,cuttedLines,rect);
+        }
+        CommandLineUtils.reportProgressEnd();
+
+        return new Pair<>(cuttedLines, new IsolineContainer(gf,isolines));
     }
 
     public static void genData(String outPath) {
@@ -244,29 +286,110 @@ public class Datagen {
 
     }
 
+    public static void generateData(IsolineContainer input_cont, String output_path) {
+
+        IsolineContainer cont;
+        ArrayList<LineString> cutted_lines;
+        {
+            Pair<ArrayList<LineString>,IsolineContainer> res = genData(input_cont);
+            cont = res.second();
+            cutted_lines = res.first();
+
+            String extension = OutputUtils.getExtension(output_path);
+
+            cont.serialize(output_path.substring(0,output_path.length()-extension.length()-1)+"_map.json");
+        }
+
+        GeometryFactory gf = cont.getFactory();
+        CachedTracer<Geometry> intersector = new CachedTracer<>(cont.stream().map(IIsoline::getGeometry).collect(Collectors.toList()),(x)->x, gf);
+                RandomForestEvaluator rf_eval = new RandomForestEvaluator(intersector);
+
+        ArrayList<Algorithm.LineConnection.Isoline_attributed> isos = new ArrayList<>(cont.size());
+        for (IIsoline i : cont)
+            isos.add(new Algorithm.LineConnection.Isoline_attributed(i));
+
+        ArrayList<RandomForestEvaluator.Connection_attributed> cons = rf_eval.getConnectionsTrain(isos,cont.getFactory());
+
+        PrintWriter writer;
+        try {
+            writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(output_path), "utf-8"));
+        } catch (Exception ex) {
+            throw new RuntimeException("Could not write to "+output_path);
+        }
+
+        CommandLineUtils.reportProgressBegin("Writing connections dataset to \'"+output_path+"\'");
+        int counter = 0;
+
+
+        writer.write("Y,x1,y1,x2,y2,");
+        for (int fi = 0; fi != RandomForestEvaluator.feature_names.length; ++fi) {
+            writer.print(RandomForestEvaluator.feature_names[fi]);
+            if (fi < RandomForestEvaluator.feature_names.length-1) {
+                writer.print(",");
+            }
+        }
+        writer.println();
+        int true_count = 0;
+        int false_count = 0;
+        for (RandomForestEvaluator.Connection_attributed con_atr : cons) {
+            Connection con = con_atr.con;
+            double[] f = con_atr.features;
+
+            CommandLineUtils.reportProgress(++counter, cons.size());
+            if (con.first().isoline.getIsoline().isSteep() ||
+                    con.second().isoline.getIsoline().isSteep()) continue;
+
+            int y = (isValid(con.getConnectionSegment(), cutted_lines, 0.000001)) ? 1 : 0;
+
+            //sourceDataRes additional_data = gatherSourceData(con, cons_array);
+            writer.print(y+","+
+                    con.first().line.p1.x+","+
+                    con.first().line.p1.y+","+
+                    con.second().line.p1.x+","+
+                    con.second().line.p1.y+",");
+            for (int fi = 0; fi != f.length;++fi) {
+                writer.print(f[fi]);
+                if (fi != f.length-1) writer.print(",");
+            }
+            writer.println();
+            if (y == 1) {
+                true_count += 1;
+            } else {
+                false_count += 1;
+            }
+        }
+        CommandLineUtils.reportProgressEnd();
+
+        System.out.println("Class 1 count: " + true_count);
+        System.out.println("Class 0 count: " + false_count);
+        System.out.println("Class 1 percent: " + ((double) true_count) / (true_count + false_count) * 100);
+        System.out.println("Class 0 percent: " + ((double) false_count) / (true_count + false_count) * 100);
+        writer.close();
+    }
+
     public static void main(String[] args) {
 
 
-
-        SimplexNoise noise = new SimplexNoise(0.01,0,1, 7, 0.5, 123223);
-
-        double[][] result = new double[1024][1024];
-
-        double min = 1000;
-        double max = -1000;
-        for (int x = 0; x != 1024; ++x) {
-            for (int y = 0; y != 1024; ++y) {
-                double n = noise.getNoise((float) x / 1024, (float) y / 1024);
-                min = Double.min(min, n);
-                max = Double.max(max, n);
-                result[x][y] = n;
-            }
-        }
+//
+//        SimplexNoise noise = new SimplexNoise(0.01,0,1, 7, 0.5, 123223);
+//
+//        double[][] result = new double[1024][1024];
+//
+//        double min = 1000;
+//        double max = -1000;
+//        for (int x = 0; x != 1024; ++x) {
+//            for (int y = 0; y != 1024; ++y) {
+//                double n = noise.getNoise((float) x / 1024, (float) y / 1024);
+//                min = Double.min(min, n);
+//                max = Double.max(max, n);
+//                result[x][y] = n;
+//            }
+//        }
 
         //System.out.println("["+min+", "+max+"],\\");
 
 
-        RasterUtils.saveAsPng(result,"noise_test.png");
+        //RasterUtils.saveAsPng(result,"noise_test.png");
 
         if (true) return;
 
@@ -336,8 +459,7 @@ public class Datagen {
             //SteepDetector steepDetector = new SteepDetector(steeps, Constants.CONNECTIONS_NEAR_STEEP_THRESHOLD, gf);
 
 
-            RandomForestEvaluator rf_eval = new RandomForestEvaluator();
-            rf_eval.intersector = intersector;
+            RandomForestEvaluator rf_eval = new RandomForestEvaluator(intersector);
 
             ArrayList<Pair<Connection,double[]>> features = rf_eval.getFeatures(isos, gf);
 
