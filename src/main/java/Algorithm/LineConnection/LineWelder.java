@@ -110,7 +110,7 @@ public class LineWelder {
         //rf_eval.getConnections(isos,gf);
         //ConnectionExtractor extr = new ConnectionExtractor(intersector, steepDetector, eval, gf, edge);
 
-        ArrayList<Connection> cons_array = RandomForestEvaluator.evaluateConnectionsRandomForest( rf_eval.getConnections(isos,gf), "forest.txt") ;
+        ArrayList<Connection> cons_array = RandomForestEvaluator.evaluateConnectionsRandomForest( rf_eval.getConnections(isos,gf,true), "forest.txt") ;
 
         //Sort by descending order
         cons_array.sort((lhs,rhs)->Double.compare(rhs.score,lhs.score));
