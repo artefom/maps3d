@@ -6,9 +6,7 @@ import Utils.Area.LineSegmentWrapper;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 import java.util.function.DoubleFunction;
 import java.util.function.Function;
 
@@ -79,6 +77,8 @@ public class CachedTracer<T>{
         return fastTrace(x0,y0,vx,vy,min,max);
     }
 
+    Set<LineSegmentWrapper> intersection_candidates_buf = Collections.newSetFromMap(new IdentityHashMap<LineSegmentWrapper,Boolean>());
+
     public traceres fastTrace(double x0,double y0,double vx,double vy, double min, double max) {
         double a;
         double b;
@@ -94,13 +94,14 @@ public class CachedTracer<T>{
         res.point = null;
         res.side = 0;
 
-        Collection<LineSegmentWrapper> intersection_candidates = buffer.findPossiblyIntersecting(x0+vx*min,y0+vy*min,x0+vx*max,y0+vy*max);
+        intersection_candidates_buf.clear();
+        buffer.findPossiblyIntersecting(x0+vx*min,y0+vy*min,x0+vx*max,y0+vy*max,intersection_candidates_buf);
 
         //ArrayList<LineSegmentWrapper> intersection_candidates = wrappers;
 
         //LineSegment ls = new LineSegment( new Coordinate(x0,y0), new Coordinate(x0+vx,y0+vy));
 
-        for (LineSegmentWrapper lsw_raw : intersection_candidates) {
+        for (LineSegmentWrapper lsw_raw : intersection_candidates_buf) {
             LSWAttributed<T> lsw = (LSWAttributed<T>)lsw_raw;
 
             prev_side = getSide(x0,y0,vx,vy,lsw.getBeginX(),lsw.getBeginY());
@@ -162,10 +163,11 @@ public class CachedTracer<T>{
         int side;
         int prev_side;
 
-        Collection<LineSegmentWrapper> intersection_candidates = buffer.findPossiblyIntersecting(x0+vx*min,y0+vy*min,x0+vx*max,y0+vy*max);
+        intersection_candidates_buf.clear();
+        buffer.findPossiblyIntersecting(x0+vx*min,y0+vy*min,x0+vx*max,y0+vy*max,intersection_candidates_buf);
 
 
-        for (LineSegmentWrapper lsw_raw : intersection_candidates) {
+        for (LineSegmentWrapper lsw_raw : intersection_candidates_buf) {
             LSWAttributed<T> lsw = (LSWAttributed<T>)lsw_raw;
 
             prev_side = getSide(x0,y0,vx,vy,lsw.getBeginX(),lsw.getBeginY());
@@ -202,9 +204,10 @@ public class CachedTracer<T>{
         int side;
         int prev_side;
 
-        Collection<LineSegmentWrapper> intersection_candidates = buffer.findPossiblyIntersecting(x0+vx*min,y0+vy*min,x0+vx*max,y0+vy*max);
+        intersection_candidates_buf.clear();
+        buffer.findPossiblyIntersecting(x0+vx*min,y0+vy*min,x0+vx*max,y0+vy*max,intersection_candidates_buf);
 
-        for (LineSegmentWrapper lsw_raw : intersection_candidates) {
+        for (LineSegmentWrapper lsw_raw : intersection_candidates_buf) {
             LSWAttributed<T> lsw = (LSWAttributed<T>)lsw_raw;
 
             prev_side = getSide(x0,y0,vx,vy,lsw.getBeginX(),lsw.getBeginY());

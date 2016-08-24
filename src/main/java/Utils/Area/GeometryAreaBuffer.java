@@ -1,6 +1,7 @@
 package Utils.Area;
 
 import Utils.CachedTracer;
+import Utils.GeomUtils;
 import com.sun.org.apache.xpath.internal.functions.Function2Args;
 import com.vividsolutions.jts.geom.*;
 
@@ -172,8 +173,7 @@ public class GeometryAreaBuffer extends AreaBuffer<LineSegmentWrapper> {
         }
     }
 
-    public Collection<LineSegmentWrapper> findPossiblyIntersecting(double x0, double y0, double x1, double y1) {
-        HashSet<LineSegmentWrapper> ret = new HashSet<>();
+    public void findPossiblyIntersecting(double x0, double y0, double x1, double y1,  Collection<LineSegmentWrapper> ret ) {
         applyAlong(toLocalX(x0),toLocalY(y0),toLocalX(x1),toLocalY(y1),(x,y)->{
 
             if (x < 0 || y < 0 || x >= width || y >= height ) return;
@@ -181,7 +181,36 @@ public class GeometryAreaBuffer extends AreaBuffer<LineSegmentWrapper> {
                 ret.add(w);
             }
         });
-        return ret;
+    }
+
+    public void findInBuffer(LineSegment seg, double r, Collection<LineSegmentWrapper> ret) {
+        findInBuffer(seg.p0.x,seg.p0.y,seg.p1.x,seg.p1.y,r,ret);
+    }
+
+    public void findInBuffer(double x0, double y0, double x1, double y1, double r,Collection<LineSegmentWrapper> ret) {
+
+        int y_r = (int)GeomUtils.clamp(toLocalY(r)+0.5,1,height);
+        int x_r = (int)GeomUtils.clamp(toLocalX(r)+0.5,1,width);
+
+        applyAlong(toLocalX(x0),toLocalY(y0),toLocalX(x1),toLocalY(y1),(c_x,c_y)->{
+
+//            if (x < 0 || y < 0 || x >= width || y >= height ) return;
+
+
+            int begin_x =   GeomUtils.clamp(c_x-x_r,0,width-1);
+            int end_x   =   GeomUtils.clamp(c_x+x_r,0,width-1);
+            int begin_y =   GeomUtils.clamp(c_y-y_r,0,height-1);
+            int end_y   =   GeomUtils.clamp(c_y+y_r,0,height-1);
+
+
+            for (int x = begin_x; x <= end_x; ++x) {
+                for (int y = begin_y; y <= end_y; ++y) {
+                    getCell(x,y).forEach(ret::add);
+                }
+            }
+
+        });
+
     }
 
 }

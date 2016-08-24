@@ -169,23 +169,35 @@ public class TOcadObject extends ByteDeserializable {
     }
 
     public boolean isLine() {
-        return Sym == 101000 ||
-                Sym == 102000 ||
-                Sym == 103000 ||
-                Sym == 106001 ||
-                Sym == 106000 ||
-                Sym == 106006;
+//        return Sym == 101000 ||
+//                Sym == 102000 ||
+//                Sym == 103000 ||
+//                Sym == 106001 ||
+//                Sym == 106000 ||
+//                Sym == 106006;
+
+        return Sym == 101001 ||
+                Sym == 102002 ||
+                Sym == 103001 ||
+                Sym == 106004 ||
+                Sym == 106006 ||
+                Sym == 106005;
     }
 
     public boolean isSlope() {
-        return Sym == 104000;
+        return (Sym == 104004 || Sym == 104003);
     }
 
     public int getType() {
-        if (Sym == 101000) return 2;
-        if (Sym == 102000) return 3;
-        if (Sym == 103000) return 1;
-        if (Sym == 106001 || Sym == 106000 || Sym == 106006) return 4;
+//        if (Sym == 101000) return 2;
+//        if (Sym == 102000) return 3;
+//        if (Sym == 103000) return 1;
+//        if (Sym == 106001 || Sym == 106000 || Sym == 106006) return 4;
+//        return -1;
+        if (Sym == 101001) return 2;
+        if (Sym == 102002) return 3;
+        if (Sym == 103001) return 1;
+        if (Sym == 106004 || Sym == 106005 || Sym == 106006) return 4;
         return -1;
     }
 

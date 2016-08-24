@@ -77,6 +77,7 @@ public class MainController {
     public void openFile(File f) throws Exception {
         deserializedOCAD = new DeserializedOCAD();
 
+        isolineContainer = new IsolineContainer(gf);
         String f_path = f.getPath();
         String configPath = f_path.substring(0, f_path.length()-OutputUtils.getExtension(f_path).length())+"ini";
         deserializedOCAD.DeserializeMap(f_path,configPath);
@@ -85,6 +86,16 @@ public class MainController {
         isos.forEach(isolineContainer::add);
         deserializedOCAD.slopeMarks.forEach(slopeMarks::add);
         System.out.println(("Added " + IsolineCount() + " isolines, bounding box: " + isolineContainer.getEnvelope()));
+        CommandLineUtils.report();
+    }
+
+    public void openJsonFile(File f) throws Exception {
+        isolineContainer = IsolineContainer.deserialize(f.getAbsolutePath());
+        CommandLineUtils.report();
+    }
+
+    public void saveJsonFile(File f) throws Exception {
+        isolineContainer.serialize(f.getAbsolutePath());
         CommandLineUtils.report();
     }
 

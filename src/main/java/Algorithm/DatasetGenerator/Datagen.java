@@ -299,13 +299,14 @@ public class Datagen {
         }
 
         GeometryFactory gf = cont.getFactory();
-        CachedTracer<Geometry> intersector = new CachedTracer<>(cont.stream().map(IIsoline::getGeometry).collect(Collectors.toList()),(x)->x, gf);
-        RandomForestEvaluator rf_eval = new RandomForestEvaluator(intersector);
+
 
         ArrayList<Algorithm.LineConnection.Isoline_attributed> isos = new ArrayList<>(cont.size());
         for (IIsoline i : cont)
             isos.add(new Algorithm.LineConnection.Isoline_attributed(i));
 
+        CachedTracer<Algorithm.LineConnection.Isoline_attributed> intersector = new CachedTracer<>(isos,(x)->x.getGeometry(), gf);
+        RandomForestEvaluator rf_eval = new RandomForestEvaluator(intersector);
         ArrayList<RandomForestEvaluator.Connection_attributed> cons = rf_eval.getConnections(isos,cont.getFactory(),false);
 
         for (RandomForestEvaluator.Connection_attributed con : cons) {

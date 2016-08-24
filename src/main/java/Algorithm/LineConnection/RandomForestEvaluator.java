@@ -1,10 +1,9 @@
 package Algorithm.LineConnection;
 
-import Algorithm.DatasetGenerator.Datagen;
-import Isolines.IIsoline;
-import Isolines.IsolineContainer;
 import Utils.*;
 import Utils.Area.CoordinateAttributed;
+import Utils.Area.LSWAttributed;
+import Utils.Area.LineSegmentWrapper;
 import Utils.Area.PointAreaBuffer;
 
 import com.vividsolutions.jts.algorithm.Angle;
@@ -12,7 +11,6 @@ import com.vividsolutions.jts.geom.*;
 
 import java.io.InputStream;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by Artyom.Fomenko on 18.08.2016.
@@ -30,16 +28,21 @@ public class RandomForestEvaluator {
     private static final int angle_sum_equals = 2;
     private static final int signed_angle_more_than_PI = 3;
     private static final int distance = 4;
-    private static final int score = 5;
-    private static final int cons_score_max = 6;
-    private static final int cons_score_mean = 7;
-    private static final int cons_curMax = 8;
-    private static final int inters_score_max = 9;
-    private static final int inters_score_mean = 10;
-    public static final String[] feature_names = new String[] {"signed_angle_sum","angle_sum","angle_sum_equals","signed_angle_more_than_PI","distance","score","cons_score_max","cons_score_mean","cons_curMax","inters_score_max","inters_score_mean"};
+    private static final int distance_closest_line = 5;
+    private static final int score = 6;
+    private static final int cons_score_max = 7;
+    private static final int cons_score_mean = 8;
+    private static final int cons_curMax = 9;
+    private static final int inters_score_max = 10;
+    private static final int inters_score_mean = 11;
+    private static final int strong = 12;
+    private static final int groupID = 13;
+    public static final String[] feature_names = new String[] {
+        "signed_angle_sum","angle_sum","angle_sum_equals","signed_angle_more_than_PI","distance","distance_closest_line"
+            ,"score","cons_score_max","cons_score_mean","cons_curMax","inters_score_max","inters_score_mean","strong","GroupID"};
 
 
-    public class Connection_attributed {
+    public static class Connection_attributed {
         public Connection con;
 
         /* Feature ids:
@@ -87,7 +90,7 @@ public class RandomForestEvaluator {
         }
     }
 
-    public CachedTracer<Geometry> intersector;
+    public CachedTracer<Isoline_attributed> intersector;
     GeometryFactory gf = null;
 
 
@@ -122,12 +125,90 @@ public class RandomForestEvaluator {
         double ang2= Angle.angleBetweenOriented(line2.p0,line2.p1,line1.p1);
 
         con.features[distance] = dist;
-        con.features[angle_sum] = Math.PI-( Math.abs(ang1)+Math.abs(ang2) );
+        con.features[angle_sum] = (Math.PI*2)-( Math.abs(ang1)+Math.abs(ang2) );
         con.features[signed_angle_sum] = Math.abs(ang1+ang2);
         con.features[angle_sum_equals] = ((ang1 < 0 && ang2 < 0) || (ang1 > 0 && ang2 >0)) ? 1 : 0;
         con.features[signed_angle_more_than_PI] = (con.features[signed_angle_sum] > Math.PI) ? 1 : 0;
     }
 
+
+
+//    e: -1.21071517609
+//    angle_sum: -1.56471653345
+//    distance: -0.0247778080897
+
+    private static final double group0_intercept = -1.21071517609;
+    private static final double group0_b_ang_sum = -1.56471653345;
+    private static final double group0_b_distanc = -0.0247778080897;
+
+
+//    e: 2.66559878786
+//    angle_sum: -1.50952504187
+//    signed_angle_sum: -0.887980817565
+//    distance: -0.0664416824728
+
+    private static final double group1_intercept = 2.66559878786;
+    private static final double group1_angle_sum_b = -1.50952504187;
+    private static final double group1_signed_angle_sum_b = -0.887980817565;
+    private static final double group1_distance_b = -0.0664416824728;
+
+//    e: 2.29197346712
+//    angle_sum: -1.51532817942
+//    distance: -0.0572548732509
+//
+    private static final double group2_intercept = 2.29197346712;
+    private static final double group2_angle_sum_b = -1.51532817942;
+    private static final double group2_distance_b = -0.0572548732509;
+
+    private static double group0DraftScore(Connection_attributed con) {
+        return 1.0/(1+Math.exp(-(group0_intercept+con.features[angle_sum]*group0_b_ang_sum+con.features[distance]*group0_b_distanc)));
+    }
+
+    private static double group1DraftScore(Connection_attributed con) {
+        return 1.0/(1+Math.exp(-(group1_intercept +con.features[signed_angle_sum]*group1_signed_angle_sum_b+
+                con.features[angle_sum]*group1_angle_sum_b+con.features[distance]*group1_distance_b)));
+    }
+
+    private static double group2DraftScore(Connection_attributed con) {
+        return 1.0/(1+Math.exp(-(group2_intercept+con.features[angle_sum]*group2_angle_sum_b+con.features[distance]*group2_distance_b)));
+    }
+
+    private static int getGrpoupID( Connection_attributed con ) {
+
+        if (con.features[angle_sum_equals] == 1 && con.features[signed_angle_more_than_PI] == 1) {
+            return 0;
+        }
+
+        if ( (con.features[angle_sum_equals] == 0) && (con.features[signed_angle_more_than_PI] == 0)) {
+            return 1;
+        }
+        return 2;
+    }
+
+    private static double generateDraftScore( Connection_attributed con ) {
+
+        if ( Double.isNaN( con.features[angle_sum] ) ) return 0;
+        if ( Double.isNaN( con.features[angle_sum] ) ) return 0;
+        if ( con.features[angle_sum] > (Math.PI*2)-0.01 ) return 0;
+        if ( con.features[signed_angle_sum] > (Math.PI*2)-0.01 ) return 0;
+        if ( Math.abs(con.features[signed_angle_sum]-Math.PI) < 0.01 ) return 0;
+        if (  (con.features[angle_sum_equals] == 1) & (con.features[signed_angle_more_than_PI] == 0) ) return 0;
+
+        if ( (con.features[angle_sum] ) < 0.001  ) return 1;
+
+        int group_id = getGrpoupID(con);
+        if ( group_id == 0 ) {
+            return group0DraftScore(con);
+        }
+
+        if (  group_id == 1 ) {
+            return group1DraftScore(con);
+        }
+
+        return group2DraftScore(con);
+    }
+
+    Set<LineSegmentWrapper> ret_buf = Collections.newSetFromMap(new IdentityHashMap<LineSegmentWrapper,Boolean>());
     private void addIfNotIntersectsAdvanced(ArrayList<Connection_attributed> cons, LineEnd le1, LineEnd le2, boolean reduced) {
         if (le1 == null || le2 == null) return;
 
@@ -139,18 +220,60 @@ public class RandomForestEvaluator {
         if (con.con == null || reduced && !con.con.isValid()) return;
         applyAngleDistanceScores(con);
 
+        con.features[strong] = con.con.first().isoline.getIsoline().isHalf() ? 0 : 1;
+
+        double draft_score = generateDraftScore(con);
+
+        if (draft_score == 1 || draft_score == 0) return;
+
+        con.features[groupID] = getGrpoupID(con);
+        con.features[score] = draft_score;
+
+//        if ( con.features[angle_sum] > (Math.PI*2)-0.01 ) return;
+//        if ( con.features[signed_angle_sum] > (Math.PI*2)-0.01 ) return;
+//        if ( Math.abs(con.features[signed_angle_sum]-Math.PI) < 0.01 ) return;
+
+        // Values, very close to 0
+        //if ( con.features[angle_sum] <  0.01 || con.features[signed_angle_sum] < 0.01  ) return;
+
+//        con.features[angle_sum] < Math.PI-( Math.abs(ang1)+Math.abs(ang2) );
+//        con.features[signed_angle_sum] = Math.abs(ang1+ang2);
+
         double length = con.con.connectionSegment.getLength();
         if (length > Constants.CONNECTIONS_MAX_DIST || length < Constants.CONNECTIONS_WELD_DIST) return;
 
-        if (reduced) {
-            con.features[score] = getDraftScore(con);
-            if (con.features[score] < draftScoreThreshold)  return;
-        }
-
-        if (reduced && (con.features[score] < draftScoreThreshold))  return;
+//        if (reduced) {
+//            con.features[score] = getDraftScore(con);
+//            if (con.features[score] < draftScoreThreshold)  return;
+//        }
+//
+//        if (reduced && (con.features[score] < draftScoreThreshold))  return;
 
 
         if (intersector.intersects(seg,0.01,0.99)) return;
+
+        ret_buf.clear();
+
+        intersector.buffer.findInArea(con.con.connectionSegment.p0,Constants.CONNECTIONS_WELD_DIST,ret_buf);
+        intersector.buffer.findInArea(con.con.connectionSegment.p1,Constants.CONNECTIONS_WELD_DIST,ret_buf);
+        double dist_to_line = Constants.CONNECTIONS_WELD_DIST;
+
+        LineSegment con_seg = con.con.getConnectionSegment();
+        Coordinate con_p0 = con_seg.p0;
+        Coordinate con_p1 = con_seg.p1;
+
+        for (LineSegmentWrapper lsw_d : ret_buf) {
+            LSWAttributed<Isoline_attributed> lsw = (LSWAttributed<Isoline_attributed>)lsw_d;
+
+            if ((lsw.getBeginX() != con_p0.x && lsw.getBeginY() != con_p0.y && lsw.getEndX() != con_p1.x && lsw.getEndY() != con_p1.y)&&
+                    (lsw.getBeginX() != con_p1.x && lsw.getBeginY() != con_p1.y && lsw.getEndX() != con_p0.x && lsw.getEndY() != con_p0.y) ) {
+                dist_to_line = Math.min( dist_to_line, con_seg.distance(lsw.getSegment()) );
+            }
+        }
+
+        if (dist_to_line < Constants.CONNECTIONS_WELD_DIST*0.1) return;
+
+        //con.features[distance_closest_line] = dist_to_line;
 
         cons.add(con);
     }
@@ -228,13 +351,15 @@ public class RandomForestEvaluator {
         lineEndAreaBuffer.setEnvelope(lineEndPool,100,100);
         lineEndAreaBuffer.addAll(lineEndPool);
 
+        Set<CoordinateAttributed<LineEnd>> candidates = Collections.newSetFromMap(new IdentityHashMap<CoordinateAttributed<LineEnd>,Boolean>());
+
         CommandLineUtils.reportProgressBegin("Collecting connections");
         int current = 0;
         for (CoordinateAttributed<LineEnd> coordinate_line_end1 : lineEndPool) {
             CommandLineUtils.reportProgress(++current,lineEndPool.size());
             LineEnd le1 = coordinate_line_end1.entity;
-            Collection<CoordinateAttributed<LineEnd>> candidates =
-                    lineEndAreaBuffer.getPossiblyInArea(coordinate_line_end1.x,coordinate_line_end1.y, Constants.CONNECTIONS_MAX_DIST);
+            candidates.clear();
+            lineEndAreaBuffer.findInArea(coordinate_line_end1.x,coordinate_line_end1.y, Constants.CONNECTIONS_MAX_DIST,candidates);
 
             for (CoordinateAttributed<LineEnd> coordinate_line_end2 : candidates)
             {
@@ -262,7 +387,7 @@ public class RandomForestEvaluator {
         return pre_ret;
     }
 
-    public RandomForestEvaluator(CachedTracer<Geometry> intersector) {
+    public RandomForestEvaluator(CachedTracer<Isoline_attributed> intersector) {
         this.intersector = intersector;
     }
 

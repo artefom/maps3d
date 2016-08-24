@@ -8,6 +8,7 @@ import Display.GeometryWrapper;
 import Display.Renderer;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
+import Utils.CommandLineUtils;
 import Utils.Pair;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -108,7 +109,7 @@ public class MainApp extends Application implements Initializable {
             List<GeometryWrapper> geometry = drawer.draw(displayedContainer,mc.edge);
             renderer.clear();
             renderer.addAll(geometry);
-            renderer.addAll( drawer.draw(mc.slopeMarks) );
+            if (mc.slopeMarks != null) renderer.addAll( drawer.draw(mc.slopeMarks) );
         };
 
     }
@@ -183,7 +184,7 @@ public class MainApp extends Application implements Initializable {
     @FXML
     public void openButtonAction(ActionEvent event) throws Exception {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Open map file");
+        fileChooser.setTitle("Open ocad map");
         fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
         File f = fileChooser.showOpenDialog(stage);
         if (f != null) {
@@ -203,6 +204,50 @@ public class MainApp extends Application implements Initializable {
                 statusText.setText("File parsing error: "+ex.getMessage());
             }
         }
+    }
+
+    @FXML
+    public void openJsonButtonAction(ActionEvent event) throws Exception {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open json map");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        File f = fileChooser.showOpenDialog(stage);
+        if (f != null) {
+            try {
+                mc.openJsonFile(f);
+                statusText.setText("Added " + mc.IsolineCount() + " isolines. Bbox: " + mc.isolineContainer.getEnvelope());
+                originalContainer = new IsolineContainer(mc.isolineContainer);
+                displayedContainer = mc.isolineContainer;
+                redraw();
+                renderer.Fit();
+                render();
+            } catch (FileNotFoundException ex) {
+                statusText.setText("File not found");
+            } catch (IOException ex) {
+                statusText.setText("File reading error: "+ex.getMessage());
+                CommandLineUtils.reportException(ex);
+            } catch (Exception ex) {
+                statusText.setText("File parsing error: "+ex.getMessage());
+                CommandLineUtils.reportException(ex);
+            }
+        }
+    }
+
+    @FXML
+    public void saveJsonButtonAction(ActionEvent event) throws Exception {
+
+        FileChooser fileChooser1 = new FileChooser();
+        fileChooser1.setTitle("Save json map as");
+
+
+        fileChooser1.setInitialDirectory( (new File(".")).getAbsoluteFile() );
+
+        File file = fileChooser1.showSaveDialog(stage);
+
+        if (file == null || file.getAbsolutePath() == null) return;
+
+        mc.saveJsonFile(file);
+
     }
 
     boolean mouseIsDown;

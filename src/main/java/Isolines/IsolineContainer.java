@@ -144,7 +144,12 @@ public class IsolineContainer extends HashSet<IIsoline> {
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(IsolineContainer.class, new IsolineContainerAdapter(gf));
         Gson g = gsonBuilder.create();
-        return g.fromJson(json_str,IsolineContainer.class);
+        try {
+            return g.fromJson(json_str, IsolineContainer.class);
+        } catch (Exception ex) {
+            CommandLineUtils.reportException(ex);
+            return null;
+        }
     }
 
     public static class LineStringAdapter implements JsonSerializer<LineString>, JsonDeserializer<LineString> {

@@ -1,6 +1,7 @@
 package Utils.Area;
 
 import Utils.GeomUtils;
+import com.vividsolutions.jts.geom.Coordinate;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,9 +66,13 @@ public abstract class AreaBuffer<T> {
 
     public abstract void setEnvelope(Collection<T> entities, int width, int height);
 
-    public Collection<T> getPossiblyInArea(double c_x, double c_y, double r) {
 
-        HashSet<T> ret = new HashSet<T>();
+    public void findInArea(Coordinate c, double r, Collection<T> ret) {
+        findInArea(c.x,c.y,r,ret);
+    }
+
+    public void findInArea(double c_x, double c_y, double r, Collection<T> ret) {
+
         int begin_x =   (int)GeomUtils.clamp(toLocalX(c_x-r),0,width-1);
         int end_x   =   (int)GeomUtils.clamp(toLocalX(c_x+r),0,width-1);
         int begin_y =   (int)GeomUtils.clamp(toLocalY(c_y-r),0,height-1);
@@ -79,7 +84,6 @@ public abstract class AreaBuffer<T> {
             }
         }
 
-        return ret;
     }
 
 }

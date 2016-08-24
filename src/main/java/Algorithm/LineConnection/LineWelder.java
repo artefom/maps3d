@@ -102,7 +102,7 @@ public class LineWelder {
 //            }
 //        }
 
-        CachedTracer<Geometry> intersector = new CachedTracer<>(isos.stream().map(Isoline_attributed::getGeometry).collect(Collectors.toList()),(x)->x, gf);
+        CachedTracer<Isoline_attributed> intersector = new CachedTracer<>(isos,(x)->x.getGeometry(), gf);
         //Tracer_Legacy<Geometry> legacy_tracer = new Tracer_Legacy<>(isos.stream().map(Isoline_attributed::getGeometry).collect(Collectors.toList()), (x)->x,gf);
         //SteepDetector steepDetector = new SteepDetector(steeps, Constants.CONNECTIONS_NEAR_STEEP_THRESHOLD, gf);
 
