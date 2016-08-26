@@ -24,6 +24,7 @@ public interface IIsoline {
     //Debug use Only;
     static int last_id = 0;
     int getID();
+    void setID(int id);
 
     Geometry getGeometry();
     LineString getLineString();

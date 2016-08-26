@@ -1,5 +1,6 @@
 package Algorithm.Interpolation;
 
+import Utils.CommandLineUtils;
 import Utils.Constants;
 import Utils.GeomUtils;
 import Utils.RasterUtils;
@@ -154,8 +155,10 @@ public class Triangulation {
 
     public List<Coordinate> ScatterPoints(double threshold) {
 
-        final int initCellSize = 100;
-        final int minCellSize = 3;
+        System.out.println("Scattering points...");
+
+        final int initCellSize = 50;
+        final int minCellSize = 1;
         final double divisionThreshold = threshold;
 
         final int rowCount = sobel.length;
@@ -185,6 +188,7 @@ public class Triangulation {
 //            }
 //        }
         int i = 0;
+
         while (i < cells.size()) {
             Cell c = cells.get(i);
             double val = getSplitScore(c);
@@ -211,8 +215,6 @@ public class Triangulation {
             }
         }
 
-        System.out.println("values.append([ "+threshold+", "+count+"])");
-
         return ret;
     }
 
@@ -238,10 +240,13 @@ public class Triangulation {
     }
 
     private void makeMesh(){
+
+        System.out.println("Building mesh...");
         List<Coordinate> points = ScatterPoints(15);
 
         GeometryFactory gf = new GeometryFactory();
 
+        System.out.println("Applying Delaunay Triangulation...");
         DelaunayTriangulationBuilder triangulator = new DelaunayTriangulationBuilder();
         triangulator.setSites( points );
 
@@ -256,6 +261,7 @@ public class Triangulation {
         // sequences of coordinate indexes
         tris = new ArrayList<>();
 
+        System.out.println("Converting to 3d mesh...");
         // Convert geometry to coordinates and triangles
         for (int i = 0; i != triangles.getNumGeometries(); ++i) {
             int[] tri = new int[3];
@@ -286,6 +292,7 @@ public class Triangulation {
 
     public void writeToFile(String path) {
         if (coord_array == null) makeMesh();
+        System.out.println("Writing to file...");
         PrintWriter out;
         try {
             out = new PrintWriter(path+".obj");

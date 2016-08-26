@@ -21,3 +21,6 @@ hs_err_pid*
 sample*.obj
 sample*.png
 sample*.txt
+
+#all ML data
+/data/*

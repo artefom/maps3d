@@ -1,11 +1,9 @@
 package Utils;
 
 import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.math.Vector2D;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.function.Function;
+import java.util.List;
 
 /**
  * Class, containing static 2D geometry functions
@@ -50,6 +48,22 @@ public class GeomUtils {
         double v2x = c.x - seg.p0.x;
         double v2y = c.y - seg.p0.y;
         return ( (v1x*v2y - v1y*v2x) > 0) ? 1 : -1;
+    }
+
+    /**
+     * Get side of (x3 y3) relative to Line segment( x0 y0, x0+v0x y0+v0y)
+     * @param x0
+     * @param y0
+     * @param x1
+     * @param y1
+     * @param x3
+     * @param y3
+     * @return
+     */
+    public static int getSide( double x0, double y0, double v0x, double v0y, double x3, double y3) {
+        double v2x = x3 - x0;
+        double v2y = y3 - y0;
+        return ( (v0x*v2y - v0y*v2x) > 0) ? 1 : -1;
     }
 
 
@@ -103,12 +117,79 @@ public class GeomUtils {
         return closest_point;
     }
 
+    public static Coordinate getInteriorPoint(Polygon p) {
+        Envelope e = p.getEnvelopeInternal();
+        LineSegment bisector = new LineSegment(new Coordinate(e.getMinX(),(e.getMinY()+e.getMaxY())*0.5), new Coordinate(e.getMaxX(),(e.getMinY()+e.getMaxY())*0.5));
+
+        List<Double> intersectionPoints = getAllIntersectionProjectionFactors(bisector,p.getExteriorRing(),0,1);
+        for (int i = 0; i != p.getNumInteriorRing(); ++i) {
+            intersectionPoints.addAll( getAllIntersectionProjectionFactors(bisector,p.getInteriorRingN(i),0,1) );
+        }
+        intersectionPoints.sort((lhs,rhs)->Double.compare(lhs,rhs));
+        if (intersectionPoints.size()%2 != 0) throw new RuntimeException("Invalid polygon");
+        double maxDist = 0;
+        double pfactor1 = 0;
+        double pfactor2 = 0;
+        for (int i = 0; i < intersectionPoints.size(); i+=2) {
+            double projFactor1 = intersectionPoints.get(i);
+            double projFactor2 = intersectionPoints.get(i+1);
+            double dist = projFactor2-projFactor1;
+            if (dist > maxDist) {
+                maxDist = dist;
+                pfactor1 = projFactor1;
+                pfactor2 = projFactor2;
+            }
+        }
+        return bisector.pointAlong((pfactor1+pfactor2)*0.5);
+    }
+
+    public static List<Double> getAllIntersectionProjectionFactors(LineSegment vec, LineString ls, double min, double max) {
+        double x0 = vec.p0.x;
+        double y0 = vec.p0.y;
+        double vx = vec.p1.x-x0;
+        double vy = vec.p1.y-y0;
+        double a;
+        double b;
+        double c;
+        double t;
+        int side;
+        int prev_side;
+        Coordinate coord1;
+        Coordinate coord2;
+        CoordinateSequence ls_coords;
+        List<Double> result = new ArrayList<>();
+
+        /*TEST FOR INTERSECTION WITH LINE STRING*/
+
+        ls_coords = ls.getCoordinateSequence();
+        coord1 = ls_coords.getCoordinate(0);
+        prev_side = getSide(vec,coord1);
+        for (int i = 1; i < ls_coords.size(); ++i) {
+            coord2 = ls_coords.getCoordinate(i);
+            side = getSide(vec,coord2);
+            if (prev_side != side) {
+                a = coord1.y-coord2.y;
+                b = coord2.x-coord1.x;
+                c = coord1.x*coord2.y-coord2.x*coord1.y;
+                t = -(c+a*x0+b*y0)/(a*vx+b*vy);
+                result.add(t);
+            }
+            prev_side = side;
+            coord1 = coord2;
+        }
+        return result;
+    }
+
     public static double clamp(double val, double from, double to) {
         return Math.max(from, Math.min(to,val));
     }
 
     public static int clamp(int val, int from, int to) {
         return Math.max(from, Math.min(to,val));
+    }
+
+    public static short clamp(short val, short from, short to) {
+        return (short)Math.max(from, Math.min(to,val));
     }
 
     /**

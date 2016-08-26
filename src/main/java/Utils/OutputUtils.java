@@ -1,6 +1,7 @@
 package Utils;
 
 import Algorithm.Interpolation.Triangulation;
+import Algorithm.Texture.TextureGenerator;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -8,6 +9,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 
 /**
  * Created by fdl on 8/10/16.
@@ -22,6 +24,16 @@ public class OutputUtils {
         triangulation.writeToFile(name);
         CommandLineUtils.report(" file dumped");
     }
+
+    public static String GetExecutionPath(){
+        String absolutePath = TextureGenerator.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        absolutePath = absolutePath.substring(0, absolutePath.lastIndexOf("/"));
+        absolutePath = absolutePath.replaceAll("%20"," "); // Surely need to do this here
+        String osAppropriatePath = System.getProperty( "os.name" ).contains( "indow" ) ? absolutePath.substring(1) : absolutePath;
+        return osAppropriatePath;
+    }
+
+
 
     public static void saveAsTXT(double [][] heightmap){
         PrintWriter out;
@@ -40,7 +52,7 @@ public class OutputUtils {
             out.println();
         }
         out.close();
-        CommandLineUtils.report(" file dumped");
+        CommandLineUtils.report("TXT file dumped");
     }
 
     public static void saveAsPNG(double[][] heightmap){
@@ -72,6 +84,17 @@ public class OutputUtils {
         } catch (IOException e) {
             throw new RuntimeException("Could not save " + name + ".png");
         }
-        CommandLineUtils.report(" file dumped");
+        CommandLineUtils.report("PMG file dumped");
     }
+
+    public static String getExtension(String fpath) {
+        String extension = "";
+        int i = fpath.lastIndexOf('.');
+        int p = Math.max(fpath.lastIndexOf('/'), fpath.lastIndexOf('\\'));
+        if (i > p) {
+            extension = fpath.substring(i+1);
+        }
+        return extension;
+    }
+
 }

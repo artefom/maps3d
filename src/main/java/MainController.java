@@ -1,4 +1,6 @@
 import Algorithm.BuildingIndex.Index;
+import Algorithm.DatasetGenerator.Datagen;
+import Algorithm.Healing.Healer;
 import Algorithm.Interpolation.DistanceFieldInterpolation;
 import Algorithm.Interpolation.Triangulation;
 import Algorithm.LineConnection.LineWelder;
@@ -11,15 +13,16 @@ import Deserialization.Interpolation.SlopeMark;
 import Deserialization.DeserializedOCAD;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
-import Utils.CommandLineUtils;
-import Utils.Constants;
-import Utils.OutputUtils;
-import Utils.PointRasterizer;
+import Utils.*;
+import com.sun.javafx.scene.shape.PathUtils;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.stream.Stream;
 
@@ -74,12 +77,26 @@ public class MainController {
 
     public void openFile(File f) throws Exception {
         deserializedOCAD = new DeserializedOCAD();
-        deserializedOCAD.DeserializeMap(f.getPath());
+
+        isolineContainer = new IsolineContainer(gf);
+        String f_path = f.getPath();
+        String configPath = f_path.substring(0, f_path.length()-OutputUtils.getExtension(f_path).length())+"ini";
+        deserializedOCAD.DeserializeMap(f_path,configPath);
         ArrayList<IIsoline> isos = deserializedOCAD.toIsolines(1,gf);
         slopeMarks = new ArrayList<>();
         isos.forEach(isolineContainer::add);
         deserializedOCAD.slopeMarks.forEach(slopeMarks::add);
         System.out.println(("Added " + IsolineCount() + " isolines, bounding box: " + isolineContainer.getEnvelope()));
+        CommandLineUtils.report();
+    }
+
+    public void openJsonFile(File f) throws Exception {
+        isolineContainer = IsolineContainer.deserialize(f.getAbsolutePath());
+        CommandLineUtils.report();
+    }
+
+    public void saveJsonFile(File f) throws Exception {
+        isolineContainer.serialize(f.getAbsolutePath());
         CommandLineUtils.report();
     }
 
@@ -94,16 +111,21 @@ public class MainController {
         );
     }
 
+    public void heal() {
+
+        Healer.heal(isolineContainer,isolineContainer.getFactory());
+    }
+
     public void connectLines() {
         if (edge == null) return;
         LineWelder lw = new LineWelder(gf,edge);
-        //lw.WeldAll(isolineContainer);
         isolineContainer = new IsolineContainer(gf,lw.WeldAll(isolineContainer));
         CommandLineUtils.report();
     }
 
     public void detectEdge() {
         edge = MapEdge.fromIsolines(isolineContainer, Constants.EDGE_CONCAVE_THRESHOLD);
+
         CommandLineUtils.report();
     }
 
@@ -115,18 +137,28 @@ public class MainController {
         graph.ConvertToSpanningTree();
         graph.recoverAllSlopes();
         graph.recoverAllHeights();
-        System.out.println("Graph built successfully");
+        //isolineContainer.serialize("cached_isolines.json");
+
+        CommandLineUtils.report("Graph was built successfully");
         CommandLineUtils.report();
     }
 
-    public void interpolate() {
+    double [][] heightmap = null;
+    public void interpolate(String name) {
         interpolation = new DistanceFieldInterpolation(isolineContainer);
-        double [][] heightmap = interpolation.getAllInterpolatingPoints();
-        OutputUtils.saveAsTXT(heightmap);
-        OutputUtils.saveAsPNG(heightmap);
+        heightmap = interpolation.getAllInterpolatingPoints();
+
+        //OutputUtils.saveAsTXT(heightmap);
+        //OutputUtils.saveAsPNG(heightmap);
+
+        System.out.println("Dumping png...");
+        RasterUtils.saveAsPng(heightmap,name);
+
+        System.out.println("Dumping txt...");
+        RasterUtils.saveAsTxt(heightmap,name);
 
         triangulation = new Triangulation(heightmap);
-        OutputUtils.saveAsOBJ(triangulation);
+        triangulation.writeToFile(name);
         CommandLineUtils.report();
     }
 
@@ -137,8 +169,25 @@ public class MainController {
     }
 
     public void generateTexture(String output_path) {
+
+        BufferedImage img = null;
+        try {
+            img = ImageIO.read(new File("sample.png"));
+        } catch (IOException e) {
+            throw new RuntimeException("Could not load heightmap!");
+        }
+        int rowCount = img.getHeight();
+        int columnCount = img.getWidth();
+        PointRasterizer rast = new PointRasterizer(columnCount,rowCount,isolineContainer.getEnvelope());
+        float[] heightmap = new float[rowCount*columnCount];
+        for (int row = 0; row != rowCount; ++row) {
+            for (int column = 0; column != columnCount; ++column) {
+                heightmap[ row*columnCount + column] = (float)(img.getRGB(column,row)&0x000000ff)/255;
+            }
+        }
+
         TextureGenerator gen = new TextureGenerator(deserializedOCAD);
-        gen.writeToFile("texture",new PointRasterizer(0.1,isolineContainer.getEnvelope()));
+        gen.writeToFile("sample_texture",rast,heightmap);
     }
 
 

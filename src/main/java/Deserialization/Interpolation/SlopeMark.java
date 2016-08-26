@@ -25,7 +25,7 @@ public class SlopeMark {
      * Initializes slope from ocad object.
      */
     public SlopeMark(TOcadObject obj ) {
-        origin = obj.Poly.get(0).toCoordinate();
+        origin = obj.vertices.get(0);
         angle = Math.toRadians(obj.Ang/10);
         vec = Vector2D.create(0,1).rotate(angle);
     }

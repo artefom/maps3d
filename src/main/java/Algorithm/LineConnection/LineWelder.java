@@ -2,9 +2,11 @@ package Algorithm.LineConnection;
 
 import Isolines.IIsoline;
 import Isolines.Isoline;
+import Utils.CachedTracer;
 import Utils.Constants;
-import Utils.Intersector;
 import Utils.Pair;
+import Utils.Tracer_Legacy;
+import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 
@@ -45,7 +47,7 @@ public class LineWelder {
      * @return
      */
     public Isoline_attributed Weld_copy(Connection con) {
-        Pair<LineString, Integer> pair = LineConnector.connect(con,gf);
+        Pair<LineString, Integer> pair = LineConnector.connect(con,gf,false);
         if (pair == null) return null;
         LineString result_ls = pair.getKey();
         Integer result_ss = pair.getValue();
@@ -67,7 +69,7 @@ public class LineWelder {
      * @return
      */
     public Isoline_attributed Weld(Connection con) {
-        Pair<LineString, Integer> pair = LineConnector.connect(con,gf);
+        Pair<LineString, Integer> pair = LineConnector.connect(con,gf,false);
 
         if (pair == null) return null;
         LineString result_ls = pair.getKey();
@@ -88,33 +90,40 @@ public class LineWelder {
      * @return
      */
     public LinkedList<IIsoline> WeldAll(Collection<IIsoline> cont) {
+
         ArrayList<Isoline_attributed> isos = new ArrayList<>(cont.size());
         for (IIsoline i : cont)
             isos.add(new Isoline_attributed(i));
 
-        ArrayList<LineString> steeps = new ArrayList<>();
-        for (IIsoline i: cont) {
-            if (i.getType() == 4){
-                steeps.add(i.getLineString());
-            }
-        }
+//        ArrayList<LineString> steeps = new ArrayList<>();
+//        for (IIsoline i: cont) {
+//            if (i.getType() == 4){
+//                steeps.add(i.getLineString());
+//            }
+//        }
 
-        Intersector intersector = new Intersector(isos.stream().map((x) -> x.getGeometry()).collect(Collectors.toList()), gf);
-        SteepDetector steepDetector = new SteepDetector(steeps, Constants.CONNECTIONS_NEAR_STEEP_THRESHOLD, gf);
-        ConnectionExtractor extr = new ConnectionExtractor(intersector, steepDetector, eval, gf, edge);
+        CachedTracer<Isoline_attributed> intersector = new CachedTracer<>(isos,(x)->x.getGeometry(), gf);
+        //Tracer_Legacy<Geometry> legacy_tracer = new Tracer_Legacy<>(isos.stream().map(Isoline_attributed::getGeometry).collect(Collectors.toList()), (x)->x,gf);
+        //SteepDetector steepDetector = new SteepDetector(steeps, Constants.CONNECTIONS_NEAR_STEEP_THRESHOLD, gf);
 
-        ArrayList<Connection> cons_array = extr.apply(isos);
+        RandomForestEvaluator rf_eval = new RandomForestEvaluator(intersector);
+        //rf_eval.getConnections(isos,gf);
+        //ConnectionExtractor extr = new ConnectionExtractor(intersector, steepDetector, eval, gf, edge);
 
+        ArrayList<Connection> cons_array = RandomForestEvaluator.evaluateConnectionsRandomForest( rf_eval.getConnections(isos,gf,true), "forest.txt") ;
 
+        //Sort by descending order
         cons_array.sort((lhs,rhs)->Double.compare(rhs.score,lhs.score));
 
         LinkedList<Isoline_attributed> welded_lines = new LinkedList<>();
         for (Connection con : cons_array) {
-            if (con.score > 0) {
+            //if (con.score > RandomForestEvaluator.finalSocre95PercentPrecisionThreshold) {
                 welded_lines.add( Weld(con) );
-            };
+            //};
         }
+
         LinkedList<IIsoline> ret = new LinkedList<>();
+
         for (Isoline_attributed iso: isos)
             if (iso != null && iso.isValid()) {
                 IIsoline iline = iso.getIsoline();
@@ -123,6 +132,7 @@ public class LineWelder {
                     ret.add(iline);
                 }
             }
+
         for (Isoline_attributed iso: welded_lines)
             if (iso != null && iso.isValid()) {
                 IIsoline iline = iso.getIsoline();
@@ -131,6 +141,8 @@ public class LineWelder {
                     ret.add(iline);
                 }
             }
+
         return ret;
     }
+
 }

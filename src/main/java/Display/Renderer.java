@@ -1,5 +1,6 @@
 package Display;
 
+import com.sun.org.apache.bcel.internal.generic.SWAP;
 import com.vividsolutions.jts.geom.*;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -131,9 +132,18 @@ public class Renderer {
             gc.setLineWidth(gs.width);
             gc.setStroke(gs.color);
 
-            Coordinate[] coords = gs.geom.getCoordinates();
+            Geometry geometry = gs.geom;
+            LineString string = null;
+            if (geometry instanceof LineString) string = (LineString) geometry;
+            if (geometry instanceof Polygon) string = ((Polygon)geometry).getExteriorRing();
+            if (geometry instanceof Point) {
+                continue;
+            }
+            if (string == null) continue;
 
-            Coordinate c1 = new Coordinate(coords[0]);
+            CoordinateSequence coords = string.getCoordinateSequence();
+
+            Coordinate c1 = new Coordinate(coords.getCoordinate(0));
             Transform(c1,center,scale);
             ReverseTransform(c1,correction_shift,correction_scale);
             Coordinate c2 = new Coordinate();
@@ -144,9 +154,9 @@ public class Renderer {
                 continue;
             }
 
-            for (int i = 1; i < coords.length; ++i) {
-                c2.x = coords[i].x;
-                c2.y = coords[i].y;
+            for (int i = 1; i < coords.size(); ++i) {
+                c2.x = coords.getX(i);
+                c2.y = coords.getY(i);
                 Transform(c2,center,scale);
                 ReverseTransform(c2,correction_shift,correction_scale);
                 gc.strokeLine(c1.x, Height-c1.y, c2.x, Height-c2.y);
@@ -160,6 +170,37 @@ public class Renderer {
         gc.setFill(Color.WHITE);
         gc.fillRect(0,0,Width,Height);
         render(gws,gc, Width, Height);
+    }
+
+    public void render(Geometry geometry, GraphicsContext gc, double Width, double Height) {
+
+        double correction_scale = (double)(Math.min(Width,Height));
+        Coordinate correction_shift = new Coordinate(Width*0.5,Height*0.5);
+
+        LineString string = null;
+        if (geometry instanceof LineString) string = (LineString) geometry;
+        if (geometry instanceof Polygon) string = ((Polygon)geometry).getExteriorRing();
+        if (geometry instanceof Point) {
+            return;
+        }
+        if (string == null) return;
+
+        CoordinateSequence coords = string.getCoordinateSequence();
+
+        Coordinate c1 = new Coordinate(coords.getCoordinate(0));
+        Transform(c1,center,scale);
+        ReverseTransform(c1,correction_shift,correction_scale);
+        Coordinate c2 = new Coordinate();
+
+        for (int i = 1; i < coords.size(); ++i) {
+            c2.x = coords.getX(i);
+            c2.y = coords.getY(i);
+            Transform(c2,center,scale);
+            ReverseTransform(c2,correction_shift,correction_scale);
+            gc.strokeLine(c1.x, Height-c1.y, c2.x, Height-c2.y);
+            c1.x = c2.x;
+            c1.y = c2.y;
+        }
     }
 
 }

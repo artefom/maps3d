@@ -17,7 +17,7 @@ import static org.junit.Assert.*;
  */
 public class TracerTest {
 
-    private Tracer<LineString> tracer;
+    private CachedTracer<LineString> tracer;
     private ArrayList<LineString> lines;
     private GeometryFactory gf;
 
@@ -29,7 +29,9 @@ public class TracerTest {
     }
 
     private void initTracer() {
-        tracer = new Tracer<>(lines,(x)->x,gf);
+
+        tracer = new CachedTracer<>(lines,
+                (x)->x,gf);
     }
 
     private LineString add(LineString ls) {
@@ -41,7 +43,7 @@ public class TracerTest {
     public void traceTest1() {
         LineString line1 =  add(TestUtils.createLineString("1 -1, 1 1",gf));
         initTracer();
-        Tracer.traceres res = tracer.trace(new Coordinate(2,0),new Vector2D(-1,0),0.001,1000);
+        CachedTracer.traceres res = tracer.trace(new Coordinate(2,0),new Vector2D(-1,0),0.001,1000);
 
         assertEquals(line1,res.entitiy);
         assertEquals(-1,res.side);
@@ -52,7 +54,7 @@ public class TracerTest {
     public void traceTest2() {
         LineString line1 =  add(TestUtils.createLineString("1 -1, 1 1",gf));
         initTracer();
-        Tracer.traceres res = tracer.trace(new Coordinate(0,0),new Vector2D(1,0),0.001,1000);
+        CachedTracer.traceres res = tracer.trace(new Coordinate(0,0),new Vector2D(1,0),0.001,1000);
 
         assertEquals(line1,res.entitiy);
         assertEquals(1,res.side);

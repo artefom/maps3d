@@ -1,13 +1,18 @@
 package Isolines;
 
-import Algorithm.LineConnection.LineEnd;
-import Utils.GeomUtils;
+import Utils.CommandLineUtils;
 import Utils.Interpolator;
+import com.google.gson.*;
 import com.vividsolutions.jts.algorithm.ConvexHull;
 import com.vividsolutions.jts.geom.*;
 
+import java.io.PrintWriter;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -19,7 +24,6 @@ import java.util.stream.Stream;
 public class IsolineContainer extends HashSet<IIsoline> {
 
     private GeometryFactory gf;
-
 
     public IsolineContainer(GeometryFactory gf, Stream<IIsoline> stream) {
         super((int)stream.count());
@@ -35,6 +39,7 @@ public class IsolineContainer extends HashSet<IIsoline> {
         }
     }
 
+
     public IsolineContainer(GeometryFactory gf) {
         super();
         this.gf = gf;
@@ -43,7 +48,9 @@ public class IsolineContainer extends HashSet<IIsoline> {
     public IsolineContainer(IsolineContainer other) {
         super(other.size());
         this.gf = other.gf;
-        other.stream().forEach(this::add);
+        other.stream().forEach((x)->{
+            this.add(new Isoline(x));
+        });
     }
 
     /**
@@ -64,193 +71,6 @@ public class IsolineContainer extends HashSet<IIsoline> {
                 (il)-> Arrays.stream(il.getGeometry().getCoordinates())).toArray((size)->new Coordinate[size]);
         return new ConvexHull(points_list,gf);
     }
-
-    /**
-     * Retrive specific isolines by predicate
-     * @param predicate if predicate returned true, isoline will be included in return list
-     * @return IsolineContariner with isolines matching predicate
-     */
-    public IsolineContainer filter( Predicate<? super IIsoline> predicate ) {
-        return new IsolineContainer( this.gf,this.stream().filter( predicate ) );
-    }
-
-    /**
-     * Perform a connection operation to all lines.
-     * isoline collection will be transformed, some isolines will be removed, new added.
-     * It uses greedy algorithm which gives priority to stronger and valid connections
-     * over weak ones.
-     */
-    /*
-    public void connectLines(double min_angle,double max_angle,double max_dist, double weld_dist) {
-        ConnectionEvaluator eval = new ConnectionEvaluator(min_angle,max_angle,max_dist,weld_dist);
-
-        // Get line ends
-        Map<IIsoline,Pair<LineEnd,LineEnd>> line_ends = getLineEnds(this.stream());
-
-        // Get connections
-        List< Pair<Connection,Double> > cons = getConnections(
-                line_ends.values().stream().flatMap(
-                        (x) -> Stream.of(x.getKey(), x.getValue())
-                ).collect(Collectors.toList()),
-                eval);
-
-        // Sort by descending order, so we give priority to heavier connections
-        Collections.sort(cons,(lhs,rhs)->-lhs.getValue().compareTo(rhs.getValue()));
-
-        ListIterator< Pair<Connection,Double> > it = cons.listIterator(0);
-
-        for (Pair<Connection,Double> p: cons) {
-            Connection con = p.getKey(); // no need for score value, they are already sorted
-
-            // Oops, looks like this connection refers to already merged line end
-            if (!con.isValid()) continue;
-
-            IIsoline l = connect(con,gf);
-            if (l == null) continue;
-            if (con.first().isoline != con.second().isoline) { // Connected DIFFERENT lines
-                // Now we must update line ends to fit model after merging
-                // Get ends of merged lines
-                Pair<LineEnd,LineEnd> first_le_p = line_ends.get(con.first().isoline);
-                Pair<LineEnd,LineEnd> second_le_p = line_ends.get(con.second().isoline);
-
-                if (first_le_p == null || second_le_p == null) {
-                    throw new RuntimeException("At this point, there MUST be lineEnds for isoline");
-                }
-
-                // Remove line ends from line ends pool
-                line_ends.remove(con.first().isoline);
-                line_ends.remove(con.second().isoline);
-
-                // Remove merged lines from isoline pool
-                remove(con.first().isoline);
-                remove(con.second().isoline);
-
-                // Remove reference to merged isolines from thier ends
-                // Do so, because futher we'll update these references to newly formed values
-                // And merged LineEnds will contain reference to null
-                first_le_p.getKey().isoline = null;
-                first_le_p.getValue().isoline = null;
-                second_le_p.getKey().isoline = null;
-                second_le_p.getValue().isoline = null;
-
-                // Estimate remaining ends
-                LineEnd first_le = con.first().end_index == -1 ? first_le_p.getKey() : first_le_p.getValue();
-                LineEnd second_le = con.second().end_index == -1 ? second_le_p.getKey() : second_le_p.getValue();
-
-                // Because points of first line are guaranteed to be first,
-                // we can assign it's end index to 1.
-                first_le.end_index = 1;
-                first_le.isoline = l;
-                second_le.end_index = -1;
-                second_le.isoline = l;
-
-
-                // Add line ends to line end pool
-                // no need to update connection pool, though,
-                // because it refers to isolines through LineEnd.isoline, which we just updated
-                // You'll just need to check for LineEnd's isoline being null futher in loop
-                // this means that current connection refers to merged line end.
-                line_ends.put(l,new Pair<>(first_le,second_le));
-            } else { // Created line loop
-                // No need for updating line ends, just remove them.
-                line_ends.remove(con.first().isoline);
-                remove(con.first().isoline);
-
-                con.first().isoline = null;
-                con.second().isoline = null;
-            }
-            // Add newly formed line
-            add(l);
-
-        }
-    }
-*/
-    /**
-     * Determine, weather the line end is on the outerBound of the map
-     * (ray, traced by this line end does not intersect any other lines)
-     * @param le
-     * @return True, if line end is on map outerBound
-     */
-    public boolean isEdgeLineEnd(LineEnd le, ConvexHull convexHull) {
-        LineString ch_shell = ((Polygon)convexHull.getConvexHull()).getExteriorRing();
-        Coordinate c1 = le.line.p1;
-        Coordinate c2 = GeomUtils.closestPoint(c1,ch_shell);
-        final LineString hull_ls = gf.createLineString( new Coordinate[] {c1,c2} );
-        if (!this.stream().anyMatch((x)-> x.getLineString().crosses(hull_ls))) {
-            return true;
-        }
-        return false;
-    }
-
-//    /**
-//     * Retrieve collection of possible connections between line ends and their scores (so called distance)
-//     * @param lineEnds collection of line ends
-//     * @param eval function, accepting connection and returning it's score (distance)
-//     * @return map Connection as value with it's score as value
-//     */
-    /*
-    public List< Pair<Connection,Double> > getConnections(List<LineEnd> lineEnds,
-                                                          Function<Connection, Double> eval) {
-
-        class ConnectionAttributes {
-
-            public ConnectionAttributes(Connection connection, double score, LineString ls) {
-                this.connection = connection;
-                this.score = score;
-                this.connecting_line = ls;
-            }
-
-            public Connection connection;
-            public double score;
-            public LineString connecting_line;
-        }
-
-        List<ConnectionAttributes> ret = new LinkedList<>();
-        Connection con = new Connection();
-        for (int i = 0; i != lineEnds.size(); ++i) {
-            LineEnd l1 = lineEnds.get(i);
-            for (int j = i+1; j < lineEnds.size(); ++j) {
-                LineEnd l2 = lineEnds.get(j);
-                if (con.SetLineEnds(l1,l2)) {
-                    if (con.isValid()) {
-                        Double score = eval.apply(con);
-
-                        double score2 = parallelScore(con)/2;
-                        score+=score2;
-
-                        final LineString con_line = con.getConnectionLine(gf);
-
-                        if (score > 0) {
-                            if (this.stream().anyMatch((iline) -> iline.getLineString().crosses(con_line))) {
-                                score = -1.0;
-                            }
-                        }
-
-                        if (score > 0) {
-
-                            LineString con_ls = con.getConnectionLine(gf);
-
-                            for (ConnectionAttributes con_attr : ret) {
-                                if ( con_attr.connecting_line.intersects(con_ls) &&
-                                        con_attr.connecting_line.getStartPoint().distance(con_ls) > 0.002 &&
-                                        con_attr.connecting_line.getEndPoint().distance(con_ls) > 0.002) {
-                                    con_attr.score *= 0.5;
-                                    score *= 0.5;
-                                }
-                            }
-
-                            ret.add(new ConnectionAttributes(con, score, con_line));
-                            con = new Connection();
-                        }
-
-                    }
-                }
-            }
-        }
-
-        return ret.stream().map((cattr)-> new Pair<>(cattr.connection, cattr.score)).collect(Collectors.toList());
-    }*/
-
 
     public static List<Coordinate> getEndPointArray(LineString ls, int end_index, double offset, int iterations) {
         offset = offset/ls.getLength();
@@ -277,20 +97,163 @@ public class IsolineContainer extends HashSet<IIsoline> {
         return ret;
     }
 
+    public void serialize(String path) {
 
-    /*
-    public static HashMap<IIsoline,Pair<LineEnd,LineEnd>> getLineEnds(Stream<IIsoline> ils ) {
-        HashMap<IIsoline,Pair<LineEnd,LineEnd>> ret = new HashMap<>();
-        ils.forEach((iline)->{
-                    LineEnd l1 = LineEnd.fromIsoline(iline,1);
-                    LineEnd l2 = LineEnd.fromIsoline(iline,-1);
-                    if (l1 != null && l2 != null) {
-                        ret.put(iline,new Pair<>(l1,l2));
-                    }
-                }
-        );
+        GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
+        gsonBuilder.registerTypeAdapter(LineString.class, new LineStringAdapter(gf));
+
+        String result = gsonBuilder.create().toJson(this);
+
+        try {
+            PrintWriter writer = new PrintWriter(path, "UTF-8");
+            writer.println(result);
+            writer.close();
+        } catch (Exception ex) {
+            CommandLineUtils.printWarning("could not serialize Isoline Container, reason: "+ex.getMessage());
+        }
+    }
+
+    public List<IIsoline> findInCircle(Coordinate center, double radius) {
+        Point p = gf.createPoint( center );
+        return this.stream().filter((il)->
+                il.getGeometry().isWithinDistance(p,radius)
+        ).collect(Collectors.toList());
+    }
+
+    public List<IIsoline> getIntersecting(LineString ls) {
+
+        ArrayList<IIsoline> ret = new ArrayList<>();
+        for (IIsoline iso : this) {
+            if (iso.getLineString().intersects(ls)) ret.add(iso);
+        }
         return ret;
-    }*/
+    }
+
+
+    public Optional<IIsoline> findClosest(Coordinate center) {
+        Point p = gf.createPoint( center );
+        return this.stream().min((lhs,rhs)-> Double.compare(p.distance(lhs.getGeometry()),p.distance(rhs.getGeometry())));
+    }
+
+    public static IsolineContainer deserialize(String path) throws Exception{
+
+        byte[] encoded = Files.readAllBytes(Paths.get(path));
+        String json_str = new String(encoded, StandardCharsets.UTF_8);
+
+        GeometryFactory gf = new GeometryFactory();
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.registerTypeAdapter(IsolineContainer.class, new IsolineContainerAdapter(gf));
+        Gson g = gsonBuilder.create();
+        try {
+            return g.fromJson(json_str, IsolineContainer.class);
+        } catch (Exception ex) {
+            CommandLineUtils.reportException(ex);
+            return null;
+        }
+    }
+
+    public static class LineStringAdapter implements JsonSerializer<LineString>, JsonDeserializer<LineString> {
+
+        GeometryFactory gf;
+
+        public LineStringAdapter(GeometryFactory gf) {
+            this.gf =gf;
+        }
+
+        @Override
+        public JsonElement serialize(LineString src, Type typeOfSrc,
+                                     JsonSerializationContext context)
+        {
+            JsonObject obj = new JsonObject();
+            Coordinate[] coords = src.getCoordinates();
+            JsonArray       x_array         = new JsonArray();
+            JsonArray       y_array         = new JsonArray();
+
+            for (int i = 0; i != coords.length; ++i) {
+                x_array.add( new JsonPrimitive(coords[i].x));
+                y_array.add( new JsonPrimitive(coords[i].y));
+            }
+            Gson g = new Gson();
+            obj.add("xs",  x_array );
+            obj.add("ys",  y_array );
+            return obj;
+        }
+
+        @Override
+        public LineString deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+
+            JsonObject jobject = (JsonObject) json;
+
+            JsonArray xs_json = jobject.get("xs").getAsJsonArray();
+            JsonArray ys_json = jobject.get("ys").getAsJsonArray();
+
+            Iterator<JsonElement> x_it = xs_json.iterator();
+            Iterator<JsonElement> y_it = ys_json.iterator();
+
+            ArrayList<Coordinate> coords = new ArrayList<>();
+
+            while (x_it.hasNext() && y_it.hasNext()) {
+                coords.add( new Coordinate(x_it.next().getAsDouble(),y_it.next().getAsDouble()));
+            }
+            return gf.createLineString(coords.toArray(new Coordinate[coords.size()]));
+        }
+    }
+
+    public static class IsolineAdapter implements JsonDeserializer<Isoline> {
+
+        GeometryFactory gf;
+        public IsolineAdapter(GeometryFactory gf) {
+            this.gf = gf;
+        }
+        @Override
+        public Isoline deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            GsonBuilder gsonBuilder = new GsonBuilder();
+            gsonBuilder.registerTypeAdapter(LineString.class, new LineStringAdapter(gf));
+            Gson g = gsonBuilder.create();
+
+            JsonObject jobj = json.getAsJsonObject();
+
+            LineString ls = g.fromJson(jobj.get("lineString"),LineString.class);
+            int type = jobj.get("type").getAsInt();
+            int slope_side = jobj.get("slope_side").getAsInt();
+            int id = jobj.get("id").getAsInt();
+            boolean edgeToEdge = jobj.get("isedgetoedge").getAsBoolean();
+            double height = jobj.get("height").getAsDouble();
+
+            Isoline new_isoline = new Isoline(type,slope_side,ls.getCoordinateSequence(),gf);
+
+            new_isoline.setHeight(height);
+            new_isoline.setEdgeToEdge(edgeToEdge);
+            new_isoline.setID(id);
+            return new_isoline;
+        }
+    }
+
+    public static class IsolineContainerAdapter implements JsonDeserializer<IsolineContainer> {
+
+        GeometryFactory gf;
+        public IsolineContainerAdapter(GeometryFactory gf) {
+            this.gf = gf;
+        }
+        @Override
+        public IsolineContainer deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+
+            GsonBuilder gsonBuilder = new GsonBuilder();
+            gsonBuilder.registerTypeAdapter(Isoline.class, new IsolineAdapter(gf));
+            Gson g = gsonBuilder.create();
+
+            JsonArray isoline_json_arr = json.getAsJsonArray();
+
+            ArrayList<IIsoline> isolines = new ArrayList<>();
+
+            for (JsonElement e : isoline_json_arr) {
+                Isoline i = g.fromJson(e,Isoline.class);
+                isolines.add(i);
+            }
+
+            return new IsolineContainer(gf,isolines);
+        }
+    }
 
 
 }

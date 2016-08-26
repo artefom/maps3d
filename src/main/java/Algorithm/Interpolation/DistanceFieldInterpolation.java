@@ -25,7 +25,7 @@ public class DistanceFieldInterpolation {
 
     GeometryFactory gf;
     Isoline_attributed[] isolines;
-    Intersector intersector;
+    CachedTracer<Geometry> intersector;
     Envelope envelope;
 
     /**
@@ -42,7 +42,7 @@ public class DistanceFieldInterpolation {
             occluders.add(iso.getLineString());
             i+=1;
         }
-        intersector = new Intersector(occluders,gf);
+        intersector = new CachedTracer<>(occluders,(x)->x,gf);
     }
 
     /**
@@ -197,12 +197,12 @@ public class DistanceFieldInterpolation {
      * Rasterize isoline to buffer grid. see {@link DistanceFieldInterpolation#rasterizeline(pixelInfo[][], int, int, int, int, Isoline_attributed,Vector2D)}.
      */
     public void rasterize(pixelInfo[][] buf, Isoline_attributed line, PointRasterizer rasterizer, Isoline_attributed iso) {
-        for (int coord_index = 1; coord_index < line.coordinates.length; ++coord_index) {
+        for (int coord_index = 1; coord_index < line.coordinates.size(); ++coord_index) {
 
-            double x1 = line.coordinates[coord_index-1].x;
-            double y1 = line.coordinates[coord_index-1].y;
-            double x2 = line.coordinates[coord_index].x;
-            double y2 = line.coordinates[coord_index].y;
+            double x1 = line.coordinates.getX(coord_index-1);
+            double y1 = line.coordinates.getY(coord_index-1);
+            double x2 = line.coordinates.getX(coord_index);
+            double y2 = line.coordinates.getY(coord_index);
 
             int row1 = rasterizer.toRow(y1);
             int col1 = rasterizer.toColumn(x1);
@@ -232,13 +232,13 @@ public class DistanceFieldInterpolation {
      * see {@link DistanceFieldInterpolation#rasterizeline(int[][], int, int, int, int, int)}
      */
     public void rasterize(int[][] buf, Isoline_attributed line, PointRasterizer rasterizer, int val) {
-        for (int coord_index = 1; coord_index < line.coordinates.length; ++coord_index) {
+        for (int coord_index = 1; coord_index < line.coordinates.size(); ++coord_index) {
 
-            int row1 = rasterizer.toRow(line.coordinates[coord_index-1].y);
-            int col1 = rasterizer.toColumn(line.coordinates[coord_index-1].x);
+            int row1 = rasterizer.toRow(line.coordinates.getY(coord_index-1));
+            int col1 = rasterizer.toColumn(line.coordinates.getX(coord_index-1));
 
-            int row2 = rasterizer.toRow(line.coordinates[coord_index].y);
-            int col2 = rasterizer.toColumn(line.coordinates[coord_index].x);
+            int row2 = rasterizer.toRow(line.coordinates.getY(coord_index));
+            int col2 = rasterizer.toColumn(line.coordinates.getX(coord_index));
 
             if (row1 == 0) continue;
             if (col1 == 0) continue;
@@ -508,12 +508,15 @@ public class DistanceFieldInterpolation {
      * @param mask Mask with rasterized isoline heights. Height of isoline with height index x can't propagate through pixels of mask with value y, where x != y
      */
     private void maskedDistanceField(pixelInfo[][] source, int[][] mask) {
-        DistanceCalculationDownPass(source,mask);
-        DistanceCalculationUpPass(source,mask);
-        DistanceCalculationDownPass(source,mask);
-        DistanceCalculationUpPass(source,mask);
-        DistanceCalculationDownPass(source,mask);
-        DistanceCalculationUpPass(source,mask);
+
+        CommandLineUtils.reportProgressBegin("Calculating distance field");
+        for (int i = 0; i != 3; ++i) {
+            CommandLineUtils.reportProgress(i*2,6);
+            DistanceCalculationDownPass(source,mask);
+            CommandLineUtils.reportProgress(i*2+1,6);
+            DistanceCalculationUpPass(source,mask);
+        }
+        CommandLineUtils.reportProgressEnd();
     }
 
     /**
@@ -625,12 +628,13 @@ public class DistanceFieldInterpolation {
     }
 
     double calcRealDistance(double pixelDist) {
-        double result = pixelDist*Constants.INTERPOLATION_STEP;
+        double result = pixelDist*Constants.INTERPOLATION_STEP/10;
         return result;
     }
 
     double calcRealDistanceWithFade(double pixelDist) {
-        double result = pixelDist*Constants.INTERPOLATION_STEP;
+        pixelDist/=3;
+        double result = pixelDist*Constants.INTERPOLATION_STEP/10;
         if (result > Constants.INTERPOLATION_FADE_DISTANCE) {
             result = Constants.INTERPOLATION_FADE_DISTANCE+Math.pow(result-Constants.INTERPOLATION_FADE_DISTANCE,Constants.INTERPOLATION_FADE_STRENGTH);
         }
@@ -659,8 +663,11 @@ public class DistanceFieldInterpolation {
 
         int[][] mask = rasterizer.createIntBuffer(-1);
 
+        CommandLineUtils.reportProgressBegin("Rasterizing polygons");
         //Populate cells
+        int count = 0;
         for (int isoline_id = 0; isoline_id != isolines.length; ++isoline_id) {
+            CommandLineUtils.reportProgress(++count,isolines.length*2);
             Isoline_attributed iso = isolines[isoline_id];
 
             if (!iso.getIsoline().isSteep()) {
@@ -670,10 +677,12 @@ public class DistanceFieldInterpolation {
         }
 
         for (int isoline_id = 0; isoline_id != isolines.length; ++isoline_id) {
+            CommandLineUtils.reportProgress(++count,isolines.length*2);
             Isoline_attributed iso = isolines[isoline_id];
             if (iso.getIsoline().isSteep())
                 rasterize(mask, iso, rasterizer, -2);
         }
+        CommandLineUtils.reportProgressEnd();
 
 
         // Calculate distance field
@@ -682,13 +691,16 @@ public class DistanceFieldInterpolation {
         // Fill gaps
         mask = rasterizer.createIntBuffer(-2);
 
+        CommandLineUtils.reportProgressBegin("Filling gaps");
         for(int row = 0; row != rasterizer.getRowCount(); ++row) {
+            CommandLineUtils.reportProgress(row,rasterizer.getRowCount());
             for (int column = 0; column != rasterizer.getColumnCount(); ++column) {
                 if (distanceField[row][column].height_index1 == -1 || distanceField[row][column].distance1 == Constants.INTERPOLATION_MAX_DISTANCE) {
                     mask[row][column] = -1;
                 }
             }
         }
+        CommandLineUtils.reportProgressEnd();
 
         for (int isoline_id = 0; isoline_id != isolines.length; ++isoline_id) {
             Isoline_attributed iso = isolines[isoline_id];
@@ -699,8 +711,12 @@ public class DistanceFieldInterpolation {
         maskedDistanceFieldSimple(distanceField,mask);
 
         // Calculate height for each pixel
+
+        CommandLineUtils.reportProgressBegin("Calculating heights");
+
         double[][] result = new double[rasterizer.getRowCount()][rasterizer.getColumnCount()];
         for(int row = 0; row != rasterizer.getRowCount(); ++row) {
+            CommandLineUtils.reportProgress(row,rasterizer.getRowCount());
             for (int column = 0; column != rasterizer.getColumnCount(); ++column) {
                 pixelInfo p = distanceField[row][column];
                 if (p.height_index1 == -1) {
@@ -717,12 +733,17 @@ public class DistanceFieldInterpolation {
                 result[row][column] = h1;
             }
         }
+        CommandLineUtils.reportProgressEnd();
 
         //Calculate heights for hills
         //gauss(result,1,2);
         double[][] sobel = RasterUtils.sobel(result);
 
+
+        CommandLineUtils.reportProgressBegin("Calculating hill heights");
+
         for(int row = 0; row != rasterizer.getRowCount(); ++row) {
+            CommandLineUtils.reportProgress(row,rasterizer.getRowCount());
             for (int column = 0; column != rasterizer.getColumnCount(); ++column) {
                 pixelInfo p = distanceField[row][column];
                 double dist1 = calcRealDistance(p.distance1);
@@ -733,18 +754,20 @@ public class DistanceFieldInterpolation {
                     //result[row][column] = 0;
                     double h2 = 0;
                     // Use tangent of slope of closest isoline. Retrieve it from previously calculated sobel
-                    double tangent = sobel[p.pivot1_row][p.pivot1_column]/Constants.INTERPOLATION_STEP*0.8;
+                    double tangent = sobel[p.pivot1_row][p.pivot1_column]*2;
 
                     // When tangent is almost 0, but we want a hill to be visible on the map. Assign high value to tangent, so it will
                     // We could use conditional expression, like tangent = tangent < 0.2 ? 5 : tangent, but it's better to use
                     // this function for calulation of smooth transition.
                     // This function is only significant at low tangent values ( < 0.2 ) and otherwise almost equals tangent
                     tangent = (1-1/(1+Math.exp(-tangent*40+2)))*3+tangent;
+
+                    //tangent = tangent/Constants.INTERPOLATION_STEP;
                     // Just make sure everything goes fine and no extreme values are encountered.
                     tangent = GeomUtils.clamp(tangent,0.05,5.7);
 
                     double ss = crossProductSideDetect(distanceField, row, column);
-                    h2 = 1 - 1.0 / (tangent * p.distance1*Constants.INTERPOLATION_STEP + 1);
+                    h2 = 1 - 1.0 / (tangent * p.distance1*Constants.INTERPOLATION_STEP/10 + 1);
                     if (ss <= 0) h2 = -h2;
                     h2 = GeomUtils.clamp(h2, -1, 1);
                     h2 = h2 * GeomUtils.clamp(GeomUtils.map(dist2, Constants.INTERPOLATION_FADE_DISTANCE, Constants.INTERPOLATION_FADE_DISTANCE * 2, 0, 1), 0, 1);
@@ -754,6 +777,8 @@ public class DistanceFieldInterpolation {
 
             }
         }
+
+        CommandLineUtils.reportProgressEnd();
 
         int[][] gaussian_blur_mask = rasterizer.createIntBuffer(1);
 
@@ -765,8 +790,11 @@ public class DistanceFieldInterpolation {
             }
         }
 
+        CommandLineUtils.reportProgressBegin("Applying gaussian blur");
         RasterUtils.gauss(result,1,1);
+        CommandLineUtils.reportProgress(1,2);
         RasterUtils.gauss(result,gaussian_blur_mask,3);
+        CommandLineUtils.reportProgressEnd();
 
         //return
         return result;

@@ -63,6 +63,9 @@ public class Isoline implements IIsoline {
     }
 
     @Override
+    public void setID(int id) {this.id = id;};
+
+    @Override
     public Geometry getGeometry() {
         return lineString;
     }

@@ -1,0 +1,7 @@
+{
+  "name" : "background",
+  "z_index" : -1000,
+  "filled" : true,
+  "color" : "0,0,0",
+  "texture" : "snow_terrain.jpg"
+}

@@ -1,8 +1,6 @@
 package Algorithm.LineConnection;
 
-import Utils.ArrayIterator;
-import Utils.ArrayReverseIterator;
-import Utils.Pair;
+import Utils.*;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.CoordinateSequence;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -25,7 +23,7 @@ public class LineConnector {
      * @param con Connection, describing wich isolines and wich ends are to be connected
      * @return IIsoline created by merging two
      */
-    public static Pair<LineString,Integer> connect (Connection con, GeometryFactory gf) {
+    public static Pair<LineString,Integer> connect (Connection con, GeometryFactory gf, boolean collapse) {
 
         if (!con.isValid()) return null;
 
@@ -48,7 +46,7 @@ public class LineConnector {
         LineString first_ls = con.first().isoline.getLineString();
         LineString second_ls = con.second().isoline.getLineString();
 
-        List<Coordinate> coordinates = new ArrayList<>(first_ls.getNumPoints()+
+        List<Coordinate> coordinates = new ArrayList<>(first_ls.getNumPoints() +
                 second_ls.getNumPoints());
 
 
@@ -64,11 +62,25 @@ public class LineConnector {
                 new ArrayIterator<>(second_ls.getCoordinates()) :
                 new ArrayReverseIterator<>(second_ls.getCoordinates());
 
-        while (first_iter.hasNext())
-            coordinates.add(first_iter.next());
 
-        while (second_iter.hasNext())
+        if (collapse) {
+            Coordinate coord = null;
+            while (first_iter.hasNext()) {
+                coord = first_iter.next();
+                if (first_iter.hasNext())
+                    coordinates.add(coord);
+            }
+            if (coord != null)
+                coordinates.add( CoordUtils.div(CoordUtils.add(coord,second_iter.next()),2)  );
+        } else {
+            while (first_iter.hasNext()) {
+                coordinates.add(first_iter.next());
+            }
+        }
+
+        while (second_iter.hasNext()) {
             coordinates.add(second_iter.next());
+        }
 
         LineString ls = gf.createLineString( coordinates.toArray(new Coordinate[coordinates.size()]));
         return new Pair<>(ls,result_ss);

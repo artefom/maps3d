@@ -1,18 +1,28 @@
 package Deserialization;
 
+import Algorithm.LineConnection.Connection;
+import Algorithm.LineConnection.Isoline_attributed;
+import Algorithm.LineConnection.LineConnector;
+import Algorithm.LineConnection.LineEnd;
 import Isolines.IIsoline;
 import Isolines.Isoline;
 import Deserialization.Binary.*;
-import Deserialization.Interpolation.CurveString;
+import Utils.CommandLineUtils;
+import Utils.Curves.CurveString;
 import Deserialization.Interpolation.SlopeMark;
 import Utils.Constants;
 import Utils.GeomUtils;
+import Utils.Pair;
+import com.sun.corba.se.impl.orb.ORBConfiguratorImpl;
+import com.sun.prism.impl.Disposer;
 import com.vividsolutions.jts.geom.*;
 
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.DoubleFunction;
+import java.util.function.Function;
 
 /**
  * Created by Artem on 21.07.2016.
@@ -23,9 +33,11 @@ public class DeserializedOCAD {
     }
 
     public ArrayList<TOcadObject> objects;
+    public HashMap< Integer,ArrayList<TRecord> > records;
     public Set<Integer> symbol_ids;
+    private double metersPerUnit;
 
-    public void DeserializeMap( String path ) throws Exception {
+    public void DeserializeMap( String path, String configPath ) throws Exception {
 
         SeekableByteChannel ch = Files.newByteChannel(Paths.get(path)); // Defaults to read-only
         ch.position(0);
@@ -35,15 +47,41 @@ public class DeserializedOCAD {
         if ( header.OCADMark != 3245 ) throw new Exception("invalid format");
         if ( header.Version != 11 ) throw new Exception("invalid format");
 
-        int nextib = header.ObjectIndexBlock;
-        TObjectIndexBlock ib = new TObjectIndexBlock();
 
         objects = new ArrayList<>(2048);
+        records = new HashMap<>(2048);
         symbol_ids = new HashSet<>();
 
-        int hash = 0;
-        int count = 0;
 
+        int nextStringIB = header.FirstStringIndexBlk;
+        TStringIndexBlock stringIB = new TStringIndexBlock();
+        while (nextStringIB != 0) {
+            stringIB.Deserialize(ch,nextStringIB);
+            nextStringIB  = stringIB.NextIndexBlock;
+            for (int i = 0; i != stringIB.Table.length; ++i) {
+                if (stringIB.Table[i] != null && stringIB.Table[i].getString() != null) {
+                    if (stringIB.Table[i] != null && stringIB.Table[i].getString().length() != 0) {
+                        TRecord rec =TRecord.fromTStringIndex(stringIB.Table[i]);
+                        if (rec != null && rec.isValid()) {
+                            if (!records.containsKey(rec.getTypeID())) records.put(rec.getTypeID(),new ArrayList<>());
+                            records.get(rec.getTypeID()).add(rec);
+                        }
+                    }
+                }
+            }
+        }
+
+        ArrayList<TRecord> scaleParameters = getRecordsByName("ScalePar");
+        if (scaleParameters.size() != 1) throw new RuntimeException("File's map scale not understood");
+        this.metersPerUnit = scaleParameters.get(0).getValueAsDouble('m')/1000;
+
+        System.out.println("Meters per unit: "+this.metersPerUnit);
+
+        Function<Pair<Integer,Integer>, Coordinate> coordinateConverter = ixy ->
+                new Coordinate((double)ixy.v1/Constants.map_scale_fix*metersPerUnit,(double)ixy.v2/Constants.map_scale_fix*metersPerUnit);
+
+        int nextib = header.ObjectIndexBlock;
+        TObjectIndexBlock ib = new TObjectIndexBlock();
         while(nextib != 0) {
 
             ib.Deserialize(ch,nextib);
@@ -53,36 +91,48 @@ public class DeserializedOCAD {
             for (int i = 0; i != 256; ++i) {
                 TObjectIndex oi = ib.Table[i];
                 if (!( oi.ObjType >= 0 && oi.ObjType <= 7 )) throw new Exception("invalid format");
-//                if (oi.ObjType == 2 || oi.ObjType == 1) {
-//                    hash += oi.Pos;
-//                    count += 1;
-//                    ifile.seekg(oi.Pos);
-//                    int len = oi.Len;
-//                    lines.emplace_back(ifile);
-//                }
-                TOcadObject obj = new TOcadObject();
+                TOcadObject obj = new TOcadObject(coordinateConverter);
                 obj.Deserialize(ch,oi.Pos);
+
                 objects.add(obj);
                 symbol_ids.add(obj.Sym);
             };
         };
+
+
         return;
     }
 
-    public ArrayList<LineString> toLines(double interpolation_step, GeometryFactory gf) throws Exception {
-        if (interpolation_step <= 0) throw new Exception("Invalid interpolation step");
+    public ArrayList<TRecord> getRecordsByName(String name) {
+        return getRecordsByID( TRecord.recordIDs.getOrDefault(name,null) );
+    };
 
-        ArrayList<LineString> ret = new ArrayList<>();
-        for (TOcadObject obj : objects) {
-            ret.add(CurveString.fromTDPoly(obj.Poly).interpolate(interpolation_step,gf));
-        }
-        return ret;
-    }
-
+    public ArrayList<TRecord> getRecordsByID(Integer id) {
+        return records.getOrDefault(id,null);
+    };
 
     public ArrayList<SlopeMark> slopeMarks;
 
-    public ArrayList<IIsoline> toIsolines(double interpolation_step,GeometryFactory gf) throws Exception {
+    private void weldEnds(LineString ls1, LineString ls2, int le1, int le2) {
+        CoordinateSequence cs1 = ls1.getCoordinateSequence();
+        CoordinateSequence cs2 = ls2.getCoordinateSequence();
+
+        int index1 = le1 == 1 ? 0 : cs1.size()-1;
+        int index2 = le2 == 1 ? 0 : cs2.size()-1;
+        double new_x = (cs1.getX(index1)+cs2.getX(index2))*0.5;
+        double new_y = (cs1.getY(index1)+cs2.getY(index2))*0.5;
+
+        cs1.setOrdinate(index1,0,new_x);
+        cs1.setOrdinate(index1,1,new_y);
+
+        cs2.setOrdinate(index2,0,new_x);
+        cs2.setOrdinate(index2,1,new_y);
+
+        ls1.geometryChanged();
+        ls2.geometryChanged();
+    }
+
+    public ArrayList<IIsoline> toIsolines(double interpolation_step ,GeometryFactory gf) throws Exception {
         if (interpolation_step <= 0) throw new Exception("Invalid interpolation step");
 
         slopeMarks = new ArrayList<>();
@@ -99,7 +149,7 @@ public class DeserializedOCAD {
 
                 // Detected slope, lying on this curve;
                 SlopeMark slope = null;
-                LineString ls = CurveString.fromTDPoly(obj.Poly).interpolate(interpolation_step, gf);
+                LineString ls = CurveString.fromOcadVertices(obj.vertices).interpolate(interpolation_step, gf);
                 Iterator<SlopeMark> it = slopeMarks.iterator();
                 // Find slope within specified distance
                 while (it.hasNext()) {
@@ -132,6 +182,7 @@ public class DeserializedOCAD {
                 }
             }
         }
+
         return ret;
     }
 
@@ -144,5 +195,19 @@ public class DeserializedOCAD {
         }
         return ret;
     }
+
+    public List<TOcadObject> getObjectsByIDs(List<Integer> symbol_ids) {
+        List<TOcadObject> ret = new ArrayList<TOcadObject>();
+        for (TOcadObject obj : objects) {
+            for (int i = 0; i != symbol_ids.size(); ++i) {
+                if ( obj.Sym == symbol_ids.get(i) ) {
+                    ret.add(obj);
+                    break;
+                }
+            }
+        }
+        return ret;
+    }
+
 
 }

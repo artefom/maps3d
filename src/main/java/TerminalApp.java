@@ -31,7 +31,7 @@ public class TerminalApp {
             mc.detectEdge();
             mc.connectLines();
             mc.buildGraph();
-            mc.interpolate();
+            mc.interpolate("sample");
             mc.buildIndex();
         }
 
