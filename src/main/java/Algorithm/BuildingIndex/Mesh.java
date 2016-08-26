@@ -1,5 +1,6 @@
 package Algorithm.BuildingIndex;
 
+import Algorithm.Interpolation.Triangulation;
 import com.vividsolutions.jts.geom.*;
 
 import java.io.BufferedWriter;
@@ -7,6 +8,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 /**
@@ -20,6 +22,12 @@ public class Mesh {
             this.a = a;
             this.b = b;
             this.c = c;
+        }
+
+        public Triplet(int[] triplet) {
+            a = triplet[0];
+            b = triplet[1];
+            c = triplet[2];
         }
 
         public Triplet createIncreasedBy(int delta) {
@@ -39,10 +47,10 @@ public class Mesh {
     /**
      * boxXZ is guaranteed to be valid only after construction time. Represents coverage area of initial structure.
      */
-    public final Box boxXZ;
-    public final int initialVertexesCount, getInitialFacesCount;
+    public final Box boxXZ = new Box();
+    protected int initialVertexesCount, getInitialFacesCount;
 
-    private static GeometryFactory gf = new GeometryFactory();
+    protected static GeometryFactory gf = new GeometryFactory();
     private static char[] V = {'v', ' '}, F = {'f', ' '};
 
     static void printVertex(double x, double y, double z, BufferedWriter obj) throws IOException {
@@ -65,21 +73,20 @@ public class Mesh {
         obj.newLine();
     }
 
+    protected Mesh(){}
+
     Mesh(String objFileName) {
         try {
             Scanner obj = new Scanner(new FileReader(objFileName));
             String token;
-            double x, y, z, x0 = Double.MAX_VALUE, x1 = Double.MIN_VALUE, z0 = Double.MAX_VALUE, z1 = Double.MIN_VALUE;
+            double x, y, z;
             while (obj.hasNext()) {
                 switch (token = obj.next()) {
                     case "v":
                         x = obj.nextDouble();
                         y = obj.nextDouble();
                         z = obj.nextDouble();
-                        x0 = Math.min(x0, x);
-                        x1 = Math.max(x1, x);
-                        z0 = Math.min(z0, z);
-                        z1 = Math.max(z1, z);
+                        boxXZ.update(x,z);
                         vertexesXZ.add(new Coordinate(x, z));
                         vertexesY.add(y);
                         break;
@@ -96,13 +103,13 @@ public class Mesh {
                         trianglesXZ.add(polygon);
                         break;
                     default:
-                        obj.nextLine();
-                        System.err.println("Designed to work only with sp4cerat's simplifier, skipping token '" + token + "'");
+                        String line = obj.nextLine();
+                        System.err.println("Designed to work only with sp4cerat's simplifier, skipping '" + token + " " + line + "'");
                         //throw new IOException("Unexpected token '" + token + "'");
                 }
             }
             obj.close();
-            boxXZ = new Box(x0, z0, x1, z1);
+            boxXZ.acceptUpdates();
             initialVertexesCount = vertexesXZ.size();
             getInitialFacesCount = faceIndices.size();
         } catch (IOException e) {
