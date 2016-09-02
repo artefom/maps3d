@@ -172,4 +172,8 @@ public class QTree {
 //                root.toString() + '\n' +
                 "";
     }
+
+    public Box getXZBox(){
+        return root.ownBox;
+    }
 }

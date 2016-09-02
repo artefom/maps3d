@@ -9,8 +9,12 @@ import com.vividsolutions.jts.geom.GeometryFactory;
  */
 public class Box {
     private static GeometryFactory gf = new GeometryFactory();
-    public final double x0, z0, x1, z1;
-    private final Geometry rectJTS;
+    public double x0, z0, x1, z1;
+    private Geometry rectJTS;
+
+    public Box(){
+        x0 = Double.MAX_VALUE; x1 = Double.MIN_VALUE; z0 = Double.MAX_VALUE; z1 = Double.MIN_VALUE;
+    }
 
     public Box(double x0, double z0, double x1, double z1) {
         Coordinate start = new Coordinate(x1, z1);
@@ -32,7 +36,23 @@ public class Box {
         };
     }
 
+    private boolean needsAcceptation = false;
+    public void update(double x, double z){
+        needsAcceptation = true;
+        x0 = Math.min(x0, x);
+        x1 = Math.max(x1, x);
+        z0 = Math.min(z0, z);
+        z1 = Math.max(z1, z);
+    }
+
+    public void acceptUpdates(){
+        needsAcceptation = false;
+        Coordinate start = new Coordinate(x1, z1);
+        rectJTS = gf.createPolygon(new Coordinate[]{start, new Coordinate(x0,z1), new Coordinate(x0,z0), new Coordinate(x1,z0), start});
+    }
+
     public boolean intersects(Geometry t){
+        assert !needsAcceptation : "acceptUpdates() hadn't been called";
         return rectJTS.intersects(t);
     }
 

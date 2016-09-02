@@ -1,3 +1,4 @@
+import Algorithm.BuildingIndex.Index;
 import Algorithm.DatasetGenerator.Datagen;
 import Algorithm.Healing.Healer;
 import Algorithm.Interpolation.DistanceFieldInterpolation;
@@ -36,7 +37,7 @@ public class MainController {
     public IsolineContainer isolineContainer;
     public DistanceFieldInterpolation interpolation;
     public Triangulation triangulation;
-//    public Index index;
+    public Index index;
     DeserializedOCAD deserializedOCAD;
 
     public MapEdge edge;
@@ -162,8 +163,9 @@ public class MainController {
     }
 
     public void buildIndex(){
-//        index = new Index(interpolation.getAllInterpolatingPoints());
-//        CommandLineUtils.report();
+        index = triangulation == null ? new Index("sample.obj") : new Index(triangulation);
+        CommandLineUtils.report();
+        //index.diamondRain();
     }
 
     public void generateTexture(String output_path) {
