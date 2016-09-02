@@ -1,0 +1,2 @@
+python buildDlls.py
+pause

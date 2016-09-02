@@ -149,7 +149,7 @@ public class DeserializedOCAD {
 
                 // Detected slope, lying on this curve;
                 SlopeMark slope = null;
-                LineString ls = CurveString.fromOcadVertices(obj.vertices).interpolate(interpolation_step, gf);
+                LineString ls = CurveString.fromOcadVertices(obj.vertices).interpolate(gf);
                 Iterator<SlopeMark> it = slopeMarks.iterator();
                 // Find slope within specified distance
                 while (it.hasNext()) {

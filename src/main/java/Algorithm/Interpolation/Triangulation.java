@@ -86,6 +86,7 @@ public class Triangulation {
      * Mathematically speaking, 2d integral of derivative of heightmap over cell.
      */
     public double getSplitScore(Cell c) {
+
         int startRow = GeomUtils.clamp(c.minRow,0,sobel.length-1);
         int startColumn = GeomUtils.clamp(c.minColumn,0,sobel[0].length-1);
         int endRow = GeomUtils.clamp(c.maxRow,0,sobel.length-1);
@@ -98,6 +99,7 @@ public class Triangulation {
                 score += sobel[row][column];
             }
         }
+
         return score;
     }
 
@@ -126,10 +128,10 @@ public class Triangulation {
     }
 
 //    public Coordinate getSobelMaximumCoord(Cell c) {
-//        int startRow = GeomUtils.clamp(c.minRow,0,sobel.length-1);
-//        int startColumn = GeomUtils.clamp(c.minColumn,0,sobel[0].length-1);
-//        int endRow = GeomUtils.clamp(c.maxRow,0,sobel.length-1);
-//        int endColumn = GeomUtils.clamp(c.maxColumn,0,sobel[0].length-1);
+//        int startRow = GeomUtils.clamp(c.minY,0,sobel.length-1);
+//        int startColumn = GeomUtils.clamp(c.minX,0,sobel[0].length-1);
+//        int endRow = GeomUtils.clamp(c.maxY,0,sobel.length-1);
+//        int endColumn = GeomUtils.clamp(c.maxX,0,sobel[0].length-1);
 //        if (startColumn==endColumn || startRow == endRow) return null;
 //        Coordinate ret = new Coordinate(startColumn,startRow);
 //        double maxValue = sobel[startRow][startColumn];
@@ -144,8 +146,8 @@ public class Triangulation {
 //            }
 //        }
 //        if (totalWeight == 0) {
-//            ret.y = (c.minRow + c.maxRow)*0.5;
-//            ret.x = (c.minColumn+c.maxColumn)*0.5;
+//            ret.y = (c.minY + c.maxY)*0.5;
+//            ret.x = (c.minX+c.maxX)*0.5;
 //        } else {
 //            ret.y = rowAccum / totalWeight;
 //            ret.x = columnAccum / totalWeight;

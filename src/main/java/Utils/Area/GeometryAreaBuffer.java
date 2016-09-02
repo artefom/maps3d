@@ -1,13 +1,10 @@
 package Utils.Area;
 
-import Utils.CachedTracer;
 import Utils.GeomUtils;
-import com.sun.org.apache.xpath.internal.functions.Function2Args;
 import com.vividsolutions.jts.geom.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 
 
@@ -114,7 +111,7 @@ public class GeometryAreaBuffer extends AreaBuffer<LineSegmentWrapper> {
     }
 
     @Override
-    public void setEnvelope(Collection<LineSegmentWrapper> entities, int width, int height) {
+    public void setEnvelope(Collection<LineSegmentWrapper> entities) {
 
 
         Iterator<LineSegmentWrapper> it = entities.iterator();
@@ -123,53 +120,20 @@ public class GeometryAreaBuffer extends AreaBuffer<LineSegmentWrapper> {
 
         double x = lsw.getBeginX();
         double y = lsw.getBeginY();
-        envelope_minX = x;
-        envelope_maxX = x;
-        envelope_minY = y;
-        envelope_maxY = y;
+        setEnvelope(x,x,y,y);
 
         x = lsw.getEndX();
         y = lsw.getEndY();
-        envelope_minX = Math.min(envelope_minX, x);
-        envelope_maxX = Math.max(envelope_maxX, x);
-        envelope_minY = Math.min(envelope_minY, y);
-        envelope_maxY = Math.max(envelope_maxY, y);
+        expandEnvelopeToInclude(x,y);
 
         while (it.hasNext()) {
             LineSegmentWrapper ls = it.next();
             x = ls.getBeginX();
             y = ls.getBeginY();
-            envelope_minX = Math.min(envelope_minX, x);
-            envelope_maxX = Math.max(envelope_maxX, x);
-            envelope_minY = Math.min(envelope_minY, y);
-            envelope_maxY = Math.max(envelope_maxY, y);
-
+            expandEnvelopeToInclude(x,y);
             x = ls.getEndX();
             y = ls.getEndY();
-            envelope_minX = Math.min(envelope_minX, x);
-            envelope_maxX = Math.max(envelope_maxX, x);
-            envelope_minY = Math.min(envelope_minY, y);
-            envelope_maxY = Math.max(envelope_maxY, y);
-        }
-
-        // Stretch a-bit, so nothing lies on boarder of envelope
-        double envelope_width_dilate = (envelope_maxX-envelope_minX)*0.01;
-        double envelope_height_dilate = (envelope_maxY-envelope_minY)*0.01;
-
-        if (envelope_width_dilate == 0) envelope_width_dilate = 0.00001;
-        if (envelope_height_dilate == 0) envelope_height_dilate = 0.00001;
-
-        envelope_minX-=envelope_width_dilate;
-        envelope_maxX+=envelope_width_dilate;
-        envelope_minY-=envelope_height_dilate;
-        envelope_maxY+=envelope_height_dilate;
-
-        this.width = width;
-        this.height = height;
-
-        cells = new ArrayList[width * height];
-        for (int i = 0; i != cells.length; ++i) {
-            cells[i] = new ArrayList<>(16);
+            expandEnvelopeToInclude(x,y);
         }
     }
 

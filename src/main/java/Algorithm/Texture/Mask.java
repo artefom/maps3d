@@ -1,20 +1,13 @@
 package Algorithm.Texture;
 
 
+import Algorithm.Mesh.TexturedPatch;
 import Utils.*;
 import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
-import sun.dc.pr.Rasterizer;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.*;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.nio.Buffer;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -49,6 +42,7 @@ public class Mask {
         for (int i = 0; i != pixels.length; ++i) pixels[i] = color;
     }
 
+
     public void fillPolygons(List<Polygon> polygons, PointRasterizer rasterizer, byte color) {
         short[][] mask = rasterizer.createShortBuffer();
 
@@ -66,12 +60,11 @@ public class Mask {
                     counter+=mask[y][x];
             }
         }
-
-        //raster.setDataElements(0, 0, width, height, pixels);
     }
 
     public void drawLines(List<LineString> strings, PointRasterizer rasterizer, byte color, int width) {
         Graphics2D g = (Graphics2D)image.getGraphics();
+        g.setClip(0,0,image.getWidth(),image.getHeight());
         g.setColor(new Color(color,color,color,255));
         g.setStroke(new BasicStroke(width));
         int height = image.getHeight();
@@ -80,8 +73,11 @@ public class Mask {
             LineStringIterator it = new LineStringIterator(s,buf);
             while (it.hasNext()) {
                 it.next();
-                g.drawLine( rasterizer.toColumn(buf.p0.x), height-1-rasterizer.toRow(buf.p0.y),
-                        rasterizer.toColumn(buf.p1.x), height-1-rasterizer.toRow(buf.p1.y));
+
+                if (rasterizer.isInBounds(buf.p0.x,buf.p0.y) || rasterizer.isInBounds(buf.p1.x,buf.p1.y)) {
+                    g.drawLine(rasterizer.toColumn(buf.p0.x), height - 1 - rasterizer.toRow(buf.p0.y),
+                            rasterizer.toColumn(buf.p1.x), height - 1 - rasterizer.toRow(buf.p1.y));
+                }
             }
         }
     }
@@ -96,14 +92,15 @@ public class Mask {
     public Graphics2D getGraphics() {
         return (Graphics2D)image.getGraphics();
     }
+//
+//    public void blur() {
+//        RasterUtils.gauss(pixels,width,height,5,3);
+//    }
 
-    public void blur() {
-        RasterUtils.gauss(pixels,width,height,5,3);
-    }
-
-    enum BlendMode { NONE, OVERLAY, MULTIPLY, SCREEN }
+    public enum BlendMode { NONE, OVERLAY, MULTIPLY, SCREEN }
 
     public void overlay(BufferedImage img, int color, BlendMode blendMode) {
+
         int[] img_pixels = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
 
         short dr = getR(color);
@@ -152,7 +149,15 @@ public class Mask {
         }
     }
 
-    public void overlay(BufferedImage img, BufferedImage tex, BlendMode blendMode) {
+    //byte[] mask_pixels = null;
+    /**
+     * Draw image over tex, using this mask
+     * @param img
+     * @param tex
+     * @param blendMode
+     */
+    public void overlay(BufferedImage img, BufferedImage tex, BlendMode blendMode, Envelope texture_envelope ) {
+
         int[] img_pixels = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
 
         int img_width = img.getWidth();
@@ -160,49 +165,13 @@ public class Mask {
         int tex_width = tex.getWidth();
         int tex_height = tex.getHeight();
 
-        for (int row = 0; row != img_height; ++row) {
-            for (int column = 0; column != img_width; ++column) {
-                int drow = row%tex_height;
-                int dcol = column%tex_width;
+        byte[] mask_pixels = new byte[img_width * img_height];
+            TextureUtils.drawOver(mask_pixels,img_width,img_height,pixels,width,height,new Envelope(
+                    new Coordinate(0,0),
+                    new Coordinate(img_width-1,img_height-1)
+            ),false);
 
-                int scolor = img_pixels[row*img_width+column];
-                int dcolor = tex.getRGB(dcol,drow);
-
-                short dr = getR(dcolor);
-                short dg = getG(dcolor);
-                short db = getB(dcolor);
-                short da = getA(dcolor);
-
-                short sr = getR(scolor);
-                short sg = getG(scolor);
-                short sb = getB(scolor);
-                short sa = getA(scolor);
-
-                float a = ((float) (pixels[row*img_width+column] + 128) / 255)*((float)da/255);
-                float a2 = 1 - a;
-
-                if (blendMode == BlendMode.SCREEN) {
-                    dr = (short)(255-(float)(255-dr)*(255-sr)/255);
-                    dg = (short)(255-(float)(255-dg)*(255-sg)/255);
-                    db = (short)(255-(float)(255-db)*(255-sb)/255);
-                } else if (blendMode == BlendMode.MULTIPLY) {
-                    dr = (short)((float)dr*sr/255);
-                    dg = (short)((float)dg*sr/255);
-                    db = (short)((float)db*sr/255);
-                } else if (blendMode == BlendMode.OVERLAY) {
-                    dr = sr < 128 ? (short)(2.0*dr*sr/255) : (short)(255-2.0*(255-dr)*(255-sr)/255);
-                    dg = sg < 128 ? (short)(2.0*dg*sg/255) : (short)(255-2.0*(255-dg)*(255-sg)/255);
-                    db = sb < 128 ? (short)(2.0*db*sb/255) : (short)(255-2.0*(255-db)*(255-sb)/255);
-                }
-
-                sr = (short) (getR(scolor) * a2 + dr * a);
-                sg = (short) (getG(scolor) * a2 + dg * a);
-                sb = (short) (getB(scolor) * a2 + db * a);
-                sa = (short) (255 - ((255 - sa) * a2));
-
-                img_pixels[row*img_width+column] = toRGB(sr, sg, sb, sa);
-            }
-        }
+        TextureUtils.drawOver(img_pixels,img_width,img_height,tex,mask_pixels,texture_envelope,true,blendMode);
     }
 
     /* Atomic functions, working with bits */

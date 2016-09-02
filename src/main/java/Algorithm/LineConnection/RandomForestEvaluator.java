@@ -348,7 +348,8 @@ public class RandomForestEvaluator {
         }
 
         PointAreaBuffer<LineEnd> lineEndAreaBuffer = new PointAreaBuffer<>();
-        lineEndAreaBuffer.setEnvelope(lineEndPool,100,100);
+        lineEndAreaBuffer.setEnvelope(lineEndPool);
+        lineEndAreaBuffer.init(100,100);
         lineEndAreaBuffer.addAll(lineEndPool);
 
         Set<CoordinateAttributed<LineEnd>> candidates = Collections.newSetFromMap(new IdentityHashMap<CoordinateAttributed<LineEnd>,Boolean>());

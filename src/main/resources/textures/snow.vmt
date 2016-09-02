@@ -3,7 +3,7 @@
   "z_index" : 1000,
   "filled" : true,
   "color" : "255, 255, 255",
-  "texture" : "snow.jpg",
+  "texture" : "uvTest.png",
   "erode_first" : false,
   "erode_size" : 2,
   "dilate_size" : 2,

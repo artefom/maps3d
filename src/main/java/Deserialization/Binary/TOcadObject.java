@@ -7,6 +7,7 @@ import com.sun.org.apache.xpath.internal.functions.Function2Args;
 import com.vividsolutions.jts.geom.*;
 
 import javax.security.auth.callback.TextOutputCallback;
+import javax.swing.plaf.metal.OceanTheme;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.util.ArrayList;
@@ -201,6 +202,28 @@ public class TOcadObject extends ByteDeserializable {
         return -1;
     }
 
+    private static ArrayList< ArrayList<OcadVertex> > splitByHoleFirst(ArrayList<OcadVertex> vertices) {
+        ArrayList< ArrayList<OcadVertex> > ret = new ArrayList<>();
+
+        ArrayList<OcadVertex> buf = new ArrayList<>();
+
+        for (OcadVertex v : vertices) {
+            if (v.HOLE_FIRST) { // Hole first encountered, enclose linestring 'buf' and put it into ret.
+                if (buf.size() >= 3) {
+                    buf.add(buf.get(0));
+                    ret.add(buf);
+                }
+                buf = new ArrayList<>();
+            }
+            buf.add(v);
+        }
+        // Enclose buf residue and add it into ret.\
+        if (buf.size() >= 3) {
+            buf.add(buf.get(0));
+            ret.add(buf);
+        }
+        return ret;
+    }
 
 
     public Geometry getGeometry(GeometryFactory gf) throws Exception {
@@ -208,46 +231,35 @@ public class TOcadObject extends ByteDeserializable {
         // Split into circles, if succeeded, means that it's polygon
 
         if (Otp == 3) {// Area object
-            ArrayList<LinearRing> rings = new ArrayList<>();
+
             ArrayList<TDPoly> poly = new ArrayList<>();
-            for (TDPoly p : Poly) {
-                if (!p.isHoleFirst()) {
-                    poly.add(p);
-                } else {
-                    if (poly.size() >= 4) {
-                        poly.add(poly.get(0));
-                        try {
-                            LinearRing r = gf.createLinearRing(CurveString.fromOcadVertices(vertices).interpolate(Constants.DESERIALIZATION_BEZIER_STEP, gf).getCoordinateSequence());
-                            rings.add(r);
-                        } catch (Exception ex) {
-                            System.out.println("ERROR: "+ex.getMessage());
-                            throw new Exception(ex.getMessage());
-                        }
-                    }
-                    poly.clear();
-                    poly.add(p);
-                }
+
+            // Run through vertecies and add them to buffer, while hole first not encountered...
+
+            // Exterior ring - first element of this array, other are holes
+            ArrayList< ArrayList<OcadVertex> > exteriorAndHoles = splitByHoleFirst(vertices);
+
+            if (exteriorAndHoles.size() == 0) {
+                throw new RuntimeException("Ocad object has no geometry");
             }
-            if (poly.size() >= 4) {
-                poly.add(poly.get(0));
-                try {
-                    LinearRing r = gf.createLinearRing(CurveString.fromOcadVertices(vertices).interpolate(Constants.DESERIALIZATION_BEZIER_STEP, gf).getCoordinateSequence());
-                    rings.add(r);
-                } catch (Exception ex) {
-                    System.out.println("ERROR: "+ex.getMessage());
-                    throw new Exception(ex.getMessage());
-                }
+
+            ArrayList<OcadVertex> exterior = exteriorAndHoles.get(0);
+            ArrayList< ArrayList<OcadVertex> > holes = new ArrayList<>();
+            for (int i = 1; i < exteriorAndHoles.size(); ++i) {
+                holes.add(exteriorAndHoles.get(i));
             }
+
+            LineString exterior_string = CurveString.fromOcadVertices(exterior).interpolate(gf);
+            LinearRing exterior_ring = gf.createLinearRing(exterior_string.getCoordinateSequence());
+            ArrayList<LinearRing> interior_rings = new ArrayList<>();
+
             // Rings gathered. Now transform them into polygon
-            if (rings.size() > 1) {
-                return gf.createPolygon(rings.get(0),rings.subList(1,rings.size()).toArray(new LinearRing[rings.size()-1]));
-            } else if (rings.size() == 1) {
-                return gf.createPolygon(rings.get(0));
-            };
-            return null;
+
+            return gf.createPolygon(exterior_ring,interior_rings.toArray(new LinearRing[interior_rings.size()]));
+
         } else if (Otp == 2) { // Line Object
             CurveString cs = CurveString.fromOcadVertices(vertices);
-            return cs.interpolate(Constants.DRAWING_INTERPOLATION_STEP,gf);
+            return cs.interpolate(gf);
         } else {
             return null;
         }

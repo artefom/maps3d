@@ -34,6 +34,7 @@ public class DistanceFieldInterpolation {
      */
     public DistanceFieldInterpolation(IsolineContainer container) {
         envelope = container.getEnvelope();
+        rasterizer = new PointRasterizer(Constants.INTERPOLATION_STEP,envelope);
         this.isolines = new Isoline_attributed[container.size()];
         List<Geometry> occluders = new ArrayList<>(container.size());
         int i = 0;
@@ -44,6 +45,8 @@ public class DistanceFieldInterpolation {
         }
         intersector = new CachedTracer<>(occluders,(x)->x,gf);
     }
+
+    PointRasterizer rasterizer;
 
     /**
      * Get min height of isolines in passed to constructor {@link IsolineContainer}
@@ -82,6 +85,10 @@ public class DistanceFieldInterpolation {
         for (int i = 0; i != isolines.length; ++i) {
             isolines[i].setHeightIndex( (short) Math.round((isolines[i].getIsoline().getHeight()-min_height)*2) );
         }
+    }
+
+    public PointRasterizer getRasterizer() {
+        return rasterizer;
     }
 
 
@@ -204,11 +211,11 @@ public class DistanceFieldInterpolation {
             double x2 = line.coordinates.getX(coord_index);
             double y2 = line.coordinates.getY(coord_index);
 
-            int row1 = rasterizer.toRow(y1);
-            int col1 = rasterizer.toColumn(x1);
+            int row1 = rasterizer.toRowClamped(y1);
+            int col1 = rasterizer.toColumnClamped(x1);
 
-            int row2 = rasterizer.toRow(y2);
-            int col2 = rasterizer.toColumn(x2);
+            int row2 = rasterizer.toRowClamped(y2);
+            int col2 = rasterizer.toColumnClamped(x2);
 
             if (row1 == 0) continue;
             if (col1 == 0) continue;
@@ -234,11 +241,11 @@ public class DistanceFieldInterpolation {
     public void rasterize(int[][] buf, Isoline_attributed line, PointRasterizer rasterizer, int val) {
         for (int coord_index = 1; coord_index < line.coordinates.size(); ++coord_index) {
 
-            int row1 = rasterizer.toRow(line.coordinates.getY(coord_index-1));
-            int col1 = rasterizer.toColumn(line.coordinates.getX(coord_index-1));
+            int row1 = rasterizer.toRowClamped(line.coordinates.getY(coord_index-1));
+            int col1 = rasterizer.toColumnClamped(line.coordinates.getX(coord_index-1));
 
-            int row2 = rasterizer.toRow(line.coordinates.getY(coord_index));
-            int col2 = rasterizer.toColumn(line.coordinates.getX(coord_index));
+            int row2 = rasterizer.toRowClamped(line.coordinates.getY(coord_index));
+            int col2 = rasterizer.toColumnClamped(line.coordinates.getX(coord_index));
 
             if (row1 == 0) continue;
             if (col1 == 0) continue;
@@ -648,9 +655,6 @@ public class DistanceFieldInterpolation {
     public double[][] getAllInterpolatingPoints() {
 
         calculateHeightIndexes();
-
-        // Create cells
-        PointRasterizer rasterizer = new PointRasterizer(Constants.INTERPOLATION_STEP,envelope);
 
         pixelInfo[][] distanceField = new pixelInfo[rasterizer.getRowCount()][rasterizer.getColumnCount()];
 

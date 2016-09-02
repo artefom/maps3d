@@ -1,13 +1,16 @@
 package Algorithm.LineConnection;
 
+import Isolines.Isoline;
 import Isolines.IsolineContainer;
 import Utils.CachedTracer;
 import Utils.Constants;
 
+import com.vividsolutions.jts.algorithm.ConvexHull;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;
 import org.opensphere.geometry.algorithm.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -35,6 +38,22 @@ public class MapEdge {
         double width = concaveHull.getEnvelopeInternal().getWidth();
         max_dist = Math.sqrt(height*height+width*width);
         id = edge_id++;
+    }
+
+    public static Polygon getConvexHull(IsolineContainer ic) {
+        ArrayList<Geometry> gc = ic.getIsolinesAsGeometry();
+        GeometryCollection gc2 = new GeometryCollection(gc.toArray(new Geometry[gc.size()]),ic.getFactory());
+        ConvexHull chull = new ConvexHull(gc2);
+        return (Polygon)chull.getConvexHull();
+    }
+
+    public static Polygon getConcaveHull(IsolineContainer ic) {
+        ArrayList<Geometry> gc = ic.getIsolinesAsGeometry();
+        GeometryCollection gc2 = new GeometryCollection(gc.toArray(new Geometry[gc.size()]),ic.getFactory());
+        return (Polygon)(new ConcaveHull(gc2,Constants.EDGE_CONCAVE_THRESHOLD).getConcaveHull());
+    }
+    public static Polygon getConcaveHull(Geometry g, double threshold) {
+        return (Polygon)(new ConcaveHull(g,threshold).getConcaveHull());
     }
 
     public static MapEdge fromGeometryCollection(Collection<Geometry> gc, GeometryFactory gf, CachedTracer<Geometry> intersector, double threshold) {

@@ -15,7 +15,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import com.google.gson.*;
 import com.vividsolutions.jts.geom.Polygon;
@@ -244,14 +243,14 @@ public class TextureGenerator {
             NodedFunction nf = b.getZMaskFilter();
             if (nf != null) {
                 for (int pixel = 0; pixel != layer.pixels.length; ++pixel) {
-                    layer.pixels[pixel] = (byte)(nf.apply(heightmap[pixel]).byteValue()); //(byte)(GeomUtils.clamp( 255.0*heightmap[pixel], 0, 255 ) - 128 );
+                    layer.pixels[pixel] = (byte)(nf.apply(heightmap[pixel])); //(byte)(GeomUtils.clamp( 255.0*heightmap[pixel], 0, 255 ) - 128 );
                 }
             }
 
             nf = b.getAngleFilter();
             if (nf != null) {
                 for (int pixel = 0; pixel != layer.pixels.length; ++pixel) {
-                    layer.pixels[pixel] = (byte)(nf.apply(Math.atan(sobel[pixel]*50)/1.5).byteValue()); //(byte)(GeomUtils.clamp( 255.0*heightmap[pixel], 0, 255 ) - 128 );
+                    layer.pixels[pixel] = (byte)(nf.apply(Math.atan(sobel[pixel]*50)/1.5)); //(byte)(GeomUtils.clamp( 255.0*heightmap[pixel], 0, 255 ) - 128 );
                 }
             }
 
@@ -277,7 +276,7 @@ public class TextureGenerator {
 
             //Write layer to texture
             if (b.hasTexture()) {
-                layer.overlay(tex, b.getTexture(), b.getBlendMode());
+                layer.overlay(tex, b.getTexture(), b.getBlendMode(), null);
             } else {
                 layer.overlay(tex, b.getColor(), b.getBlendMode());
             }

@@ -60,7 +60,8 @@ public class CachedTracer<T>{
             LSWAttributed.fromGeometry(e,g_col).forEach(wrappers::add);
         }
 
-        buffer.setEnvelope(wrappers,500,500);
+        buffer.setEnvelope(wrappers);
+        buffer.init(500,500);
         buffer.addAll(wrappers);
     }
 

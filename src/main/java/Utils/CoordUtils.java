@@ -3,6 +3,8 @@ package Utils;
 import com.vividsolutions.jts.geom.Coordinate;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,5 +55,45 @@ public class CoordUtils {
         }
 
         return coordinates;
+    }
+
+    public static double getMinX(Collection<Coordinate> coordinates) {
+        Iterator<Coordinate> it = coordinates.iterator();
+        Coordinate c = it.next();
+        double ret = c.x;
+        while (it.hasNext()) {
+            ret = Math.min(ret,c.x);
+        }
+        return ret;
+    }
+
+    public static double getMaxX(Collection<Coordinate> coordinates) {
+        Iterator<Coordinate> it = coordinates.iterator();
+        Coordinate c = it.next();
+        double ret = c.x;
+        while (it.hasNext()) {
+            ret = Math.max(ret,c.x);
+        }
+        return ret;
+    }
+
+    public static double getMinY(Collection<Coordinate> coordinates) {
+        Iterator<Coordinate> it = coordinates.iterator();
+        Coordinate c = it.next();
+        double ret = c.y;
+        while (it.hasNext()) {
+            ret = Math.min(ret,c.y);
+        }
+        return ret;
+    }
+
+    public static double getMaxY(Collection<Coordinate> coordinates) {
+        Iterator<Coordinate> it = coordinates.iterator();
+        Coordinate c = it.next();
+        double ret = c.y;
+        while (it.hasNext()) {
+            ret = Math.max(ret,c.y);
+        }
+        return ret;
     }
 }

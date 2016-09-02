@@ -1,10 +1,7 @@
-package Algorithm.Texture;
+package Utils;
 
 
-import Utils.CoordUtils;
 import Utils.Curves.CurveString;
-import Utils.GeomUtils;
-import Utils.LineStringInterpolatedPointIterator;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
@@ -14,15 +11,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.DoubleFunction;
 
-public class NodedFunction implements DoubleFunction<Double> {
+public class NodedFunction {
 
 
     double min_x;
     double max_x;
 
     // Evenly spaced y-measurements
-    double[] y_cahce;
-    double x_step;
+    public double[] y_cahce;
 
     /**
      * Creates a function, from set of coordinates.
@@ -59,6 +55,12 @@ public class NodedFunction implements DoubleFunction<Double> {
 
     }
 
+    public NodedFunction(double[] y_cache, double min_x, double max_x) {
+        this.y_cahce = y_cache;
+        this.min_x = min_x;
+        this.max_x = max_x;
+    }
+
     public static NodedFunction fromCoordinateString(String str, int cacheSteps) {
         String[] coordsinates = str.split("\\s*,\\s*");
         ArrayList<Coordinate> coords = new ArrayList<>();
@@ -76,7 +78,7 @@ public class NodedFunction implements DoubleFunction<Double> {
         CurveString curve = CurveString.fromCoordinates(cs);
 
         GeometryFactory gf = new GeometryFactory();
-        LineString string = curve.interpolate(0.01,gf);
+        LineString string = curve.interpolate(gf);
         LineStringInterpolatedPointIterator it = new LineStringInterpolatedPointIterator(string,0.01,0);
         ArrayList<Coordinate> coords = new ArrayList<>();
         while (it.hasNext()) {
@@ -104,14 +106,36 @@ public class NodedFunction implements DoubleFunction<Double> {
         return ys[start_index]*w1+ys[start_index+1]*w2;
     }
 
-    @Override
-    public Double apply(double x) {
+    public double apply(double x) {
         double index = GeomUtils.map(x,min_x,max_x,0,y_cahce.length-1);
         if (index >= y_cahce.length-1) return y_cahce[y_cahce.length-1];
         if (index <= 0) return y_cahce[0];
         double w1 = index-(int)index;
         double w2 = 1-w1;
         return y_cahce[(int)(index)]*w2+y_cahce[(int)(index)+1]*w1;
+    }
+
+    public double applyDescrete(double x) {
+        double index = GeomUtils.map(x,min_x,max_x,0,y_cahce.length-1);
+        if (index >= y_cahce.length-1) return y_cahce[y_cahce.length-1];
+        if (index <= 0) return y_cahce[0];
+
+        if (index-(int)index > 0.5) return y_cahce[(int)index+1];
+        else return y_cahce[(int)index];
+    }
+
+    public static NodedFunction histogramCDF(double[] hist_values, double in_min, double in_max, double out_min, double out_max) {
+        double summ = 0;
+
+        double[] cumulative = new double[hist_values.length];
+        for (int i = 0; i != cumulative.length; ++i) {
+            cumulative[i] = hist_values[i]*0.5+summ;
+            summ += hist_values[i];
+        }
+
+        double cumulative_min = hist_values[0]; double cumulative_max = summ; for (int i = 0; i != cumulative.length; ++i)
+            cumulative[i] = GeomUtils.map(cumulative[i],cumulative_min,cumulative_max,out_min,out_max);
+        return new NodedFunction(cumulative,in_min,in_max);
     }
 
 }
