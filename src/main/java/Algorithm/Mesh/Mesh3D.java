@@ -10,6 +10,8 @@ import Deserialization.DeserializedOCAD;
 import Isolines.IsolineContainer;
 import Utils.*;
 import Utils.Curves.CurveString;
+import Utils.FBX.FBXConverter;
+import com.sun.org.apache.bcel.internal.generic.ARRAYLENGTH;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.triangulate.DelaunayTriangulationBuilder;
 import com.vividsolutions.jts.triangulate.quadedge.Vertex;
@@ -29,9 +31,9 @@ public class Mesh3D {
 
     }
 
-    ArrayList<Coordinate> vertexes;
-    ArrayList<int[]> tris;
-    Coordinate[] coord_array;
+    public ArrayList<Coordinate> vertexes;
+    public ArrayList<int[]> tris;
+    public Coordinate[] coord_array;
 
     double x_min;
     double x_max;
@@ -120,6 +122,65 @@ public class Mesh3D {
         return texturedPatches;
     }
 
+    public void saveAsFbx(String path) {
+
+        System.out.println("Dumping fbx");
+
+        Coordinate[] coord_array = this.coord_array;
+
+        ArrayList<Coordinate> tex_coord_array = new ArrayList<>();
+
+        ArrayList<Integer> material_ids = new ArrayList<>();
+
+        ArrayList<TexturedPatch> texturedPatches = getTexturedPatches();
+        System.out.println("Number of texture patches: " + texturedPatches.size());
+        ArrayList<Integer> texturedPatchesIndexOffset = new ArrayList<>();
+        texturedPatchesIndexOffset.add(0);
+        // Write texture coordinates
+        int texture_coordinate_offset = 0;
+
+        for (TexturedPatch texturedPatch : texturedPatches) {
+
+            ArrayList<Coordinate> textureCoordinates = texturedPatch.getTextureCoordinates();
+
+            texture_coordinate_offset += textureCoordinates.size();
+            texturedPatchesIndexOffset.add(texture_coordinate_offset);
+
+            for (Coordinate c : textureCoordinates)
+                tex_coord_array.add(new Coordinate(c.x,1-c.y));
+        }
+
+        ArrayList<Integer> polygon_indexes = new ArrayList<>();
+        ArrayList<Integer> texture_indexes = new ArrayList<>();
+
+        for (int i = 0; i != texturedPatches.size(); ++i) {
+            TexturedPatch texturedPatch = texturedPatches.get(i);
+            int textureCoordinateOffset = texturedPatchesIndexOffset.get(i);
+            for (int[] tri : texturedPatch.triangles) {
+                for (int tri_i = 0; tri_i != tri.length; ++tri_i) {
+                    int v_index = tri[tri_i];
+                    int vt_index = texturedPatch.getTextureCoordinateID(v_index) + textureCoordinateOffset;
+                    if (tri_i == tri.length-1) {
+                        polygon_indexes.add(-1*(v_index+1));
+                    } else {
+                        polygon_indexes.add(v_index);
+                    }
+                    texture_indexes.add(vt_index);
+                }
+                material_ids.add(i);
+            }
+        }
+
+        Coordinate[] texture_coordinates = tex_coord_array.toArray(new Coordinate[tex_coord_array.size()]);
+
+        try {
+            FBXConverter.serializeMesh(coord_array,texture_coordinates,polygon_indexes,texture_indexes,material_ids, path+".fbx");
+        } catch (Exception ignored) {
+
+            CommandLineUtils.reportException(ignored);
+
+        };
+    }
 
     /**
      * Export mesh to obj format
@@ -515,6 +576,59 @@ public class Mesh3D {
         return mesh;
     }
 
+    public static Mesh3D fromPolygonsFBX(double[] coordinates, int[] polygons) {
+
+        double x_min = coordinates[0];
+        double x_max = coordinates[0];
+        double y_min = coordinates[1];
+        double y_max = coordinates[1];
+        double z_min = coordinates[2];
+        double z_max = coordinates[2];
+
+        for (int i = 0; i < coordinates.length-2; i+=3) {;
+
+            x_min = Math.min(x_min,coordinates[i]);
+            x_max = Math.max(x_max,coordinates[i]);
+
+            y_min = Math.min(y_min,coordinates[i+1]);
+            y_max = Math.max(y_max,coordinates[i+1]);
+
+            z_min = Math.min(z_min,coordinates[i+2]);
+            z_max = Math.max(z_max,coordinates[i+2]);
+        }
+
+        Mesh3D mesh = new Mesh3D();
+        mesh.vertexes = new ArrayList<>();
+        for (int i = 0; i < coordinates.length-2; i+=3) {
+            mesh.vertexes.add(new Coordinate(coordinates[i],coordinates[i+1],coordinates[i+2]));
+        }
+
+        mesh.coord_array = new Coordinate[mesh.vertexes.size()];
+        for (int i = 0; i != mesh.coord_array.length; ++i) {
+            mesh.coord_array[i] = mesh.vertexes.get(i);
+        }
+        mesh.tris = new ArrayList<>();
+
+        int begin = 0;
+        int end = begin;
+        do {
+            while ( end < polygons.length-1 && polygons[end] >= 0 ) {
+                ++end;
+            }
+            ++end;
+
+            int[] poly = new int[end-begin];
+            for (int i = begin; i != end; ++i) {
+                if (polygons[i] < 0) poly[i-begin] = -polygons[i]-1;
+                else poly[i-begin] = polygons[i];
+            }
+            mesh.tris.add(poly);
+            begin = end;
+        } while (end < polygons.length);
+
+        return mesh;
+    }
+
     public double getWidth() {return x_max-x_min;}
     public double getHeight() {return y_max-y_min;}
     public double getZHeight() {return z_max-z_min;}
@@ -602,6 +716,7 @@ public class Mesh3D {
         System.out.println("Dumping mesh");
 
         mesh.saveAsObj("mesh"+outputPostfix);
+        mesh.saveAsFbx("mesh"+outputPostfix);
 
         DeserializedOCAD ocad = new DeserializedOCAD();
         ocad.DeserializeMap("sample.ocd",null);
