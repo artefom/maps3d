@@ -4,6 +4,7 @@ import Utils.RasterUtils;
 import Utils.TextureUtils;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -13,6 +14,7 @@ import static org.junit.Assert.*;
  */
 public class TextureBlenderTest {
     @Test
+    @Ignore
     public void drawOverTiled() throws Exception {
 
         int image_width = 1024;

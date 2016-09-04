@@ -3,11 +3,13 @@ package Algorithm.Interpolation;
 import Utils.*;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
+import Utils.Properties.PropertiesLoader;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * This class performs rasterisation and interpolation of isoline map.
@@ -34,7 +36,8 @@ public class DistanceFieldInterpolation {
      */
     public DistanceFieldInterpolation(IsolineContainer container) {
         envelope = container.getEnvelope();
-        rasterizer = new PointRasterizer(Constants.INTERPOLATION_STEP,envelope);
+        PropertiesLoader.update();
+        rasterizer = new PointRasterizer(PropertiesLoader.getInterpolationStep(),envelope);
         this.isolines = new Isoline_attributed[container.size()];
         List<Geometry> occluders = new ArrayList<>(container.size());
         int i = 0;
@@ -339,7 +342,7 @@ public class DistanceFieldInterpolation {
      */
     private void applyDistance(short height_index, float distance, short pivot_column, short pivot_row, pixelInfo info) {
 
-        // update old values to ensure info.height_index1 != info.height_index2
+        // init old values to ensure info.height_index1 != info.height_index2
         if (info.height_index1 == height_index) {
             if (info.distance1 > distance) {
                 info.distance1 = distance;
@@ -349,7 +352,7 @@ public class DistanceFieldInterpolation {
             return;
         }
 
-        // update old values to ensure info.height_index1 != info.height_index2
+        // init old values to ensure info.height_index1 != info.height_index2
         if (info.height_index2 == height_index) {
             if (info.distance2 > distance) {
                 info.distance2 = distance;
@@ -635,15 +638,16 @@ public class DistanceFieldInterpolation {
     }
 
     double calcRealDistance(double pixelDist) {
-        double result = pixelDist*Constants.INTERPOLATION_STEP/10;
+        double result = pixelDist*PropertiesLoader.getInterpolationStep()/10;
         return result;
     }
 
     double calcRealDistanceWithFade(double pixelDist) {
         pixelDist/=3;
-        double result = pixelDist*Constants.INTERPOLATION_STEP/10;
-        if (result > Constants.INTERPOLATION_FADE_DISTANCE) {
-            result = Constants.INTERPOLATION_FADE_DISTANCE+Math.pow(result-Constants.INTERPOLATION_FADE_DISTANCE,Constants.INTERPOLATION_FADE_STRENGTH);
+        double result = pixelDist*PropertiesLoader.getInterpolationStep()/10;
+        if (result > PropertiesLoader.interpolation.fade_distance) {
+            result = PropertiesLoader.interpolation.fade_distance+Math.pow(result-PropertiesLoader.interpolation.fade_distance,
+                    PropertiesLoader.interpolation.fade_strength);
         }
         return result;
     }
@@ -754,7 +758,7 @@ public class DistanceFieldInterpolation {
                 double dist2 = calcRealDistance(p.distance2);
 
                 // Calculate hills
-                if (dist2>Constants.INTERPOLATION_FADE_DISTANCE && p.distance1 != 0) {
+                if (dist2>PropertiesLoader.interpolation.fade_distance && p.distance1 != 0) {
                     //result[row][column] = 0;
                     double h2 = 0;
                     // Use tangent of slope of closest isoline. Retrieve it from previously calculated sobel
@@ -771,10 +775,10 @@ public class DistanceFieldInterpolation {
                     tangent = GeomUtils.clamp(tangent,0.05,5.7);
 
                     double ss = crossProductSideDetect(distanceField, row, column);
-                    h2 = 1 - 1.0 / (tangent * p.distance1*Constants.INTERPOLATION_STEP/10 + 1);
+                    h2 = 1 - 1.0 / (tangent * p.distance1*PropertiesLoader.getInterpolationStep()/10 + 1);
                     if (ss <= 0) h2 = -h2;
                     h2 = GeomUtils.clamp(h2, -1, 1);
-                    h2 = h2 * GeomUtils.clamp(GeomUtils.map(dist2, Constants.INTERPOLATION_FADE_DISTANCE, Constants.INTERPOLATION_FADE_DISTANCE * 2, 0, 1), 0, 1);
+                    h2 = h2 * GeomUtils.clamp(GeomUtils.map(dist2, PropertiesLoader.interpolation.fade_distance, PropertiesLoader.interpolation.fade_distance * 2, 0, 1), 0, 1);
                     h2 = GeomUtils.clamp(h2, -1, 1);
                     result[row][column] += h2;
                 }

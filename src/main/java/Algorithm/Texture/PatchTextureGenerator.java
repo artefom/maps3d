@@ -1,10 +1,13 @@
 package Algorithm.Texture;
 
+import Algorithm.Mesh.Mesh3D;
 import Algorithm.Mesh.TexturedPatch;
 import Deserialization.Binary.TOcadObject;
 import Deserialization.DeserializedOCAD;
 import Utils.*;
+import Utils.Properties.PropertiesLoader;
 import com.google.gson.Gson;
+
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.Polygon;
 
@@ -27,10 +30,12 @@ public class PatchTextureGenerator {
 
     DeserializedOCAD map;
     TexturedPatch patch;
+    Mesh3D mesh;
 
-    public PatchTextureGenerator(DeserializedOCAD map, TexturedPatch texturedPatch) {
+    public PatchTextureGenerator(DeserializedOCAD map, TexturedPatch texturedPatch, Mesh3D mesh) {
         this.map = map;
         this.patch = texturedPatch;
+        this.mesh = mesh;
     }
 
     private class Brush {
@@ -108,9 +113,11 @@ public class PatchTextureGenerator {
         public BufferedImage getTexture() {
             BufferedImage img = null;
             try {
-                String filename = OutputUtils.GetExecutionPath()+"/textures/"+this.texture;
+                String texture_folder = getTextureFolder();
+                String filename = texture_folder+"/"+this.texture;
                 img = ImageIO.read(new File(filename));
             } catch (IOException ignored) {
+                CommandLineUtils.reportException(ignored);
             }
             return img;
         }
@@ -152,6 +159,34 @@ public class PatchTextureGenerator {
         }
     }
 
+    public static String getTextureFolder() {
+
+        String[] folders = new String[] {
+                (new File("")).getAbsolutePath(),
+                OutputUtils.GetExecutionPath(),
+                "" };
+
+        String specified_texture_folder = PropertiesLoader.texture.texture_folder;
+
+        if (specified_texture_folder.charAt(0) == '.') specified_texture_folder = specified_texture_folder.substring(1);
+        if (specified_texture_folder.charAt(0) != '\\' &&
+                specified_texture_folder.charAt(0) != '/') specified_texture_folder = '\\'+specified_texture_folder;
+
+        for (String folder : folders) {
+            while (folder.length() > 0 && folder.charAt(folder.length()-1) == '\\' || folder.charAt(folder.length()-1) == '/')
+                folder = folder.substring(0,folder.length()-1);
+
+            Path path = Paths.get( folder+specified_texture_folder );
+            File f = path.toFile();
+
+            if (f.exists()) {
+                return f.getAbsolutePath();
+            }
+        }
+
+        return null;
+    }
+
     public void writeToFile(String path) {
 
 
@@ -161,7 +196,8 @@ public class PatchTextureGenerator {
 
         //float[] sobel = RasterUtils.sobel(heightmap,rast.getColumnCount(),rast.getRowCount());
 
-        String textures_folder = OutputUtils.GetExecutionPath()+"/textures";
+        String textures_folder = getTextureFolder(); //OutputUtils.GetExecutionPath()+"/textures";
+
         ArrayList<Path> vmtFiles = new ArrayList<>();
         try {
             Files.walk(Paths.get(textures_folder)).forEach(filePath -> {
@@ -172,7 +208,7 @@ public class PatchTextureGenerator {
                 }
             });
         } catch (Exception ignored) {
-            CommandLineUtils.printWarning("Could not find ./textures folder");
+            CommandLineUtils.printWarning("Could not find textures folder");
             return;
         };
 
@@ -221,17 +257,14 @@ public class PatchTextureGenerator {
 
                 List<Polygon> polygons = new ArrayList<>();
                 List<LineString> strings = new ArrayList<>();
-                ArrayList<Integer> symbol_ids = b.getSymbols();
-                System.out.print("Baking "+b.getName()+" for symbols: ");
-                for (Integer symbol_id : symbol_ids) System.out.print(symbol_id+", ");
-                System.out.println();
+
                 map.getObjectsByIDs(b.getSymbols());
                 for (TOcadObject obj : map.getObjectsByIDs(b.getSymbols())) {
                     Geometry col = null;
                     try {
                         col = obj.getGeometry(gf);
                     } catch (Exception ex) {
-                        System.out.println("Failed to read geometry for " + obj.Sym + " " + obj.getType());
+                        //System.out.println("Failed to read geometry for " + obj.Sym + " " + obj.getType());
                     }
                     if (col == null) {
                         continue;
@@ -257,13 +290,56 @@ public class PatchTextureGenerator {
 
             // Apply height mask
             NodedFunction nf = b.getZMaskFilter();
-//            if (nf != null) {
-//                for (int pixel = 0; pixel != layer.pixels.length; ++pixel) {
-//                    layer.pixels[pixel] = (byte)(nf.apply(heightmap[pixel])); //(byte)(GeomUtils.clamp( 255.0*heightmap[pixel], 0, 255 ) - 128 );
+            Coordinate ret = new Coordinate();
+            if (nf != null) {
+//                for (int j = 0; j != layer.pixels.length; ++j) {
+//                    layer.pixels[j] = (byte)GeomUtils.map(j,0,layer.pixels.length,-128,127);
 //                }
-//            }
+                for (int row = 0; row != layer.height; ++row) {
+                    for (int column = 0; column != layer.width; ++column) {
 
-//            nf = b.getAngleFilter();
+                        double u = GeomUtils.map(column+0.5,0,layer.width,0,1);
+                        double v = GeomUtils.map(row+0.5,0,layer.height,0,1);
+
+                        patch.UVtoXY(u,v,ret);
+                        double x = ret.x;
+                        double y = ret.y;
+                        double z = mesh.getPointHeight(x,y);
+                        if (Double.isNaN(z)) {
+                            layer.pixels[row*layer.width+column] = -128;
+                        } else {
+                            layer.pixels[row*layer.width+column] =
+                                    (byte)GeomUtils.clamp( nf.apply( GeomUtils.map(z,mesh.z_min,mesh.z_max,0,1) ), -128, 127);
+                        }
+                    }
+                }
+            }
+
+            //Calculate angle
+            nf = b.getAngleFilter();
+            if (nf != null) {
+//                for (int j = 0; j != layer.pixels.length; ++j) {
+//                    layer.pixels[j] = (byte)GeomUtils.map(j,0,layer.pixels.length,-128,127);
+//                }
+                for (int row = 0; row != layer.height; ++row) {
+                    for (int column = 0; column != layer.width; ++column) {
+
+                        double u = GeomUtils.map(column+0.5,0,layer.width,0,1);
+                        double v = GeomUtils.map(row+0.5,0,layer.height,0,1);
+
+                        patch.UVtoXY(u,v,ret);
+                        double x = ret.x;
+                        double y = ret.y;
+                        double angle = mesh.getPointAngle(x,y);
+                        if (Double.isNaN(angle)) {
+                            layer.pixels[row*layer.width+column] = -128;
+                        } else {
+                            layer.pixels[row*layer.width+column] =
+                                    (byte)GeomUtils.clamp( nf.apply( angle ), -128, 127);
+                        }
+                    }
+                }
+            }
 //            if (nf != null) {
 //                for (int pixel = 0; pixel != layer.pixels.length; ++pixel) {
 //                    layer.pixels[pixel] = (byte)(nf.apply(Math.atan(sobel[pixel]*50)/1.5)); //(byte)(GeomUtils.clamp( 255.0*heightmap[pixel], 0, 255 ) - 128 );
@@ -289,7 +365,7 @@ public class PatchTextureGenerator {
 
 
             Coordinate texture_min = patch.XYtoUV(0,0);
-            Coordinate texture_max = patch.XYtoUV(tex.getWidth()/patch.getTexturePointsPerUnit(),tex.getHeight()/patch.getTexturePointsPerUnit());
+            Coordinate texture_max = patch.XYtoUV(tex.getWidth()*PropertiesLoader.texture.scale,tex.getHeight()*PropertiesLoader.texture.scale);
 
             texture_min.x = GeomUtils.map(texture_min.x,0,1,0,tex.getWidth());
             texture_min.y = GeomUtils.map(texture_min.y,0,1,0,tex.getHeight());
@@ -297,6 +373,8 @@ public class PatchTextureGenerator {
             texture_max.y = GeomUtils.map(texture_max.y,0,1,0,tex.getHeight());
 
             Envelope textureEnvelope = new Envelope(texture_min,texture_max);
+
+            layer.calcImgPixels(tex.getWidth(),tex.getHeight());
 
             //Write layer to texture
             if (b.hasTexture()) {

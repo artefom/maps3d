@@ -51,8 +51,8 @@ public class Constants {
     public static final double NEARBY_HILL_THRESHOLD_AREA = 10000;
 
     //Interpolation
-    public static final double INTERPOLATION_STEP = 2.5;
-    public static final double INTERPOLATION_FADE_DISTANCE = 10;
+    //public static final double INTERPOLATION_STEP = 2.5;
+    //public static final double INTERPOLATION_FADE_DISTANCE = 10;
     public static final double INTERPOLATION_FADE_STRENGTH = 3;
     public static final double INTERPOLATION_HILL_TANGENT = 1;
     public static final float INTERPOLATION_MAX_DISTANCE = 100000000;

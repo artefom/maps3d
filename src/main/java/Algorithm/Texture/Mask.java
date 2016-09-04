@@ -20,7 +20,7 @@ public class Mask {
     int width;
     int height;
     byte[] pixels;
-    float[] opacity;
+    //float[] opacity;
 
     public Mask(int width, int height) {
         image = new BufferedImage(width,height,BufferedImage.TYPE_BYTE_GRAY);
@@ -29,7 +29,7 @@ public class Mask {
         this.width = raster.getWidth();
         this.height = raster.getHeight();
         this.pixels = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
-        this.opacity = new float[this.pixels.length];
+        //this.opacity = new float[this.pixels.length];
         fill((byte)-128);
     }
 
@@ -99,9 +99,26 @@ public class Mask {
 
     public enum BlendMode { NONE, OVERLAY, MULTIPLY, SCREEN }
 
+    int mask_pixels_width;
+    int mask_pixels_height;
+    public byte[] mask_pixels;
+
+    public void calcImgPixels(int img_width, int img_height) {
+        mask_pixels = new byte[img_width * img_height];
+        TextureUtils.drawOver(mask_pixels,img_width,img_height,pixels,width,height,new Envelope(
+                new Coordinate(0,0),
+                new Coordinate(img_width-1,img_height-1)
+        ),false);
+        mask_pixels_width = img_width;
+        mask_pixels_height = img_height;
+    }
+
     public void overlay(BufferedImage img, int color, BlendMode blendMode) {
 
         int[] img_pixels = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
+        if (mask_pixels_width != img.getWidth() || mask_pixels_height != img.getHeight()) {
+            calcImgPixels(img.getWidth(),img.getHeight());
+        }
 
         short dr = getR(color);
         short dg = getG(color);
@@ -123,7 +140,7 @@ public class Mask {
                 da = getA(color);
             }
 
-            float a = ((float)(pixels[i] + 128) / 255)*((float)da/255);
+            float a = ((float)(mask_pixels[i] + 128) / 255)*((float)da/255);
             float a2 = 1 - a;
 
 
@@ -165,11 +182,9 @@ public class Mask {
         int tex_width = tex.getWidth();
         int tex_height = tex.getHeight();
 
-        byte[] mask_pixels = new byte[img_width * img_height];
-            TextureUtils.drawOver(mask_pixels,img_width,img_height,pixels,width,height,new Envelope(
-                    new Coordinate(0,0),
-                    new Coordinate(img_width-1,img_height-1)
-            ),false);
+        if (mask_pixels_width != img_width || mask_pixels_height != img_height) {
+            calcImgPixels(img_width,img_height);
+        }
 
         TextureUtils.drawOver(img_pixels,img_width,img_height,tex,mask_pixels,texture_envelope,true,blendMode);
     }

@@ -8,38 +8,9 @@ import java.util.ArrayList;
 
 public class FBXConverter {
 
-    public static FBXNode getVerticies(Coordinate[] coordinates) {
-        FBXNode vertices_node = new FBXNode("Vertices");
-        vertices_node.properties.add(new FBXNode.Ammount( coordinates.length *3 ));
-        ArrayList<Double> values = new ArrayList<>();
-        for (Coordinate c : coordinates) {
-            values.add(c.x);
-            values.add(c.y);
-            values.add(c.z);
-        }
-        vertices_node.addSubNode("a",values);
-        return vertices_node;
-    }
-
-    public static FBXNode getPolygons(ArrayList<Integer> polys) {
-        FBXNode p = new FBXNode("PolygonVertexIndex");
-        ArrayList<Integer> polygons = new ArrayList<>();
-        for (Integer i : polys) {
-            polygons.add(i);
-        }
-//        for (int[] tri :polys) {
-//            for (int i = 0; i != tri.length-1; ++i) {
-//                polygons.add(tri[i]);
-//            }
-//            polygons.add( -1*(tri[tri.length-1]+1) );
-//        }
-        p.properties.add( new FBXNode.Ammount( polygons.size() ) );
-        p.addSubNode("a",polygons);
-        return p;
-    }
-
     public static int writeMesh(
             Coordinate[] coordinates,
+            Coordinate[] normals,
             Coordinate[] texture_coordinates,
             ArrayList<Integer> polygons,
             ArrayList<Integer> uv_ids,
@@ -49,13 +20,13 @@ public class FBXConverter {
         FBXNode g = FBXDefaults.getDefaultGeometryDefinition(++index);
         FBXNode m = FBXDefaults.getDefaultModelDefinition(++index,name);
 
-        g.subNodes.add(getVerticies(coordinates));
-        g.subNodes.add(getPolygons(polygons));
+        g.subNodes.add(FBXDefaults.getVerticies(coordinates));
+        g.subNodes.add(FBXDefaults.getPolygons(polygons));
         g.subNodes.add(FBXDefaults.getDefaultUVDefinition(texture_coordinates,uv_ids));
         g.subNodes.add(FBXDefaults.getDefaulLayerDefinition());
         g.subNodes.add(FBXDefaults.getLayerElementMaterial(material_ids));
         g.subNodes.add(FBXDefaults.getLayerElementSmoothing(material_ids.size()));
-        g.subNodes.add(FBXDefaults.getLayerElementNormal(coordinates,polygons));
+        g.subNodes.add(FBXDefaults.getLayerElementNormal(normals,polygons));
 
         {
             objects.subNodes.add(g);
@@ -71,6 +42,7 @@ public class FBXConverter {
 
     public static void serializeMesh(
             Coordinate[] coordinates,
+            Coordinate[] normals,
             Coordinate[] texture_coordinates,
             ArrayList<Integer> polygons,
             ArrayList<Integer> uv_ids,
@@ -89,7 +61,7 @@ public class FBXConverter {
         FBXNode connections = new FBXNode("Connections");
 
 
-        writeMesh(coordinates,texture_coordinates,polygons,uv_ids,material_ids,"GenericMesh",0,objects,connections);
+        writeMesh(coordinates,normals,texture_coordinates,polygons,uv_ids,material_ids,"GenericMesh",0,objects,connections);
 
         root.subNodes.add(objects);
         root.subNodes.add(connections);

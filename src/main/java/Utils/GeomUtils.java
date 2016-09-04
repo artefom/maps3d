@@ -52,18 +52,31 @@ public class GeomUtils {
 
     /**
      * Get side of (x3 y3) relative to Line segment( x0 y0, x0+v0x y0+v0y)
-     * @param x0
-     * @param y0
-     * @param x1
-     * @param y1
-     * @param x3
-     * @param y3
      * @return
      */
     public static int getSide( double x0, double y0, double v0x, double v0y, double x3, double y3) {
         double v2x = x3 - x0;
         double v2y = y3 - y0;
         return ( (v0x*v2y - v0y*v2x) > 0) ? 1 : -1;
+    }
+
+    public static double crossProduct(double v0x, double v0y, double v1x, double v1y) {
+        return (v0x*v1y - v0y*v1x);
+    }
+
+    /**
+     * unsigned area of triangle
+     * @param c0
+     * @param c1
+     * @param c2
+     * @return
+     */
+    public static double area(Coordinate c0, Coordinate c1, Coordinate c2) {
+        double v0x = c2.x-c0.x;
+        double v0y = c2.y-c0.y;
+        double v1x = c1.x-c0.x;
+        double v1y = c1.y-c0.y;
+        return Math.abs(crossProduct(v0x,v0y,v1x,v1y));
     }
 
 

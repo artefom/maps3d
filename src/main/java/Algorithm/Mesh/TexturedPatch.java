@@ -3,6 +3,7 @@ package Algorithm.Mesh;
 import Utils.GeomUtils;
 import Utils.Pair;
 import Utils.PointRasterizer;
+import Utils.Properties.PropertiesLoader;
 import Utils.TriangleUtils;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
@@ -54,23 +55,15 @@ public class TexturedPatch {
     }
 
     public int getTexturePatchWidth() {
-        return texturePatchWidth;
-    }
-
-    public void setTexturePatchWidth(int texturePatchWidth) {
-        this.texturePatchWidth = texturePatchWidth;
+        return PropertiesLoader.textured_patch.texture_width;
     }
 
     public int getTexturePatchHeight() {
-        return texturePatchHeight;
-    }
-
-    public void setTexturePatchHeight(int texturePatchHeight) {
-        this.texturePatchHeight = texturePatchHeight;
+        return PropertiesLoader.textured_patch.texture_height;
     }
 
     public double getMaskPointsPerUnit() {
-        return maskPointsPerUnit;
+        return PropertiesLoader.textured_patch.mask_points_per_unit;
     }
 
     public void setMaskPointsPerUnit(double maskPointsPerUnit) {

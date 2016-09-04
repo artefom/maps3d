@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.function.BooleanSupplier;
+import java.util.function.DoubleBinaryOperator;
 
 /**
  * Created by Artyom.Fomenko on 03.09.2016.
@@ -51,11 +52,14 @@ public class FBXNode {
             }
         } else if (obj instanceof String) {
             ret.add( String.format("\"%s\"",(String)obj) );
-        } else {
+        } else if (obj instanceof Double) {
+            ret.add( Float.toString( ((Double)obj).floatValue() ) );
+        } else
+        {
             ret.add( obj.toString() );
         }
 
-        return String.join(", ",ret);
+        return String.join(",",ret);
     }
 
     private PrintWriter writer;
@@ -162,10 +166,10 @@ public class FBXNode {
 
         ind();
         pw.print(typename);
-        pw.print(": ");
+        pw.print(":");
         write(properties);
         if (subNodes.size() != 0) {
-            pw.println(" {");
+            pw.println("{");
             for (FBXNode node : subNodes) {
                 node.serialize(pw,this.indent_size+1);
             }

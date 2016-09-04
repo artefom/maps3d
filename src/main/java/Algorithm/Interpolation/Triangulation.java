@@ -3,6 +3,7 @@ package Algorithm.Interpolation;
 import Utils.CommandLineUtils;
 import Utils.Constants;
 import Utils.GeomUtils;
+import Utils.Properties.PropertiesLoader;
 import Utils.RasterUtils;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.triangulate.DelaunayTriangulationBuilder;
@@ -286,9 +287,9 @@ public class Triangulation {
         // Normalize coordinates. So map is 0-centered and scaled properly
         for (int i = 0; i != coord_array.length; ++i) {
             // Multiply by step, so it will convert rasterized heightmap pixel coordinates to real coordinates.
-            coord_array[i].x = (coord_array[i].x-(envelope.getMaxX()-envelope.getMinX())*0.5)*Constants.INTERPOLATION_STEP;
+            coord_array[i].x = (coord_array[i].x-(envelope.getMaxX()-envelope.getMinX())*0.5) * PropertiesLoader.getInterpolationStep();
             // Invert y, so map not looks mirrored.
-            coord_array[i].y = -(coord_array[i].y-(envelope.getMaxY()-envelope.getMinY())*0.5)*Constants.INTERPOLATION_STEP;
+            coord_array[i].y = -(coord_array[i].y-(envelope.getMaxY()-envelope.getMinY())*0.5) * PropertiesLoader.getInterpolationStep();
         }
     }
 

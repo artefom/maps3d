@@ -13,6 +13,7 @@ import Deserialization.Interpolation.SlopeMark;
 import Utils.Constants;
 import Utils.GeomUtils;
 import Utils.Pair;
+import Utils.Properties.PropertiesLoader;
 import com.sun.corba.se.impl.orb.ORBConfiguratorImpl;
 import com.sun.prism.impl.Disposer;
 import com.vividsolutions.jts.geom.*;
@@ -75,10 +76,19 @@ public class DeserializedOCAD {
         if (scaleParameters.size() != 1) throw new RuntimeException("File's map scale not understood");
         this.metersPerUnit = scaleParameters.get(0).getValueAsDouble('m')/1000;
 
-        System.out.println("Meters per unit: "+this.metersPerUnit);
 
-        Function<Pair<Integer,Integer>, Coordinate> coordinateConverter = ixy ->
-                new Coordinate((double)ixy.v1/Constants.map_scale_fix*metersPerUnit,(double)ixy.v2/Constants.map_scale_fix*metersPerUnit);
+        PropertiesLoader.update();
+        Function<Pair<Integer, Integer>, Coordinate> coordinateConverter;
+        if (PropertiesLoader.ocad_input.multiply_by_scale) {
+            System.out.println("Meters per unit: "+this.metersPerUnit);
+            coordinateConverter = ixy ->
+                    new Coordinate((double) ixy.v1 / Constants.map_scale_fix * metersPerUnit * PropertiesLoader.ocad_input.scale_multiplier
+                            , (double) ixy.v2 / Constants.map_scale_fix * metersPerUnit * PropertiesLoader.ocad_input.scale_multiplier);
+        } else {
+            coordinateConverter = ixy ->
+                    new Coordinate((double) ixy.v1 / Constants.map_scale_fix * PropertiesLoader.ocad_input.scale_multiplier ,
+                            (double) ixy.v2 / Constants.map_scale_fix * PropertiesLoader.ocad_input.scale_multiplier);
+        }
 
         int nextib = header.ObjectIndexBlock;
         TObjectIndexBlock ib = new TObjectIndexBlock();

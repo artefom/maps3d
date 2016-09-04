@@ -323,6 +323,31 @@ public class FBXDefaults {
         return g;
     }
 
+    public static FBXNode getVerticies(Coordinate[] coordinates) {
+        FBXNode vertices_node = new FBXNode("Vertices");
+        vertices_node.properties.add(new FBXNode.Ammount( coordinates.length *3 ));
+        ArrayList<Double> values = new ArrayList<>();
+        for (Coordinate c : coordinates) {
+            values.add(c.x);
+            values.add(c.y);
+            values.add(c.z);
+        }
+        vertices_node.addSubNode("a",values);
+        return vertices_node;
+    }
+
+    public static FBXNode getPolygons(ArrayList<Integer> polys) {
+        FBXNode p = new FBXNode("PolygonVertexIndex");
+        ArrayList<Integer> polygons = new ArrayList<>();
+        for (Integer i : polys) {
+            polygons.add(i);
+        }
+        p.properties.add( new FBXNode.Ammount( polygons.size() ) );
+        p.addSubNode("a",polygons);
+        return p;
+    }
+
+
     public static FBXNode getDefaultUVDefinition(Coordinate[] texture_coordinates, ArrayList<Integer> indexes) {
 
         ArrayList<Double> tex_coords = new ArrayList<>();
@@ -416,102 +441,7 @@ public class FBXDefaults {
     }
 
 
-    public static FBXNode getLayerElementNormal(Coordinate[] coordinates, ArrayList<Integer> polygons) {
-
-        Coordinate[] normals = new Coordinate[coordinates.length];
-        for (int i = 0; i != normals.length; ++i) {
-            normals[i] = new Coordinate(0,0,0);
-        }
-
-        int begin = 0;
-        int end = begin;
-
-        while (end < polygons.size()) {
-
-            while (end < polygons.size()-1 && polygons.get(end) >= 0) end+=1;
-            end += 1;
-
-            for (int i = begin; i < end; ++i) {
-
-                int i1;
-                int i2 = polygons.get(i);
-                int i3;
-                if (i <= begin) {
-                    i1 = polygons.get(end-1);
-                } else {
-                    i1 = polygons.get(i-1);
-                }
-                if (i >= end-1) {
-                    i3 = polygons.get(begin);
-                } else {
-                    i3 = polygons.get(i+1);
-                }
-
-                if (i1 < 0) i1 = -i1-1;
-                if (i2 < 0) i2 = -i2-1;
-                if (i3 < 0) i3 = -i3-1;
-
-                Vector3D vec1 = (new Vector3D(coordinates[i1],coordinates[i2])).normalize();
-                Vector3D vec2 = (new Vector3D(coordinates[i2],coordinates[i3])).normalize();
-
-                double u1 = vec1.getX();
-                double u2 = vec1.getY();
-                double u3 = vec1.getZ();
-                double v1 = vec2.getX();
-                double v2 = vec2.getY();
-                double v3 = vec2.getZ();
-
-                double uvi, uvj, uvk;
-                uvi = u2 * v3 - v2 * u3;
-                uvj = v1 * u3 - u1 * v3;
-                uvk = u1 * v2 - v1 * u2;
-
-                normals[i2].x += uvi;
-                normals[i2].y += uvj;
-                normals[i2].z += uvk;
-            }
-
-            begin = end;
-        }
-//        for (int i = 0; i < polygons.size()-2; ++i) {
-//            int i1 = polygons.get(i);
-//            int i2 = polygons.get(i+1);
-//            int i3 = polygons.get(i+2);
-//            if (i1 < 0 || i2 < 0) continue;
-//            if (i3 < 0) i3 = -i3-1;
-//
-//            Vector3D vec1 = new Vector3D(coordinates[i1],coordinates[i2]);
-//            Vector3D vec2 = new Vector3D(coordinates[i2],coordinates[i3]);
-//
-//            double u1 = vec1.getX();
-//            double u2 = vec1.getY();
-//            double u3 = vec1.getZ();
-//            double v1 = vec2.getX();
-//            double v2 = vec2.getY();
-//            double v3 = vec2.getZ();
-//
-//            double uvi, uvj, uvk;
-//            uvi = u2 * v3 - v2 * u3;
-//            uvj = v1 * u3 - u1 * v3;
-//            uvk = u1 * v2 - v1 * u2;
-//
-//            normals[i2].x += uvi;
-//            normals[i2].y += uvj;
-//            normals[i2].z += uvk;
-//        }
-
-        for (int i = 0; i != coordinates.length; ++i) {
-            double x = normals[i].x;
-            double y = normals[i].y;
-            double z = normals[i].z;
-            double length = Math.sqrt(x*x+y*y+z*z);
-            x/=length;
-            y/=length;
-            z/=length;
-            normals[i].x = x;
-            normals[i].y = y;
-            normals[i].z = z;
-        }
+    public static FBXNode getLayerElementNormal(Coordinate[] normals, ArrayList<Integer> polygons) {
 
         ArrayList<Double> byPolygonVertex = new ArrayList<>();
 
@@ -542,13 +472,6 @@ public class FBXDefaults {
 
         return ln;
     }
-
-//    LayerElementNormal: 0 {
-//        Version: 101
-//        Name: ""
-//        MappingInformationType: "ByPolygonVertex"
-//        ReferenceInformationType: "Direct"
-//        Normals: *192 {
 
     public static FBXNode getDefaulLayerDefinition() {
         FBXNode l = new FBXNode("Layer");

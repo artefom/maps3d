@@ -9,15 +9,16 @@ import Algorithm.Texture.PatchTextureGenerator;
 import Deserialization.DeserializedOCAD;
 import Isolines.IsolineContainer;
 import Utils.*;
+import Utils.Area.PolygonAreaBuffer;
 import Utils.Curves.CurveString;
 import Utils.FBX.FBXConverter;
-import com.sun.org.apache.bcel.internal.generic.ARRAYLENGTH;
-import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.triangulate.DelaunayTriangulationBuilder;
-import com.vividsolutions.jts.triangulate.quadedge.Vertex;
-import sun.security.krb5.internal.crypto.Des;
+import Utils.Properties.PropertiesLoader;
 
-import java.awt.image.Raster;
+import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.math.Vector2D;
+import com.vividsolutions.jts.math.Vector3D;
+import com.vividsolutions.jts.triangulate.DelaunayTriangulationBuilder;
+
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.*;
@@ -33,16 +34,18 @@ public class Mesh3D {
 
     public ArrayList<Coordinate> vertexes;
     public ArrayList<int[]> tris;
+
     public Coordinate[] coord_array;
+    public Coordinate[] normals;
 
-    double x_min;
-    double x_max;
-    double y_min;
-    double y_max;
-    double z_min;
-    double z_max;
+    public double x_min;
+    public double x_max;
+    public double y_min;
+    public double y_max;
+    public double z_min;
+    public double z_max;
 
-    public void buildMesh() {
+    public void buildMeshFromVertices() {
         if (vertexes == null) throw new RuntimeException("First, initialize vertexes member");
 
         System.out.println("Triangulating");
@@ -78,27 +81,85 @@ public class Mesh3D {
             tris.add(tri);
         }
 
-        // Convert hashmap to array
         coord_array = new Coordinate[last_index + 1];
         coordinates.forEach((c, i) -> coord_array[i] = c);
-
-//        for (int i = 0; i != coord_array.length; ++i) {
-//            // Invert y, so map not looks mirrored.
-//            coord_array[i].y = envelope.getMaxY() - coord_array[i].y + envelope.getMinY();
-//        }
-
+        calculateNormals();
+        initializePolygonBuffer();
     }
+
+
+    public static Coordinate[] calculateNormals(Coordinate[] coord_array,ArrayList<int[]> polygons) {
+        Coordinate[] normals = new Coordinate[coord_array.length];
+        for (int i = 0; i != normals.length; ++i) {
+            normals[i] = new Coordinate(0,0,0);
+        }
+
+
+        for (int[] polygon : polygons) {
+            for (int i = 0; i != polygon.length; ++i) {
+
+                int i2 = polygon[i];
+                int i1 = i == 0 ? polygon[polygon.length-1] : polygon[i-1];
+                int i3 = i == polygon.length-1 ? polygon[0] : polygon[i+1];
+
+                Vector3D vec1 = (new Vector3D(coord_array[i1],coord_array[i2])).normalize();
+                Vector3D vec2 = (new Vector3D(coord_array[i2],coord_array[i3])).normalize();
+
+                double u1 = vec1.getX();
+                double u2 = vec1.getY();
+                double u3 = vec1.getZ();
+                double v1 = vec2.getX();
+                double v2 = vec2.getY();
+                double v3 = vec2.getZ();
+
+                double uvi, uvj, uvk;
+                uvi = u2 * v3 - v2 * u3;
+                uvj = v1 * u3 - u1 * v3;
+                uvk = u1 * v2 - v1 * u2;
+
+                normals[i2].x += uvi;
+                normals[i2].y += uvj;
+                normals[i2].z += uvk;
+            }
+        }
+
+        for (int i = 0; i != normals.length; ++i) {
+            double x = normals[i].x;
+            double y = normals[i].y;
+            double z = normals[i].z;
+            double length = Math.sqrt(x*x+y*y+z*z);
+            x/=length;
+            y/=length;
+            z/=length;
+            normals[i].x = x;
+            normals[i].y = y;
+            normals[i].z = z;
+        }
+
+        return normals;
+    }
+
+    PolygonAreaBuffer poly_buf;
+    public void initializePolygonBuffer() {
+        poly_buf = new PolygonAreaBuffer(coord_array,tris,200,200);
+    }
+
+    public void calculateNormals() {
+        normals = calculateNormals(coord_array,tris);
+    }
+
 
     private ArrayList<TexturedPatch> texturedPatches;
 
     public ArrayList<TexturedPatch> getTexturedPatches() {
         if (texturedPatches == null) {
 
-            final long texture_pixel_count = 3000 * 3000;
-            final long patch_texture_pixel_count = 2048 * 2048;
-            final double max_area = ((x_max - x_min) * (y_max - y_min)) * ((double) patch_texture_pixel_count / texture_pixel_count);
+            final double area = ((x_max - x_min) * (y_max - y_min));
 
-            texturedPatches = generateTexturedPatches(-1, -1, max_area, -1, -1, true);
+//            final double max_area = ((x_max - x_min) * (y_max - y_min)) * ((double) patch_texture_pixel_count / texture_pixel_count);
+
+            texturedPatches = generateTexturedPatches(-1, -1, area*PropertiesLoader.textured_patch.max_area, -1,
+                    PropertiesLoader.textured_patch.max_vertices, PropertiesLoader.textured_patch.preserve_aspect);
         }
 
         return texturedPatches;
@@ -112,8 +173,8 @@ public class Mesh3D {
         System.out.println("Calculating textured patches");
 
         TexturedPatch initial = TexturedPatch.fromTriangles(coord_array, tris);
-        initial.setMantainAspect(true);
-        initial.setEdgePadding(0.05);
+        initial.setMantainAspect(mantain_aspect);
+        initial.setEdgePadding(PropertiesLoader.textured_patch.padding);
 
         TexturedPatch.splitRecursivly(initial, texturedPatches, max_width, max_height, max_area, max_triangle_count, max_vertex_count, mantain_aspect);
 
@@ -122,11 +183,61 @@ public class Mesh3D {
         return texturedPatches;
     }
 
+    public static Coordinate[] transformCoordinates(Coordinate[] coords) {
+
+        //Copy array
+        Coordinate[] vertices = new Coordinate[coords.length];
+        for (int i = 0; i != vertices.length; ++i) {
+            vertices[i] = new Coordinate(coords[i]);
+        }
+
+        double x_offset = 0;
+        double y_offset = 0;
+        double z_offset = vertices[0].z;
+
+        // calculate z_offset
+        for (int i = 0; i != vertices.length; ++i) {
+            if (z_offset > vertices[i].z) z_offset = vertices[i].z;
+        }
+        z_offset = -z_offset+PropertiesLoader.mesh_output.z_offset;
+
+        if (PropertiesLoader.mesh_output.zero_centered) {
+
+            double min_x = vertices[0].x;
+            double max_x = vertices[0].x;
+            double min_y = vertices[0].y;
+            double max_y = vertices[0].y;
+
+            for (int i = 0; i != vertices.length; ++i) {
+                if (min_x > vertices[i].x) min_x = vertices[i].x;
+                if (min_y > vertices[i].y) min_y = vertices[i].y;
+                if (max_x < vertices[i].x) max_x = vertices[i].x;
+                if (max_y < vertices[i].y) max_y = vertices[i].y;
+            }
+
+            x_offset = -(min_x+max_x)*0.5;
+            y_offset = -(min_y+max_y)*0.5;
+        }
+
+        for (int i = 0; i != vertices.length; ++i) {
+
+            vertices[i].x += x_offset;
+            vertices[i].y += y_offset;
+            vertices[i].z += z_offset;
+
+            vertices[i].x *= PropertiesLoader.mesh_output.scale;
+            vertices[i].y *= PropertiesLoader.mesh_output.scale;
+            vertices[i].z *= PropertiesLoader.mesh_output.scale;
+            vertices[i].z *= PropertiesLoader.mesh_output.z_scale;
+
+        }
+
+        return vertices;
+    }
+
     public void saveAsFbx(String path) {
 
         System.out.println("Dumping fbx");
-
-        Coordinate[] coord_array = this.coord_array;
 
         ArrayList<Coordinate> tex_coord_array = new ArrayList<>();
 
@@ -173,8 +284,11 @@ public class Mesh3D {
 
         Coordinate[] texture_coordinates = tex_coord_array.toArray(new Coordinate[tex_coord_array.size()]);
 
+        Coordinate[] vertices = transformCoordinates(coord_array);
+        Coordinate[] normals = calculateNormals(vertices,tris);
+
         try {
-            FBXConverter.serializeMesh(coord_array,texture_coordinates,polygon_indexes,texture_indexes,material_ids, path+".fbx");
+            FBXConverter.serializeMesh(vertices,normals,texture_coordinates,polygon_indexes,texture_indexes,material_ids, path+".fbx");
         } catch (Exception ignored) {
 
             CommandLineUtils.reportException(ignored);
@@ -261,11 +375,6 @@ public class Mesh3D {
                         (v3_index + 1) + "/" + (vt3_index + 1));
             }
         }
-//        for (int[] tri : tris) {
-//            // Indexes in .obj format start from 1, so add 1 to indexes before writing
-//            // Swap second and third indexes, so triangels will face up.
-//            out.println("f "+(tri[0]+1)+" "+(tri[1]+1)+" "+(tri[2]+1));
-//        }
 
         out.close();
     }
@@ -276,7 +385,7 @@ public class Mesh3D {
         int patch_id = 0;
         for (TexturedPatch tp : getTexturedPatches()) {
 
-            PatchTextureGenerator PTGen = new PatchTextureGenerator(ocad,tp);
+            PatchTextureGenerator PTGen = new PatchTextureGenerator(ocad,tp,this);
 
             PTGen.writeToFile(out_path+"_"+patch_id+"_."+extension);
 
@@ -287,11 +396,11 @@ public class Mesh3D {
 
 
     public static Mesh3D fromHeightmap(double[] heightmap, int width, int height,
-                                       Coordinate envelope_min, Coordinate envelope_max, int decimation_max_points, Polygon concaveHull) {
+                                       Coordinate envelope_min, Coordinate envelope_max, Polygon concaveHull) {
         double real_width = envelope_max.x - envelope_min.x;
         double real_height = envelope_max.y - envelope_min.y;
         double real_z_height = envelope_max.z - envelope_min.z;
-        double crease_angle = 0.25;
+        double crease_angle = PropertiesLoader.mesh_creation.crease_angle;
         RasterUtils.map(heightmap,0,real_z_height);
 
 
@@ -345,30 +454,6 @@ public class Mesh3D {
         }
         CommandLineUtils.reportProgressEnd();
 
-//        if (decimation_max_points > 0) {
-//
-////            float[] importantPoints_mask = Arrays.copyOf(importantPoints,importantPoints.length);
-////            RasterUtils.gauss(importantPoints_mask,width,height,2,3);
-////
-////            for (int i = 0; i != importantPoints.length; ++i) {
-////                importantPoints[i]*=importantPoints_mask[i];
-////            }
-//
-//            //PointScatter sc = new PointScatter();
-//
-//            //sc.setDistribution(importantPoints, width, height);
-//            //sc.setMaxPointCount(decimation_max_points);
-//            //sc.setEnvelope(envelope_min.x, envelope_min.y, envelope_max.x, envelope_max.y);
-//            //sc.setMaxRadius(Math.max(envelope_max.x - envelope_min.x, envelope_max.y - envelope_min.y) / 20);
-//            //sc.scatterPoints(vertexes);
-//
-//            for (Coordinate c : vertexes) {
-//                int row = (int) (GeomUtils.map(c.y, envelope_min.y, envelope_max.y, 1, height - 1) + 0.5);
-//                int column = (int) (GeomUtils.map(c.x, envelope_min.x, envelope_max.x, 1, width - 1) + 0.5);
-//                c.z = heightmap[row * width + column];
-//            }
-//
-//        } else {
         for (int i = 0; i != importantPoints.length; ++i) {
             if (importantPoints[i] > 0.5) {
                 int row = i/width;
@@ -419,113 +504,7 @@ public class Mesh3D {
                 processedVertexes.add(c);
             }
             vertexes = processedVertexes;
-        }
 
-        return Mesh3D.fromVertexes(vertexes);
-    }
-
-    public static Mesh3D fromHeightmap_old(float[] heightmap, int width, int height, Coordinate envelope_min, Coordinate envelope_max) {
-        double real_width = envelope_max.x - envelope_min.x;
-        double real_height = envelope_max.y - envelope_min.y;
-        double real_z_height = envelope_max.z - envelope_min.z;
-
-        ArrayList<Coordinate> vertexes = new ArrayList<>();
-        PointScatter sc = new PointScatter();
-
-        RasterUtils.map(heightmap,0,real_z_height);
-
-        float[] normals = new float[heightmap.length];
-        float[] angles = new float[heightmap.length];
-
-        RasterUtils.angleSobelBased(heightmap,normals,angles,width,height,real_width/width,real_height/height);
-
-        for (int i = 0; i != normals.length; ++i) {
-            angles[i] = (float)(angles[i]/Math.PI);
-        }
-
-//        RasterUtils.dilate(sobel1,width,height);
-//        RasterUtils.erode(sobel1,width,height);
-//        RasterUtils.erode(sobel1,width,height);
-//        RasterUtils.dilate(sobel1,width,height);
-        //RasterUtils.gauss(sobel1,width,height,1,1);
-
-        RasterUtils.save(angles,width,height,"mesh_heightmap"+debug_prefix+"_angles.png");
-        RasterUtils.saveAsTxt(angles,width,height,"mesh_heightmap"+debug_prefix+"_angles");
-        RasterUtils.save(normals,width,height,"mesh_heightmap"+debug_prefix+"_normals.png");
-        RasterUtils.saveAsTxt(normals,width,height,"mesh_heightmap"+debug_prefix+"_normals");
-
-//        for (int i = 0; i != normals.length; ++i) {
-//            angles[i] = (float)( (angles[i]/Math.PI+normals[i]/real_z_height)*0.5 );
-//        }
-
-//        RasterUtils.dilate(sobel2,width,height);
-//        RasterUtils.erode(sobel2,width,height);
-//        RasterUtils.erode(sobel2,width,height);
-//        RasterUtils.dilate(sobel2,width,height);
-//        RasterUtils.gauss(sobel2,width,height,3,3);
-
-
-        float[] angles_sobel = RasterUtils.sobel(angles, width, height);
-        float[] normal_sobel = RasterUtils.sobel(normals, width, height);
-        float[] sobel2_fine = angles_sobel;
-
-        for (int i = 0; i != angles_sobel.length; ++i) {
-            angles_sobel[i]*=normals[i];
-            angles_sobel[i] = (float)GeomUtils.clamp( GeomUtils.map(angles_sobel[i],0,3,0,1), 0,1);
-            normal_sobel[i] = (float)GeomUtils.clamp( GeomUtils.map(normal_sobel[i],0,6,0,1), 0,1.4);
-            //normal_sobel[i] = normal_sobel[i]*normal_sobel[i];
-            sobel2_fine[i] = Math.max(angles_sobel[i],normal_sobel[i]);
-            //#Math.max(normal_sobel[i],angles_sobel[i]);
-        }
-
-        int blur_size = (int)Math.ceil((double)Math.min(width,height)/200);
-        RasterUtils.bloom(angles_sobel,width,height,0.1,blur_size);
-
-        CommandLineUtils.reportProgressBegin("Dumping files");
-        RasterUtils.save(angles_sobel,width,height,0,1,"mesh_heightmap"+debug_prefix+"_angles_sobel.png");
-        CommandLineUtils.reportProgress(1,4);
-        RasterUtils.saveAsTxt(angles_sobel,width,height,"mesh_heightmap"+debug_prefix+"_angles_sobel");
-        CommandLineUtils.reportProgress(2,4);
-        RasterUtils.save(normal_sobel,width,height,0,1,"mesh_heightmap"+debug_prefix+"_normals_sobel.png");
-        CommandLineUtils.reportProgress(3,4);
-        RasterUtils.saveAsTxt(normal_sobel,width,height,"mesh_heightmap"+debug_prefix+"_normals_sobel");
-        CommandLineUtils.reportProgressEnd();
-
-        sc.setDistribution(sobel2_fine,width,height);
-        sc.setMaxPointCount(6);
-        sc.setEnvelope(envelope_min.x,envelope_min.y,envelope_max.x,envelope_max.y);
-        sc.setMaxRadius(Math.max(envelope_max.x-envelope_min.x,envelope_max.y-envelope_min.y)/20);
-        sc.scatterPoints(vertexes);
-
-        double row_scale = height/real_height;
-        double column_scale = width/real_width;
-
-        ArrayList<Coordinate> valid_vertexes = new ArrayList<>();
-        for (Coordinate c : vertexes) {
-
-            int row = GeomUtils.clamp((int)GeomUtils.map(c.y,envelope_min.y,envelope_max.y,0,height),0,height-1);
-            int column = GeomUtils.clamp((int)GeomUtils.map(c.x,envelope_min.x,envelope_max.x,0,width),0,width-1);
-            double r = sc.getRadius( sobel2_fine[row*width+column] )*1.2;
-            double start_x = c.x-r;
-            double start_y = c.y-r;
-            double end_x = c.x+r;
-            double end_y = c.y+r;
-
-            int start_column = GeomUtils.clamp((int)GeomUtils.map(start_x,envelope_min.x,envelope_max.x,0,width),0,width-1);
-            int start_row    = GeomUtils.clamp((int)GeomUtils.map(start_y,envelope_min.y,envelope_max.y,0,height),0,height-1);
-            int end_column   = GeomUtils.clamp((int)GeomUtils.map(end_x,envelope_min.x,envelope_max.x,0,width),0,width-1)+1;
-            int end_row      = GeomUtils.clamp((int)GeomUtils.map(end_y,envelope_min.y,envelope_max.y,0,height),0,height-1)+1;
-
-            double z = 0;
-            int count = (end_column-start_column)*(end_row-start_row);
-            if (count == 0) continue;
-            for (row = start_row; row != end_row; ++row) {
-                for (column = start_column; column != end_column; ++column) {
-                    z += heightmap[row*width+column];
-                }
-            }
-            c.z = z/count;
-            valid_vertexes.add(c);
         }
 
         return Mesh3D.fromVertexes(vertexes);
@@ -571,36 +550,37 @@ public class Mesh3D {
 
         vertexes.forEach(mesh.vertexes::add);
 
-        mesh.buildMesh();
+        mesh.buildMeshFromVertices();
 
         return mesh;
     }
 
     public static Mesh3D fromPolygonsFBX(double[] coordinates, int[] polygons) {
 
-        double x_min = coordinates[0];
-        double x_max = coordinates[0];
-        double y_min = coordinates[1];
-        double y_max = coordinates[1];
-        double z_min = coordinates[2];
-        double z_max = coordinates[2];
-
-        for (int i = 0; i < coordinates.length-2; i+=3) {;
-
-            x_min = Math.min(x_min,coordinates[i]);
-            x_max = Math.max(x_max,coordinates[i]);
-
-            y_min = Math.min(y_min,coordinates[i+1]);
-            y_max = Math.max(y_max,coordinates[i+1]);
-
-            z_min = Math.min(z_min,coordinates[i+2]);
-            z_max = Math.max(z_max,coordinates[i+2]);
-        }
 
         Mesh3D mesh = new Mesh3D();
         mesh.vertexes = new ArrayList<>();
         for (int i = 0; i < coordinates.length-2; i+=3) {
             mesh.vertexes.add(new Coordinate(coordinates[i],coordinates[i+1],coordinates[i+2]));
+        }
+
+        mesh.x_min = coordinates[0];
+        mesh.x_max = coordinates[0];
+        mesh.y_min = coordinates[1];
+        mesh.y_max = coordinates[1];
+        mesh.z_min = coordinates[2];
+        mesh.z_max = coordinates[2];
+
+        for (int i = 0; i < coordinates.length-2; i+=3) {;
+
+            mesh.x_min = Math.min(mesh.x_min,coordinates[i]);
+            mesh.x_max = Math.max(mesh.x_max,coordinates[i]);
+
+            mesh.y_min = Math.min(mesh.y_min,coordinates[i+1]);
+            mesh.y_max = Math.max(mesh.y_max,coordinates[i+1]);
+
+            mesh.z_min = Math.min(mesh.z_min,coordinates[i+2]);
+            mesh.z_max = Math.max(mesh.z_max,coordinates[i+2]);
         }
 
         mesh.coord_array = new Coordinate[mesh.vertexes.size()];
@@ -625,6 +605,9 @@ public class Mesh3D {
             mesh.tris.add(poly);
             begin = end;
         } while (end < polygons.length);
+
+        mesh.calculateNormals();
+        mesh.initializePolygonBuffer();
 
         return mesh;
     }
@@ -658,92 +641,81 @@ public class Mesh3D {
     }
 
     public static String debug_prefix = "";
-//    public static void processheightmap(float[] heightmap, int width, int height, String outputPostfix, Polygon concaveHull) {
-//
-//
-//        RasterUtils.padding(heightmap,width,height,2);
-//
-//        debug_prefix = outputPostfix;
-//
-//        double real_width = 1;
-//        double real_height = (float)height/width;
-//        double real_z_height = 0.2;
-//
-//        double multiplier = 10;
-//
-//        real_height*=multiplier;
-//        real_width*=multiplier;
-//        real_z_height*=multiplier;
-//
-//        Coordinate c_min = new Coordinate(-real_width*0.5,-real_height*0.5,0);
-//        Coordinate c_max = new Coordinate(real_width*0.5,real_height*0.5,real_z_height);
-//
-//        Mesh3D mesh = Mesh3D.fromHeightmap(heightmap,width,height,c_min,c_max);
-//
-//        System.out.println("Dumping vertexes as image");
-//        mesh.saveVertexesAsImage("mesh_vertexes"+outputPostfix+".png");
-//
-//        System.out.println("Dumping mesh");
-//        mesh.saveAsObj("mesh"+outputPostfix);
-//        CommandLineUtils.report();
-//    }
 
-    public static void processheightmap(double[] heightmap, Coordinate c_min, Coordinate c_max, int width, int height, String outputPostfix, Polygon concaveHull) throws Exception {
+    public static Mesh3D fromIsolineContainer(IsolineContainer ic) {
+        PropertiesLoader.update();
 
+        DistanceFieldInterpolation interpolation = new DistanceFieldInterpolation(ic);
+        double[][] heightmap_matrix = interpolation.getAllInterpolatingPoints();
+        int width = heightmap_matrix[0].length;
+        int height = heightmap_matrix.length;
+        double[] heightmap = RasterUtils.linearize( heightmap_matrix);
 
-        RasterUtils.padding(heightmap,width,height,2);
+        //Coordinate c_min = new Coordinate(-real_width*0.5,-real_height*0.5,0);
+        //Coordinate c_max = new Coordinate(real_width*0.5,real_height*0.5,real_z_height);
 
-        debug_prefix = outputPostfix;
+        PointRasterizer rast = interpolation.getRasterizer();
 
-        double real_width = 1;
-        double real_height = (float)height/width;
-        double real_z_height = 0.06;
+        double height_multiplier = PropertiesLoader.mesh_creation.isoline_height_delta;
+        double map_z_height = (interpolation.getMaxHeight()-interpolation.getMinHeight())*height_multiplier;
 
-        double multiplier = 50;
+        Coordinate c_min = new Coordinate(rast.toX(0),      rast.toY(0),        0);
+        Coordinate c_max = new Coordinate(rast.toX(width),  rast.toY(height),   map_z_height);
 
-        real_height*=multiplier;
-        real_width*=multiplier;
-        real_z_height*=multiplier;
+        RasterUtils.padding(heightmap,width,height,PropertiesLoader.mesh_creation.heightmap_padding);
 
-        Mesh3D mesh = Mesh3D.fromHeightmap(heightmap,width,height,c_min,c_max,8000000,concaveHull);
+        Polygon map_area = MapEdge.getConvexHull(ic);
 
-        System.out.println("Dumping vertexes as image");
-        mesh.saveVertexesAsImage("mesh_vertexes"+outputPostfix+".png");
+        if (PropertiesLoader.mesh_creation.convex_hull_cull) {
+            return Mesh3D.fromHeightmap(heightmap, width, height, c_min, c_max, map_area);
+        } else {
+            return Mesh3D.fromHeightmap(heightmap, width, height, c_min, c_max, null);
+        }
 
-        System.out.println("Deserializing ocad...");
-
-
-        System.out.println("Dumping mesh");
-
-        mesh.saveAsObj("mesh"+outputPostfix);
-        mesh.saveAsFbx("mesh"+outputPostfix);
-
-        DeserializedOCAD ocad = new DeserializedOCAD();
-        ocad.DeserializeMap("sample.ocd",null);
-        mesh.generateTexture(ocad,"mesh_texture"+outputPostfix,"png");
-        CommandLineUtils.report();
     }
 
-//
-//    public static void processImageHeightmap(String path, String outputPostfix) {
-//        Pair<Integer,float[]> ret_pair = RasterUtils.loadARGBasGrayscaleFloat(path);
-//
-//        int width = ret_pair.v1;
-//        int height = ret_pair.v2.length/width;
-//        float[] heightmap = ret_pair.v2;
-//
-//        processheightmap(heightmap,width,height,outputPostfix,null);
-//    }
-//
-//    public static void processTextHeightmap(String path,String outputPostfix) {
-//        Pair<Integer,float[]> ret_pair = RasterUtils.loadTextAsGrayscaleFloat(path);
-//
-//        int width = ret_pair.v1;
-//        int height = ret_pair.v2.length/width;
-//        float[] heightmap = ret_pair.v2;
-//
-//        processheightmap(heightmap,width,height,outputPostfix,null);
-//    }
+    private static Coordinate point_height_buf = new Coordinate();
+    public double getPointHeight(double x, double y) {
+
+        point_height_buf.x = x;
+        point_height_buf.y = y;
+
+        int[] triangle = poly_buf.getPolygonByPoint(x,y);
+        if (triangle == null) return Double.NaN;
+        //return coord_array[triangle[0]].z;
+
+        double area_0 = GeomUtils.area(point_height_buf,coord_array[triangle[1]],coord_array[triangle[2]]);
+        double area_1 = GeomUtils.area(point_height_buf,coord_array[triangle[0]],coord_array[triangle[2]]);
+        double area_2 = GeomUtils.area(point_height_buf,coord_array[triangle[1]],coord_array[triangle[0]]);
+        double area_sum = area_0+area_1+area_2;
+
+        return (coord_array[triangle[0]].z*area_0+coord_array[triangle[1]].z*area_1+coord_array[triangle[2]].z*area_2)/area_sum;
+    }
+
+    Vector3D z_normal = new Vector3D(0,0,1);
+    public double getPointAngle(double x, double y) {
+
+        point_height_buf.x = x;
+        point_height_buf.y = y;
+
+        int[] triangle = poly_buf.getPolygonByPoint(x,y);
+        if (triangle == null) return Double.NaN;
+        //return coord_array[triangle[0]].z;
+
+        double area_0 = GeomUtils.area(point_height_buf,coord_array[triangle[1]],coord_array[triangle[2]]);
+        double area_1 = GeomUtils.area(point_height_buf,coord_array[triangle[0]],coord_array[triangle[2]]);
+        double area_2 = GeomUtils.area(point_height_buf,coord_array[triangle[1]],coord_array[triangle[0]]);
+        double area_sum = area_0+area_1+area_2;
+
+        Coordinate angle = new Coordinate(0,0,0);
+        angle.x = (normals[triangle[0]].x*area_0+normals[triangle[1]].x*area_1+normals[triangle[2]].x*area_2)/area_sum;
+        angle.y = (normals[triangle[0]].y*area_0+normals[triangle[1]].y*area_1+normals[triangle[2]].y*area_2)/area_sum;
+        angle.z = (normals[triangle[0]].z*area_0+normals[triangle[1]].z*area_1+normals[triangle[2]].z*area_2)/area_sum;
+        Vector3D norm = new Vector3D(angle);
+        norm.normalize();
+        return Math.abs( Math.acos( norm.dot(z_normal) ) )/Math.PI*2;
+    }
+
 
     public static void main(String[] args) throws Exception {
 
@@ -756,28 +728,13 @@ public class Mesh3D {
         graph.recoverAllSlopes();
         graph.recoverAllHeights();
 
-        DistanceFieldInterpolation interpolation = new DistanceFieldInterpolation(ic);
-        double[][] heightmap_matrix = interpolation.getAllInterpolatingPoints();
-        int width = heightmap_matrix[0].length;
-        int height = heightmap_matrix.length;
-        double[] heightmap = RasterUtils.linearize( heightmap_matrix);
-        Polygon map_area = MapEdge.getConvexHull(ic);
+        Mesh3D mesh = Mesh3D.fromIsolineContainer(ic);
 
-        //Coordinate c_min = new Coordinate(-real_width*0.5,-real_height*0.5,0);
-        //Coordinate c_max = new Coordinate(real_width*0.5,real_height*0.5,real_z_height);
+        mesh.saveAsObj("mesh");
+        mesh.saveAsFbx("mesh");
 
-        PointRasterizer rast = interpolation.getRasterizer();
-
-        double height_multiplier = 15;
-        double map_z_height = (interpolation.getMaxHeight()-interpolation.getMinHeight())*height_multiplier;
-
-        Coordinate c_min = new Coordinate(rast.toX(0),      rast.toY(0),        0);
-        Coordinate c_max = new Coordinate(rast.toX(width),  rast.toY(height),   map_z_height);
-
-        processheightmap(heightmap,c_min,c_max,width,height,"_normal",map_area);
-
-//        processTextHeightmap("sample.txt","_normal");
-//        processImageHeightmap("sample_small.png","_small");
-//        processImageHeightmap("sample_tiny.png","_tiny");
+        DeserializedOCAD ocad = new DeserializedOCAD();
+        ocad.DeserializeMap("sample.ocd",null);
+        mesh.generateTexture(ocad,"mesh_texture","png");
     }
 }
