@@ -716,24 +716,24 @@ public class Mesh3D {
     }
 
 
-    public static void main(String[] args) throws Exception {
-
-        IsolineContainer ic = IsolineContainer.deserialize("sample_clean_map2.json");
-        NearbyContainer cont = new NearbyContainer(ic);
-        NearbyEstimator est = new NearbyEstimator(ic.getFactory());
-        NearbyGraphWrapper graph = new NearbyGraphWrapper(est.getRelationGraph(cont));
-        graph.SetHillsSlopeSides();
-        graph.ConvertToSpanningTree();
-        graph.recoverAllSlopes();
-        graph.recoverAllHeights();
-
-        Mesh3D mesh = Mesh3D.fromIsolineContainer(ic);
-
-        mesh.saveAsObj("mesh");
-        mesh.saveAsFbx("mesh");
-
-        DeserializedOCAD ocad = new DeserializedOCAD();
-        ocad.DeserializeMap("sample.ocd",null);
-        mesh.generateTexture(ocad,"mesh_texture","png");
-    }
+//    public static void main(String[] args) throws Exception {
+//
+//        IsolineContainer ic = IsolineContainer.deserialize("sample_clean_map2.json");
+//        NearbyContainer cont = new NearbyContainer(ic);
+//        NearbyEstimator est = new NearbyEstimator(ic.getFactory());
+//        NearbyGraphWrapper graph = new NearbyGraphWrapper(est.getRelationGraph(cont));
+//        graph.SetHillsSlopeSides();
+//        graph.ConvertToSpanningTree();
+//        graph.recoverAllSlopes();
+//        graph.recoverAllHeights();
+//
+//        Mesh3D mesh = Mesh3D.fromIsolineContainer(ic);
+//
+//        mesh.saveAsObj("mesh");
+//        mesh.saveAsFbx("mesh");
+//
+//        DeserializedOCAD ocad = new DeserializedOCAD();
+//        ocad.DeserializeMap("sample.ocd",null);
+//        mesh.generateTexture(ocad,"mesh_texture","png");
+//    }
 }

@@ -3,6 +3,7 @@
  */
 
 import Algorithm.DatasetGenerator.Datagen;
+import Deserialization.DeserializedOCAD;
 import Display.Drawer;
 import Display.GeometryWrapper;
 import Display.Renderer;
@@ -215,6 +216,9 @@ public class MainApp extends Application implements Initializable {
         if (f != null) {
             try {
                 mc.openJsonFile(f);
+                if (mc.isolineContainer == null) {
+                    throw new IOException("Could not parse file");
+                }
                 statusText.setText("Added " + mc.IsolineCount() + " isolines. Bbox: " + mc.isolineContainer.getEnvelope());
                 originalContainer = new IsolineContainer(mc.isolineContainer);
                 displayedContainer = mc.isolineContainer;
@@ -244,7 +248,7 @@ public class MainApp extends Application implements Initializable {
 
         File file = fileChooser1.showSaveDialog(stage);
 
-        if (file == null || file.getAbsolutePath() == null) return;
+        if (file == null) return;
 
         mc.saveJsonFile(file);
 
@@ -418,8 +422,48 @@ public class MainApp extends Application implements Initializable {
         render();
     }
 
+    DeserializedOCAD texture_ocad_cache = null;
     @FXML void algorithm_texture_pressed() {
-        mc.generateTexture("texture");
+
+
+        FileChooser fileChooser1 = new FileChooser();
+        fileChooser1.setTitle("Save texture as");
+
+
+        fileChooser1.setInitialFileName("sample");
+        fileChooser1.setInitialDirectory( (new File(".")).getAbsoluteFile() );
+
+        File file = fileChooser1.showSaveDialog(stage);
+
+        if (file == null) return;
+        String texture_output_path = file.getAbsolutePath();
+
+        if (!mc.generateTexture(texture_output_path)) {
+
+            if (texture_ocad_cache == null) {
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.setTitle("Open ocad map");
+                fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+                File f = fileChooser.showOpenDialog(stage);
+                if (f != null) {
+                    try {
+                        String f_path = f.getPath();
+                        texture_ocad_cache = new DeserializedOCAD();
+                        texture_ocad_cache.DeserializeMap(f_path,null);
+                    } catch (FileNotFoundException ex) {
+                        statusText.setText("File not found");
+                    } catch (IOException ex) {
+                        statusText.setText("File reading error: "+ex.getMessage());
+                    } catch (Exception ex) {
+                        statusText.setText("File parsing error: "+ex.getMessage());
+                    }
+                }
+            }
+            if (texture_output_path != null) {
+                mc.generateTexture(texture_output_path, texture_ocad_cache);
+            }
+
+        }
     }
 
     @FXML

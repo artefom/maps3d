@@ -161,6 +161,8 @@ public class PatchTextureGenerator {
 
     public static String getTextureFolder() {
 
+        PropertiesLoader.update();
+
         String[] folders = new String[] {
                 (new File("")).getAbsolutePath(),
                 OutputUtils.GetExecutionPath(),

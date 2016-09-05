@@ -1,0 +1,13 @@
+{
+  "name" : "overlay",
+  "z_index" : 1000,
+  "filled" : true,
+  "color" : "255, 255, 255",
+  "angle_mask_bezier_definitions" : "function drawShape(ctx, xoff, yoff) {
+  ctx.beginPath();
+  ctx.moveTo(96 + xoff, 120 + yoff);
+  ctx.bezierCurveTo(163 + xoff, 127 + yoff, 196 + xoff, 221 + yoff, 198 + xoff, 261 + yoff);
+  ctx.bezierCurveTo(207 + xoff, 415 + yoff, 235 + xoff, 418 + yoff, 469 + xoff, 424 + yoff);
+  ctx.stroke();
+}"
+}

@@ -1,5 +1,4 @@
 import Algorithm.BuildingIndex.Index;
-import Algorithm.DatasetGenerator.Datagen;
 import Algorithm.Healing.Healer;
 import Algorithm.Interpolation.DistanceFieldInterpolation;
 import Algorithm.Interpolation.Triangulation;
@@ -9,21 +8,16 @@ import Algorithm.Mesh.Mesh3D;
 import Algorithm.NearbyGraph.NearbyContainer;
 import Algorithm.NearbyGraph.NearbyEstimator;
 import Algorithm.NearbyGraph.NearbyGraphWrapper;
-import Algorithm.Texture.TextureGenerator;
 import Deserialization.Interpolation.SlopeMark;
 import Deserialization.DeserializedOCAD;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
 import Utils.*;
-import com.sun.javafx.scene.shape.PathUtils;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.stream.Stream;
 
@@ -81,8 +75,8 @@ public class MainController {
 
         isolineContainer = new IsolineContainer(gf);
         String f_path = f.getPath();
-        String configPath = f_path.substring(0, f_path.length()-OutputUtils.getExtension(f_path).length())+"ini";
-        deserializedOCAD.DeserializeMap(f_path,configPath);
+        //String configPath = f_path.substring(0, f_path.length()-OutputUtils.getExtension(f_path).length())+"ini";
+        deserializedOCAD.DeserializeMap(f_path,null);
         ArrayList<IIsoline> isos = deserializedOCAD.toIsolines(1,gf);
         slopeMarks = new ArrayList<>();
         isos.forEach(isolineContainer::add);
@@ -169,19 +163,41 @@ public class MainController {
         //index.diamondRain();
     }
 
-    public void generateTexture(String output_path) {
+    public boolean generateTexture(String output_path) {
 
-        if (deserializedOCAD != null)
-            mesh.generateTexture(deserializedOCAD,output_path,"png");
+        if (deserializedOCAD != null) {
+            generateTexture(output_path,deserializedOCAD);
+            return true;
+        }
 
+        return false;
     }
 
-    private Mesh3D mesh = null;
+
+    public boolean generateTexture(String output_path, DeserializedOCAD ocad) {
+
+        if (ocad != null) {
+            String extension = OutputUtils.getExtension(output_path);
+            if (extension.length() > 0) {
+                output_path = output_path.substring(0,output_path.length()-1-extension.length());
+                extension = "png";
+            } else {
+                extension = "png";
+            }
+            getMesh().generateTexture(ocad, output_path, extension);
+            return true;
+        }
+
+        return false;
+    }
+
+    private Mesh3D mesh_cache = null;
 
     private boolean heights_calculated = false;
-    public void saveMesh(String output_name) {
 
-        if (heights_calculated == false) {
+    private Mesh3D getMesh() {
+        if (mesh_cache != null) return mesh_cache;
+        if (!heights_calculated) {
             NearbyContainer cont = new NearbyContainer(isolineContainer);
             NearbyEstimator est = new NearbyEstimator(isolineContainer.getFactory());
             NearbyGraphWrapper graph = new NearbyGraphWrapper(est.getRelationGraph(cont));
@@ -191,9 +207,18 @@ public class MainController {
             graph.recoverAllHeights();
             heights_calculated = true;
         }
+        mesh_cache = Mesh3D.fromIsolineContainer(isolineContainer);
+        return mesh_cache;
+    }
 
-        mesh = Mesh3D.fromIsolineContainer(isolineContainer);
-        mesh.saveAsFbx(output_name);
+    public void saveMesh(String output_path) {
+
+        String extension = OutputUtils.getExtension(output_path);
+        if (extension.length() > 0) {
+            output_path = output_path.substring(0,output_path.length()-1-extension.length());
+        }
+
+        getMesh().saveAsFbx(output_path);
 
     }
 
