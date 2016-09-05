@@ -1,0 +1,12 @@
+{
+  "name" : "snow",
+  "z_index" : 1000,
+  "filled" : true,
+  "color" : "255, 255, 255",
+  "texture" : "snow.jpg",
+  "erode_first" : false,
+  "erode_size" : 2,
+  "dilate_size" : 2,
+  "blur_size" : 1,
+  "angle_mask_bezier_definitions" : "21 54 116 51 82 478 131 480 223 483 511 487 576 485"
+}

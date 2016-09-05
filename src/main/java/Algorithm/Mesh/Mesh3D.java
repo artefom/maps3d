@@ -15,7 +15,6 @@ import Utils.FBX.FBXConverter;
 import Utils.Properties.PropertiesLoader;
 
 import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.math.Vector2D;
 import com.vividsolutions.jts.math.Vector3D;
 import com.vividsolutions.jts.triangulate.DelaunayTriangulationBuilder;
 

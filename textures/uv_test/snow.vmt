@@ -1,0 +1,6 @@
+{
+  "name" : "uvTest",
+  "z_index" : 1000,
+  "filled" : true,
+  "texture" : "uvTest.png",
+}

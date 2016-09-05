@@ -176,8 +176,9 @@ public class Mesh {
         } catch (IOException e) {
             throw new RuntimeException("Can't export obj with typename " + fileName, e);
         }
-
     }
+
+
 }
 
 

@@ -3,6 +3,7 @@ package Utils.Properties;
 import Utils.CommandLineUtils;
 import Utils.Constants;
 import Utils.OutputUtils;
+import Utils.SymbolIdMatcher;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -24,6 +25,33 @@ public class PropertiesLoader {
     public static class ocad_input {
         public static boolean multiply_by_scale = true;
         public static double scale_multiplier = 1;
+
+        public static String contour_1 = "103...";
+        public static String contour_1_ignore = "";
+        public static String contour_2 = "101...";
+        public static String contour_2_ignore = "";
+        public static String contour_3 = "102...";
+        public static String contour_3_ignore = "";
+        public static String contour_4 = "106...";
+        public static String contour_4_ignore = "106002";
+
+        public static String slope = "104...";
+
+        public static int getLineType(int symbol_id) {
+            if (SymbolIdMatcher.matches(symbol_id,contour_1) && !SymbolIdMatcher.matches(symbol_id,contour_1_ignore)) return 1;
+            if (SymbolIdMatcher.matches(symbol_id,contour_2) && !SymbolIdMatcher.matches(symbol_id,contour_2_ignore)) return 2;
+            if (SymbolIdMatcher.matches(symbol_id,contour_3) && !SymbolIdMatcher.matches(symbol_id,contour_3_ignore)) return 3;
+            if (SymbolIdMatcher.matches(symbol_id,contour_4) && !SymbolIdMatcher.matches(symbol_id,contour_4_ignore)) return 4;
+            return -1;
+        }
+
+        public static boolean isLine(int symbol_id) {
+            return getLineType(symbol_id) != -1;
+        }
+
+        public static boolean isSlope(int symbol_id) {
+            return SymbolIdMatcher.matches(symbol_id,slope);
+        }
     }
 
     // mesh output

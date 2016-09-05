@@ -378,12 +378,12 @@ public class MainApp extends Application implements Initializable {
         redraw();
         render();
     }
-
-    @FXML void algorithm_edge_pressed() {
-        mc.detectEdge();
-        redraw();
-        render();
-    }
+//
+//    @FXML void algorithm_edge_pressed() {
+//        mc.detectEdge();
+//        redraw();
+//        render();
+//    }
 
     @FXML void algorithm_lines_pressed() {
         mc.connectLines();
@@ -392,11 +392,11 @@ public class MainApp extends Application implements Initializable {
         render();
     }
 
-    @FXML void algorithm_graph_pressed() {
-        mc.buildGraph();
-        redraw();
-        render();
-    }
+//    @FXML void algorithm_graph_pressed() {
+//        mc.buildGraph();
+//        redraw();
+//        render();
+//    }
 
     @FXML void algorithm_interpolate_pressed() {
 
@@ -413,7 +413,7 @@ public class MainApp extends Application implements Initializable {
 
         String path = file.getAbsolutePath();
 
-        mc.interpolate(path);
+        mc.saveMesh(path);
         redraw();
         render();
     }

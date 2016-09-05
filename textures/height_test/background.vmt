@@ -1,0 +1,6 @@
+{
+  "name" : "background",
+  "z_index" : 0,
+  "filled" : true,
+  "color" : "0, 0, 0"
+}

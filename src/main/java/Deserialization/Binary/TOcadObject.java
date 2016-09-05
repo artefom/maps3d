@@ -3,6 +3,8 @@ package Deserialization.Binary;
 import Utils.Curves.CurveString;
 import Utils.Constants;
 import Utils.Pair;
+import Utils.Properties.PropertiesLoader;
+import Utils.SymbolIdMatcher;
 import com.sun.org.apache.xpath.internal.functions.Function2Args;
 import com.vividsolutions.jts.geom.*;
 
@@ -169,37 +171,25 @@ public class TOcadObject extends ByteDeserializable {
         this.nItem = this.Poly.size();
     }
 
+    int isLineCache = 0;
     public boolean isLine() {
-//        return Sym == 101000 ||
-//                Sym == 102000 ||
-//                Sym == 103000 ||
-//                Sym == 106001 ||
-//                Sym == 106000 ||
-//                Sym == 106006;
-
-        return Sym == 101001 ||
-                Sym == 102002 ||
-                Sym == 103001 ||
-                Sym == 106004 ||
-                Sym == 106006 ||
-                Sym == 106005;
+        return getType() != -1;
     }
 
+    private int isSlope_cache = 0;
     public boolean isSlope() {
-        return (Sym == 104004 || Sym == 104003);
+        if (isSlope_cache == 0) {
+            isSlope_cache = PropertiesLoader.ocad_input.isSlope(Sym) ? 1 : -1;
+        }
+        return isSlope_cache == 1;
     }
 
+    private int line_type_cache = -2;
     public int getType() {
-//        if (Sym == 101000) return 2;
-//        if (Sym == 102000) return 3;
-//        if (Sym == 103000) return 1;
-//        if (Sym == 106001 || Sym == 106000 || Sym == 106006) return 4;
-//        return -1;
-        if (Sym == 101001) return 2;
-        if (Sym == 102002) return 3;
-        if (Sym == 103001) return 1;
-        if (Sym == 106004 || Sym == 106005 || Sym == 106006) return 4;
-        return -1;
+        if (line_type_cache == -2) {
+            line_type_cache = PropertiesLoader.ocad_input.getLineType(Sym);
+        }
+        return line_type_cache;
     }
 
     private static ArrayList< ArrayList<OcadVertex> > splitByHoleFirst(ArrayList<OcadVertex> vertices) {

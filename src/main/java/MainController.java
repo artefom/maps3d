@@ -5,6 +5,7 @@ import Algorithm.Interpolation.DistanceFieldInterpolation;
 import Algorithm.Interpolation.Triangulation;
 import Algorithm.LineConnection.LineWelder;
 import Algorithm.LineConnection.MapEdge;
+import Algorithm.Mesh.Mesh3D;
 import Algorithm.NearbyGraph.NearbyContainer;
 import Algorithm.NearbyGraph.NearbyEstimator;
 import Algorithm.NearbyGraph.NearbyGraphWrapper;
@@ -123,44 +124,44 @@ public class MainController {
         CommandLineUtils.report();
     }
 
-    public void detectEdge() {
-        edge = MapEdge.fromIsolines(isolineContainer, Constants.EDGE_CONCAVE_THRESHOLD);
+//    public void detectEdge() {
+//        edge = MapEdge.fromIsolines(isolineContainer, Constants.EDGE_CONCAVE_THRESHOLD);
+//
+//        CommandLineUtils.report();
+//    }
 
-        CommandLineUtils.report();
-    }
-
-    public void buildGraph() {
-        NearbyContainer cont = new NearbyContainer(isolineContainer);
-        NearbyEstimator est = new NearbyEstimator(gf);
-        NearbyGraphWrapper graph = new NearbyGraphWrapper(est.getRelationGraph(cont));
-        graph.SetHillsSlopeSides();
-        graph.ConvertToSpanningTree();
-        graph.recoverAllSlopes();
-        graph.recoverAllHeights();
-        //isolineContainer.serialize("cached_isolines.json");
-
-        CommandLineUtils.report("Graph was built successfully");
-        CommandLineUtils.report();
-    }
-
-    double [][] heightmap = null;
-    public void interpolate(String name) {
-        interpolation = new DistanceFieldInterpolation(isolineContainer);
-        heightmap = interpolation.getAllInterpolatingPoints();
-
-        //OutputUtils.saveAsTXT(heightmap);
-        //OutputUtils.saveAsPNG(heightmap);
-
-        System.out.println("Dumping png...");
-        RasterUtils.saveAsPng(heightmap,name);
-
-        System.out.println("Dumping txt...");
-        RasterUtils.saveAsTxt(heightmap,name);
-
-        triangulation = new Triangulation(heightmap);
-        triangulation.writeToFile(name);
-        CommandLineUtils.report();
-    }
+//    public void buildGraph() {
+//        NearbyContainer cont = new NearbyContainer(isolineContainer);
+//        NearbyEstimator est = new NearbyEstimator(gf);
+//        NearbyGraphWrapper graph = new NearbyGraphWrapper(est.getRelationGraph(cont));
+//        graph.SetHillsSlopeSides();
+//        graph.ConvertToSpanningTree();
+//        graph.recoverAllSlopes();
+//        graph.recoverAllHeights();
+//        //isolineContainer.serialize("cached_isolines.json");
+//
+//        CommandLineUtils.report("Graph was built successfully");
+//        CommandLineUtils.report();
+//    }
+//
+//    double [][] heightmap = null;
+//    public void interpolate(String name) {
+//        interpolation = new DistanceFieldInterpolation(isolineContainer);
+//        heightmap = interpolation.getAllInterpolatingPoints();
+//
+//        //OutputUtils.saveAsTXT(heightmap);
+//        //OutputUtils.saveAsPNG(heightmap);
+//
+//        System.out.println("Dumping png...");
+//        RasterUtils.saveAsPng(heightmap,name);
+//
+//        System.out.println("Dumping txt...");
+//        RasterUtils.saveAsTxt(heightmap,name);
+//
+//        triangulation = new Triangulation(heightmap);
+//        triangulation.writeToFile(name);
+//        CommandLineUtils.report();
+//    }
 
     public void buildIndex(){
         index = triangulation == null ? new Index("sample.obj") : new Index(triangulation);
@@ -170,25 +171,30 @@ public class MainController {
 
     public void generateTexture(String output_path) {
 
-        BufferedImage img = null;
-        try {
-            img = ImageIO.read(new File("sample.png"));
-        } catch (IOException e) {
-            throw new RuntimeException("Could not load heightmap!");
-        }
-        int rowCount = img.getHeight();
-        int columnCount = img.getWidth();
-        PointRasterizer rast = new PointRasterizer(columnCount,rowCount,isolineContainer.getEnvelope());
-        float[] heightmap = new float[rowCount*columnCount];
-        for (int row = 0; row != rowCount; ++row) {
-            for (int column = 0; column != columnCount; ++column) {
-                heightmap[ row*columnCount + column] = (float)(img.getRGB(column,row)&0x000000ff)/255;
-            }
-        }
+        if (deserializedOCAD != null)
+            mesh.generateTexture(deserializedOCAD,output_path,"png");
 
-        TextureGenerator gen = new TextureGenerator(deserializedOCAD);
-        gen.writeToFile("sample_texture",rast,heightmap);
     }
 
+    private Mesh3D mesh = null;
+
+    private boolean heights_calculated = false;
+    public void saveMesh(String output_name) {
+
+        if (heights_calculated == false) {
+            NearbyContainer cont = new NearbyContainer(isolineContainer);
+            NearbyEstimator est = new NearbyEstimator(isolineContainer.getFactory());
+            NearbyGraphWrapper graph = new NearbyGraphWrapper(est.getRelationGraph(cont));
+            graph.SetHillsSlopeSides();
+            graph.ConvertToSpanningTree();
+            graph.recoverAllSlopes();
+            graph.recoverAllHeights();
+            heights_calculated = true;
+        }
+
+        mesh = Mesh3D.fromIsolineContainer(isolineContainer);
+        mesh.saveAsFbx(output_name);
+
+    }
 
 }

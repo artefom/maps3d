@@ -27,12 +27,13 @@ public class TerminalApp {
             System.err.println("!!SKIPPING MAP BUILDING!!");
             mc.buildIndex();
         } else {
-            mc.openFile(new File(args[args.length-1]));
-            mc.detectEdge();
-            mc.connectLines();
-            mc.buildGraph();
-            mc.interpolate("sample");
-            mc.buildIndex();
+            throw new RuntimeException("Not implemented");
+            //mc.openFile(new File(args[args.length-1]));
+            //mc.detectEdge();
+            //mc.connectLines();
+            //mc.buildGraph();
+            //mc.interpolate("sample");
+            //mc.buildIndex();
         }
 
         System.out.println("Total execution time since start is " + (System.currentTimeMillis()-startTime)/1000 + " seconds.");

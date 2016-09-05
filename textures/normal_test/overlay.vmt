@@ -1,0 +1,7 @@
+{
+  "name" : "overlay",
+  "z_index" : 1000,
+  "filled" : true,
+  "color" : "255, 255, 255",
+  "angle_mask_bezier_definitions" : "50 429 38 438 555 35 543 44"
+}
