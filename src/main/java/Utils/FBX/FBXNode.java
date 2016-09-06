@@ -180,25 +180,4 @@ public class FBXNode {
         this.writer = null;
     }
 
-    public static void main(String[] args) throws FileNotFoundException {
-
-//
-//        FBXNode node1 = new FBXNode("Test_node1");
-//        node1.properties.add("Hello");
-//        node1.properties.add(10);
-//        node1.properties.add(20);
-//
-//        FBXNode node2 = new FBXNode("Test_node2");
-//        node2.properties.add("Hello");
-//        node2.properties.add(10);
-//        node2.properties.add("World");
-//        node2.addSubNode("Vasya","Pupkin",1);
-//        node2.addSubNode("Test_property",10.2,20,"wo");
-//
-//        node1.subNodes.add(node2);
-//
-//        node1.serialize("Test.fbx");
-
-    }
-
 }

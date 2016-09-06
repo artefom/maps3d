@@ -69,39 +69,39 @@ public class FBXConverter {
         root.serialize(path);
     }
 
-    public static void main(String[] args) throws FileNotFoundException {
+//    public static void main(String[] args) throws FileNotFoundException {
+////
+////        int object_count = 1;
+////
+////        FBXNode root = new FBXNode("");
+////
+////        root.subNodes.add( FBXDefaults.getDefaultFbxHeader() );
+////        root.subNodes.add( FBXDefaults.getGlobalSettings() );
+////        root.subNodes.add( FBXDefaults.getDocumentsDescription() );
+////        root.subNodes.add( FBXDefaults.getObjectDefinitions( object_count ) );
+////
+////        FBXNode objects = new FBXNode("Objects");
+////        FBXNode connections = new FBXNode("Connections");
+////
 //
-//        int object_count = 1;
+//        Mesh3D mesh = Mesh3D.fromPolygonsFBX(new double[] {
+//            -0.5,-0.5,0,0.5,-0.5,0,-0.5,0.5,0,0.5,0.5,0,-0.5,-0.5,1,0.5,-0.5,1,-0.5,0.5,1,0.5,0.5,1
+//        },new int[] {
+//            0,2,3,-2,4,5,7,-7,0,1,5,-5,1,3,7,-6,3,2,6,-8,2,0,4,-7
+//        });
 //
-//        FBXNode root = new FBXNode("");
 //
-//        root.subNodes.add( FBXDefaults.getDefaultFbxHeader() );
-//        root.subNodes.add( FBXDefaults.getGlobalSettings() );
-//        root.subNodes.add( FBXDefaults.getDocumentsDescription() );
-//        root.subNodes.add( FBXDefaults.getObjectDefinitions( object_count ) );
+//        mesh.saveAsFbx("Test.fbx");
 //
-//        FBXNode objects = new FBXNode("Objects");
-//        FBXNode connections = new FBXNode("Connections");
+//        //serializeMesh(mesh,"Test.fbx");
 //
-
-        Mesh3D mesh = Mesh3D.fromPolygonsFBX(new double[] {
-            -0.5,-0.5,0,0.5,-0.5,0,-0.5,0.5,0,0.5,0.5,0,-0.5,-0.5,1,0.5,-0.5,1,-0.5,0.5,1,0.5,0.5,1
-        },new int[] {
-            0,2,3,-2,4,5,7,-7,0,1,5,-5,1,3,7,-6,3,2,6,-8,2,0,4,-7
-        });
-
-
-        mesh.saveAsFbx("Test.fbx");
-
-        //serializeMesh(mesh,"Test.fbx");
-
-//        writeMesh(mesh,"Box01",0,objects,connections);
+////        writeMesh(mesh,"Box01",0,objects,connections);
+////
+////        root.subNodes.add(objects);
+////        root.subNodes.add(connections);
+////
+////        root.serialize("Test.fbx");
 //
-//        root.subNodes.add(objects);
-//        root.subNodes.add(connections);
-//
-//        root.serialize("Test.fbx");
-
-    }
+//    }
 
 }

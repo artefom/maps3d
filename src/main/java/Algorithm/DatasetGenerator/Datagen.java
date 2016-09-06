@@ -384,10 +384,5 @@ public class Datagen {
         writer.close();
     }
 
-    public static void main(String[] args) {
-
-    }
-
-
 
 }

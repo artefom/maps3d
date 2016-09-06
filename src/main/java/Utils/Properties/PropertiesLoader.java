@@ -169,6 +169,9 @@ public class PropertiesLoader {
     public static File createProperties() throws IOException {
 
         File file = new File("properties.ini");
+        if (file.exists()) {
+            return file;
+        }
         PrintWriter br = new PrintWriter( new FileWriter( file ));
 
         for (Class c : PropertiesLoader.class.getDeclaredClasses()) {
@@ -318,10 +321,5 @@ public class PropertiesLoader {
 
         }
     }
-
-    public static void main(String[] args) throws IOException {
-        update();
-    }
-
 
 }

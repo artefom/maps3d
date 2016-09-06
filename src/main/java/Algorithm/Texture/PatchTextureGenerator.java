@@ -117,6 +117,7 @@ public class PatchTextureGenerator {
                 String filename = texture_folder+"/"+this.texture;
                 img = ImageIO.read(new File(filename));
             } catch (IOException ignored) {
+                CommandLineUtils.printError("Could not load texture image for texture "+getName());
                 CommandLineUtils.reportException(ignored);
             }
             return img;
@@ -380,7 +381,12 @@ public class PatchTextureGenerator {
 
             //Write layer to texture
             if (b.hasTexture()) {
-                layer.overlay(tex, b.getTexture(), b.getBlendMode(), textureEnvelope );
+                BufferedImage texture = b.getTexture();
+                if (texture == null) {
+                    CommandLineUtils.printWarning("Could not load texture for brush: "+b.getName()+", skipping");
+                } else {
+                    layer.overlay(tex, texture, b.getBlendMode(), textureEnvelope);
+                }
             } else {
                 layer.overlay(tex, b.getColor(), b.getBlendMode());
             }

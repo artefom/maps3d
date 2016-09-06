@@ -28,18 +28,18 @@ public class TextureBlender {
                                 double envelope_max_y,
                                 boolean tile, int blend_mode);
 
-
-        // Test Driver
-    public static void main(String[] args) {
-
-        //System.out.println( TextureUtils.bilinearInterpolation(0.5, 0.5, (byte)0, (byte)50, (byte)100, (byte)200) );
-
-//        TextureBlender tb = new TextureBlender();
-//        tb.sayHello();
 //
-//        tb.calcSumm( new int[] {1,2,1000});
+//        // Test Driver
+//    public static void main(String[] args) {
 //
-//        overlay(null,null,0,0,0,0);
-    }
+//        //System.out.println( TextureUtils.bilinearInterpolation(0.5, 0.5, (byte)0, (byte)50, (byte)100, (byte)200) );
+//
+////        TextureBlender tb = new TextureBlender();
+////        tb.sayHello();
+////
+////        tb.calcSumm( new int[] {1,2,1000});
+////
+////        overlay(null,null,0,0,0,0);
+//    }
 
 }

@@ -76,9 +76,9 @@ public class MainApp extends Application implements Initializable {
     private IIsoline highlighted_yellow_last;
     private IIsoline highlighted_yellow;
 
-    public static void main(String[] args) throws Exception {
-        launch(args);
-    }
+//    public static void main(String[] args) throws Exception {
+//        launch(args);
+//    }
 
     public MainApp() {
         this.mc = new MainController();
