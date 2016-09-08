@@ -229,7 +229,7 @@ public class FBXDefaults {
         return docs;
     }
 
-    public static FBXNode getObjectDefinitions(int object_count) {
+    public static FBXNode getObjectDefinitions(int object_count, int material_count) {
 
         FBXNode od = new FBXNode("Definitions");
         od.addSubNode("Version", 100);
@@ -258,9 +258,83 @@ public class FBXDefaults {
             od.subNodes.add(g);
         }
 
+        {
+            FBXNode mat = new FBXNode("ObjectType");
+            mat.properties.add("Material");
+            mat.addSubNode("Count",material_count);
+            mat.subNodes.add(getMaterialProperties());
+            od.subNodes.add(mat);
+        }
+
+        {
+            FBXNode tex = new FBXNode("ObjectType");
+            tex.properties.add("Texture");
+            tex.addSubNode("Count",material_count);
+            tex.subNodes.add(getDefaultTextureProperties());
+            od.subNodes.add(tex);
+        }
+
+        {
+            FBXNode vid = new FBXNode("ObjectType");
+            vid.properties.add("Video");
+            vid.addSubNode("Count",material_count);
+            vid.subNodes.add(getDefaultVideoProperties());
+            od.subNodes.add(vid);
+        }
+
         return od;
 
     }
+
+
+    public static FBXNode getDefaultMaterialDefinition(int id, double r, double g, double b) {
+        FBXNode mat = new FBXNode("Material");
+        mat.properties.add(id);
+        mat.properties.add("Material::Material #"+id);
+        mat.addSubNode("Version",102);
+        mat.addSubNode("ShadingModel","phong");
+        mat.addSubNode("MultiLayer",0);
+        FBXNode p = new FBXNode("Properties70");
+        mat.subNodes.add(p);
+        p.setP("ShadingModel", "KString", "", "", "phong");
+        p.setP("EmissiveFactor", "Number", "", "A",0);
+        p.setP("AmbientColor", "Color", "", "A",r,g,b);
+        p.setP("DiffuseColor", "Color", "", "A",r,g,b);
+        p.setP("TransparentColor", "Color", "", "A",1,1,1);
+        p.setP("SpecularColor", "Color", "", "A",0.9,0.9,0.9);
+        p.setP("SpecularFactor", "Number", "", "A",0);
+        p.setP("ShininessExponent", "Number", "", "A",2);
+        p.setP("Emissive", "Vector3D", "Vector", "",0,0,0);
+        p.setP("Ambient", "Vector3D", "Vector", "",r,g,b);
+        p.setP("Diffuse", "Vector3D", "Vector", "",r,g,b);
+        p.setP("Specular", "Vector3D", "Vector", "",0,0,0);
+        p.setP("Shininess", "double", "Number", "",2);
+        p.setP("Opacity", "double", "Number", "",1);
+        p.setP("Reflectivity", "double", "Number", "",0);
+        return mat;
+    }
+
+    public static FBXNode getDefaultTextureDefinition(int index, String texture_relative_path) {
+
+        FBXNode tex = new FBXNode("Texture");
+        tex.properties.add(index);
+        tex.properties.add("Texture::Map #"+index);
+        tex.properties.add("");
+
+        tex.addSubNode("Type","TextureVideoClip");
+        tex.addSubNode("Version",202);
+        tex.addSubNode("TextureName","Texture::Map #"+index);
+        tex.addSubNode("Media","Video::Map #"+index);
+        tex.addSubNode("FileName:","");
+        tex.addSubNode("RelativeFilename","./"+texture_relative_path);
+        tex.addSubNode("ModelUVTranslation", 0,0);
+        tex.addSubNode("ModelUVScaling",1,1);
+        tex.addSubNode("Texture_Alpha_Source","Alpha_Black");
+        tex.addSubNode("Cropping",0,0,0,0);
+        return tex;
+    }
+
+
 
     public static int getGeometryVersion() {
         return 124;
@@ -298,6 +372,84 @@ public class FBXDefaults {
         p.setP("MaxHandle", "int", "Integer", "UH",3);
 
         return p;
+    }
+
+    public static FBXNode getMaterialProperties() {
+
+        FBXNode ptemp = new FBXNode("FbxSurfacePhong");
+        FBXNode p = new FBXNode("Properties70");
+        ptemp.subNodes.add(p);
+        p.setP("ShadingModel", "KString", "", "", "Phong");
+        p.setP("MultiLayer", "bool", "", "",0);
+        p.setP("EmissiveColor", "Color", "", "A",0,0,0);
+        p.setP("EmissiveFactor", "Number", "", "A",1);
+        p.setP("AmbientColor", "Color", "", "A",0.2,0.2,0.2);
+        p.setP("AmbientFactor", "Number", "", "A",1);
+        p.setP("DiffuseColor", "Color", "", "A",0.8,0.8,0.8);
+        p.setP("DiffuseFactor", "Number", "", "A",1);
+        p.setP("Bump", "Vector3D", "Vector", "",0,0,0);
+        p.setP("NormalMap", "Vector3D", "Vector", "",0,0,0);
+        p.setP("BumpFactor", "double", "Number", "",1);
+        p.setP("TransparentColor", "Color", "", "A",0,0,0);
+        p.setP("TransparencyFactor", "Number", "", "A",0);
+        p.setP("DisplacementColor", "ColorRGB", "Color", "",0,0,0);
+        p.setP("DisplacementFactor", "double", "Number", "",1);
+        p.setP("VectorDisplacementColor", "ColorRGB", "Color", "",0,0,0);
+        p.setP("VectorDisplacementFactor", "double", "Number", "",1);
+        p.setP("SpecularColor", "Color", "", "A",0.2,0.2,0.2);
+        p.setP("SpecularFactor", "Number", "", "A",1);
+        p.setP("ShininessExponent", "Number", "", "A",20);
+        p.setP("ReflectionColor", "Color", "", "A",0,0,0);
+        p.setP("ReflectionFactor", "Number", "", "A",1);
+
+        return ptemp;
+    }
+
+    public static FBXNode getDefaultTextureProperties() {
+        FBXNode ptemp = new FBXNode("FbxFileTexture");
+        FBXNode p = new FBXNode("Properties70");
+        ptemp.subNodes.add(p);
+
+        p.setP("TextureTypeUse", "enum", "", "",0);
+        p.setP("Texture alpha", "Number", "", "A",1);
+        p.setP("CurrentMappingType", "enum", "", "",0);
+        p.setP("WrapModeU", "enum", "", "",0);
+        p.setP("WrapModeV", "enum", "", "",0);
+        p.setP("UVSwap", "bool", "", "",0);
+        p.setP("PremultiplyAlpha", "bool", "", "",1);
+        p.setP("Translation", "Vector", "", "A",0,0,0);
+        p.setP("Rotation", "Vector", "", "A",0,0,0);
+        p.setP("Scaling", "Vector", "", "A",1,1,1);
+        p.setP("TextureRotationPivot", "Vector3D", "Vector", "",0,0,0);
+        p.setP("TextureScalingPivot", "Vector3D", "Vector", "",0,0,0);
+        p.setP("CurrentTextureBlendMode", "enum", "", "",1);
+        p.setP("UVSet", "KString", "", "", "default");
+        p.setP("UseMaterial", "bool", "", "",0);
+        p.setP("UseMipMap", "bool", "", "",0);
+
+        return ptemp;
+    }
+
+    public static FBXNode getDefaultVideoProperties() {
+        FBXNode ptemp = new FBXNode("FbxFileTexture");
+        FBXNode p = new FBXNode("Properties70");
+        ptemp.subNodes.add(p);
+        p.setP("ImageSequence", "bool", "", "",0);
+        p.setP("ImageSequenceOffset", "int", "Integer", "",0);
+        p.setP("FrameRate", "double", "Number", "",0);
+        p.setP("LastFrame", "int", "Integer", "",0);
+        p.setP("Width", "int", "Integer", "",0);
+        p.setP("Height", "int", "Integer", "",0);
+        p.setP("Path", "KString", "XRefUrl", "", "");
+        p.setP("StartFrame", "int", "Integer", "",0);
+        p.setP("StopFrame", "int", "Integer", "",0);
+        p.setP("PlaySpeed", "double", "Number", "",0);
+        p.setP("Offset", "KTime", "Time", "",0);
+        p.setP("InterlaceMode", "enum", "", "",0);
+        p.setP("FreeRunning", "bool", "", "",0);
+        p.setP("Loop", "bool", "", "",0);
+        p.setP("AccessMode", "enum", "", "",0);
+        return ptemp;
     }
 
     public static FBXNode getDefaultModelDefinition(int index, String name) {
@@ -410,7 +562,7 @@ public class FBXDefaults {
 
         FBXNode s_a = new FBXNode("a");
         for (int i = 0; i != size; ++i) {
-            s_a.properties.add(0);
+            s_a.properties.add(1);
         }
 
         s.subNodes.add(s_a);
@@ -486,17 +638,17 @@ public class FBXDefaults {
         }
 
         {
-            FBXNode le = new FBXNode("LayerElement");
-            le.addSubNode("Type","LayerElementMaterial");
-            le.addSubNode("TypedIndex",0);
-            l.subNodes.add(le);
+            FBXNode lem = new FBXNode("LayerElement");
+            lem.addSubNode("Type","LayerElementMaterial");
+            lem.addSubNode("TypedIndex",0);
+            l.subNodes.add(lem);
         }
 
         {
-            FBXNode le = new FBXNode("LayerElement");
-            le.addSubNode("Type","LayerElementSmoothing");
-            le.addSubNode("TypedIndex",0);
-            l.subNodes.add(le);
+            FBXNode les = new FBXNode("LayerElement");
+            les.addSubNode("Type","LayerElementSmoothing");
+            les.addSubNode("TypedIndex",0);
+            l.subNodes.add(les);
         }
 
         {

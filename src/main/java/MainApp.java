@@ -3,6 +3,7 @@
  */
 
 import Algorithm.DatasetGenerator.Datagen;
+import Algorithm.Mesh.TexturedPatch;
 import Deserialization.DeserializedOCAD;
 import Display.Drawer;
 import Display.GeometryWrapper;
@@ -430,7 +431,7 @@ public class MainApp extends Application implements Initializable {
         fileChooser1.setTitle("Save texture as");
 
 
-        fileChooser1.setInitialFileName("sample");
+        fileChooser1.setInitialFileName(TexturedPatch.getDefaultTextureNameBase());
         fileChooser1.setInitialDirectory( (new File(".")).getAbsoluteFile() );
 
         File file = fileChooser1.showSaveDialog(stage);

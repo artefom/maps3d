@@ -1,10 +1,7 @@
 package Algorithm.Mesh;
 
-import Utils.GeomUtils;
-import Utils.Pair;
-import Utils.PointRasterizer;
+import Utils.*;
 import Utils.Properties.PropertiesLoader;
-import Utils.TriangleUtils;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 
@@ -151,6 +148,26 @@ public class TexturedPatch {
     public void setMantainAspect(boolean mantain_aspect) {
         this.mantain_aspect = mantain_aspect;
         //validateAspect();
+    }
+
+    public static String extendTextureName(String str, int index) {
+        String extension = OutputUtils.getExtension(str);
+        String file_name = str;
+        if (extension.length() > 0) {
+            file_name = str.substring(0, str.length() - extension.length()-1);
+        }
+        if (extension == null || extension.length() == 0) {
+            extension = "png";
+        }
+        return file_name+"_"+index+"."+extension;
+    }
+
+    public static String getDefaultTextureNameBase() {
+        return "default_texture";
+    }
+
+    public static String getDefaultTextureExtension() {
+        return "png";
     }
 
     private void validateAspect() {
@@ -318,14 +335,24 @@ public class TexturedPatch {
         }
     }
 
+    private static final Integer max_split_times = 10;
     public static void splitRecursivly(TexturedPatch initial, Collection<TexturedPatch> out, double max_width, double max_height,
                                 double max_area, int max_triangle_count, int max_vertex_count, boolean mantain_aspect) {
 
+        ArrayDeque<Integer> splitted_times = new ArrayDeque<>();
         ArrayDeque<TexturedPatch> split_queue = new ArrayDeque<>();
         split_queue.add(initial);
+        splitted_times.add(0);
 
         while (split_queue.size() > 0) {
             TexturedPatch tp = split_queue.poll();
+            int splits = splitted_times.poll();
+
+            if (splits > max_split_times) {
+                if (!tp.isTextureCoordsInitialized()) tp.initializeTextureCoordinates();
+                out.add(tp);
+                continue;
+            }
 
             if ((max_width > 0 && tp.getWidth() > max_width) ||
                     (max_height > 0 && tp.getHeight() > max_height) ||
@@ -341,7 +368,9 @@ public class TexturedPatch {
                 new_patches.v2.setMantainAspect(tp.isMantainAspect());
 
                 split_queue.add(new_patches.v1);
+                splitted_times.add(splits+1);
                 split_queue.add(new_patches.v2);
+                splitted_times.add(splits+1);
             } else {
                 if (mantain_aspect && (tp.getWidth()/tp.getHeight() > 1.6 || tp.getHeight()/tp.getWidth() > 1.6)) {
                     Pair<TexturedPatch,TexturedPatch> new_patches = tp.splitInternal();
@@ -372,13 +401,5 @@ public class TexturedPatch {
         return tp;
     }
 
-//    public static void fromTrianglesSplit(Coordinate[] coords, Collection<int[]> triangles,
-//                                          Collection<TexturedPatch> patches_out,
-//                                          double max_width, double max_height,
-//                                          double max_area, int max_triangle_count, int max_vertex_count, boolean mantain_aspect) {
-//        TexturedPatch initial = fromTriangles(coords,triangles);
-//
-//        splitRecursivly(initial,patches_out,max_width,max_height,max_area,max_triangle_count,max_vertex_count,mantain_aspect);
-//    }
 
 }

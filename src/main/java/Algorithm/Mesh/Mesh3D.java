@@ -386,7 +386,8 @@ public class Mesh3D {
 
             PatchTextureGenerator PTGen = new PatchTextureGenerator(ocad,tp,this);
 
-            PTGen.writeToFile(out_path+"_"+patch_id+"_."+extension);
+            String full_path = TexturedPatch.extendTextureName(out_path,patch_id);
+            PTGen.writeToFile(full_path);
 
             patch_id += 1;
 

@@ -1,14 +1,24 @@
 package Utils.FBX;
 
 import Algorithm.Mesh.Mesh3D;
+import Algorithm.Mesh.TexturedPatch;
 import com.vividsolutions.jts.geom.Coordinate;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Random;
 
 public class FBXConverter {
 
-    public static int writeMesh(
+    private static class writeMeshRes{
+        int model_id;
+        int geometry_id;
+        int last_free_index;
+    }
+
+    public static writeMeshRes writeMesh(
             Coordinate[] coordinates,
             Coordinate[] normals,
             Coordinate[] texture_coordinates,
@@ -17,8 +27,17 @@ public class FBXConverter {
             ArrayList<Integer> material_ids,
             String name, int index, FBXNode objects, FBXNode connections) {
 
-        FBXNode g = FBXDefaults.getDefaultGeometryDefinition(++index);
-        FBXNode m = FBXDefaults.getDefaultModelDefinition(++index,name);
+        HashSet<Integer> unique_material_ids = new HashSet<>();
+        for (Integer i : material_ids)
+            unique_material_ids.add(i);
+
+        writeMeshRes res = new writeMeshRes();
+        res.model_id = index+2;
+        res.geometry_id = index+1;
+        res.last_free_index = index+3;
+
+        FBXNode g = FBXDefaults.getDefaultGeometryDefinition(res.geometry_id);
+        FBXNode m = FBXDefaults.getDefaultModelDefinition(res.model_id,name);
 
         g.subNodes.add(FBXDefaults.getVerticies(coordinates));
         g.subNodes.add(FBXDefaults.getPolygons(polygons));
@@ -36,8 +55,8 @@ public class FBXConverter {
             // Connect geometry to model
             connections.addSubNode("C","OO",g.properties.get(0),m.properties.get(0));
         }
-        return index;
 
+        return res;
     }
 
     public static void serializeMesh(
@@ -50,23 +69,75 @@ public class FBXConverter {
             String path) throws FileNotFoundException {
         int object_count = 1;
 
+        HashSet<Integer> unique_material_ids = new HashSet<>();
+        for (Integer i : material_ids)
+            unique_material_ids.add(i);
+
         FBXNode root = new FBXNode("");
 
         root.subNodes.add( FBXDefaults.getDefaultFbxHeader() );
         root.subNodes.add( FBXDefaults.getGlobalSettings() );
         root.subNodes.add( FBXDefaults.getDocumentsDescription() );
-        root.subNodes.add( FBXDefaults.getObjectDefinitions( object_count ) );
+        root.subNodes.add( FBXDefaults.getObjectDefinitions( object_count, unique_material_ids.size() ) );
 
         FBXNode objects = new FBXNode("Objects");
         FBXNode connections = new FBXNode("Connections");
 
 
-        writeMesh(coordinates,normals,texture_coordinates,polygons,uv_ids,material_ids,"GenericMesh",0,objects,connections);
+        writeMeshRes meshRes = writeMesh(coordinates,normals,texture_coordinates,polygons,uv_ids,material_ids,"GenericMesh",0,objects,connections);
+
+        ArrayList<Integer> unique_materials_sorted = new ArrayList<>();
+
+        unique_material_ids.forEach(unique_materials_sorted::add);
+        unique_materials_sorted.sort(Integer::compare);
+
+        for (Integer i : unique_materials_sorted)
+            meshRes.last_free_index = writeMaterial(objects, connections,meshRes.model_id, i, meshRes.last_free_index);
 
         root.subNodes.add(objects);
         root.subNodes.add(connections);
 
         root.serialize(path);
+    }
+
+    private static Random mat_rand = new Random();
+    private static int color_index = 0;
+    private static double mat_r;
+    private static double mat_g;
+    private static double mat_b;
+    private static void nextColor() {
+
+        ++color_index;
+        mat_r = (double)color_index/5;
+        mat_g = (double)color_index/10;
+        mat_b = (double)color_index/20;
+
+        while (mat_r > 1) mat_r-=1;
+        while (mat_g > 1) mat_g-=1;
+        while (mat_b > 1) mat_b-=1;
+    }
+
+    public static int writeMaterial(FBXNode objects, FBXNode connections, int model_id, int material_id, int index) {
+
+        nextColor();
+
+        int material_index = index;
+        ++index;
+        int texture_index = index;
+        ++index;
+        String texture_caption = TexturedPatch.getDefaultTextureNameBase();
+        String texture_local_path = TexturedPatch.extendTextureName(texture_caption,material_id);
+
+        FBXNode mat_def = FBXDefaults.getDefaultMaterialDefinition(material_index,mat_r,mat_g,mat_b);
+        FBXNode tex_def = FBXDefaults.getDefaultTextureDefinition(texture_index,texture_local_path);
+
+        objects.subNodes.add(mat_def);
+        objects.subNodes.add(tex_def);
+
+        connections.addSubNode("C","OO",material_index,model_id);
+        connections.addSubNode("C","OP",texture_index,material_index,"DiffuseColor");
+
+        return index;
     }
 
 //    public static void main(String[] args) throws FileNotFoundException {
