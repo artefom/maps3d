@@ -27,4 +27,16 @@ public class OcadVertex extends Coordinate {
     public boolean isEmptyRight(){return EMPTY_RIGHT;};
     public boolean isDash(){return IS_DASH;};
 
+    @Override
+    public String toString() {
+        return "OcadVertex{" +
+            "IS_BEIZER=" + IS_BEIZER +
+            ", EMPTY_LEFT=" + EMPTY_LEFT +
+            ", AREA_BORDER=" + AREA_BORDER +
+            ", CONNER=" + CONNER +
+            ", HOLE_FIRST=" + HOLE_FIRST +
+            ", EMPTY_RIGHT=" + EMPTY_RIGHT +
+            ", IS_DASH=" + IS_DASH +
+            '}';
+    }
 }
