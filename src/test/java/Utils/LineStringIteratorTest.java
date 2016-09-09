@@ -3,10 +3,11 @@ package Utils;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineSegment;
 import com.vividsolutions.jts.geom.LineString;
-import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
 import static TestUtils.TestUtils.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by Artyom.Fomenko on 19.07.2016.

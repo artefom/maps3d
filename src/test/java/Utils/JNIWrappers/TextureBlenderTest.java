@@ -1,13 +1,8 @@
 package Utils.JNIWrappers;
 
 import Utils.RasterUtils;
-import Utils.TextureUtils;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 /**
  * Created by Artyom.Fomenko on 02.09.2016.

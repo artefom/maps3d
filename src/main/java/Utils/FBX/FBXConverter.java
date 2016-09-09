@@ -1,12 +1,10 @@
 package Utils.FBX;
 
-import Algorithm.Mesh.Mesh3D;
 import Algorithm.Mesh.TexturedPatch;
 import com.vividsolutions.jts.geom.Coordinate;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 

@@ -1,17 +1,13 @@
 package Algorithm.NearbyGraph;
 
-import Algorithm.LineConnection.LineEnd;
 import Isolines.IIsoline;
 import TestUtils.TestUtils;
 import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineString;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
 import org.junit.Test;
 
 import java.util.LinkedList;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Created by Artyom.Fomenko on 26.07.2016.

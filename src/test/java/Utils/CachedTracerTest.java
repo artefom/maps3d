@@ -5,11 +5,8 @@ import com.vividsolutions.jts.math.Vector2D;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Random;
-
-import static org.junit.Assert.*;
 
 /**
  * Created by Artyom.Fomenko on 22.08.2016.

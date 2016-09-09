@@ -24,27 +24,7 @@
  */
 package org.opensphere.geometry.algorithm;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
-import org.opensphere.geometry.triangulation.DoubleComparator;
-import org.opensphere.geometry.triangulation.model.Edge;
-import org.opensphere.geometry.triangulation.model.Triangle;
-import org.opensphere.geometry.triangulation.model.Vertex;
-
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineSegment;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.LinearRing;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
+import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.impl.CoordinateArraySequence;
 import com.vividsolutions.jts.operation.linemerge.LineMerger;
 import com.vividsolutions.jts.triangulate.ConformingDelaunayTriangulationBuilder;
@@ -52,6 +32,13 @@ import com.vividsolutions.jts.triangulate.quadedge.QuadEdge;
 import com.vividsolutions.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import com.vividsolutions.jts.triangulate.quadedge.QuadEdgeTriangle;
 import com.vividsolutions.jts.util.UniqueCoordinateArrayFilter;
+import org.opensphere.geometry.triangulation.DoubleComparator;
+import org.opensphere.geometry.triangulation.model.Edge;
+import org.opensphere.geometry.triangulation.model.Triangle;
+import org.opensphere.geometry.triangulation.model.Vertex;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Computes a concave hull of a {@link Geometry} which is

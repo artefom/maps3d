@@ -1,6 +1,9 @@
 package Utils.Area;
 
-import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.geom.CoordinateSequence;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.Polygon;
 
 import java.util.ArrayList;
 

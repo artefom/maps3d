@@ -1,7 +1,6 @@
 package Display;
 
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
 import javafx.scene.paint.Color;
 
 /**

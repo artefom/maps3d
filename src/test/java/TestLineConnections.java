@@ -2,11 +2,11 @@ import Algorithm.LineConnection.*;
 import TestUtils.TestUtils;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import static TestUtils.TestUtils.*;
 
-import org.junit.Assert;
+import static TestUtils.TestUtils.*;
 
 /**
  * Created by Artem on 16.07.2016.

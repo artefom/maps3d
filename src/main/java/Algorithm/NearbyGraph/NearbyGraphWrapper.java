@@ -1,23 +1,18 @@
 package Algorithm.NearbyGraph;
 
-import Algorithm.LineConnection.LineEnd;
 import Isolines.IIsoline;
 import Utils.Constants;
-import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.geom.impl.PackedCoordinateSequence;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LinearRing;
+import com.vividsolutions.jts.geom.Polygon;
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
 import org.jgrapht.alg.KruskalMinimumSpanningTree;
 import org.jgrapht.graph.AsUnweightedGraph;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 import org.jgrapht.traverse.BreadthFirstIterator;
-import sun.java2d.pipe.SpanShapeRenderer;
 
-import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Predicate;
 
 /**
  * Created by Artyom.Fomenko on 26.07.2016.

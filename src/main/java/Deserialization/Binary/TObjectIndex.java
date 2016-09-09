@@ -5,43 +5,43 @@ package Deserialization.Binary;
  */
 public class TObjectIndex {
 
-    @byteoffset( offset = 0)
+    @ByteOffset( offset = 0)
     public LRect rc;
 
-    @byteoffset( offset = 16)
+    @ByteOffset( offset = 16)
     public int Pos;
 
-    @byteoffset( offset = 20)
+    @ByteOffset( offset = 20)
     public int Len;
 
-    @byteoffset( offset = 24)
+    @ByteOffset( offset = 24)
     public int Sym;
 
-    @byteoffset( offset = 28)
+    @ByteOffset( offset = 28)
     public byte ObjType;
 
-    @byteoffset( offset = 29)
+    @ByteOffset( offset = 29)
     public byte EncryptedMode;
 
-    @byteoffset( offset = 30)
+    @ByteOffset( offset = 30)
     public byte Status;
 
-    @byteoffset( offset = 31)
+    @ByteOffset( offset = 31)
     public byte ViewType;
 
-    @byteoffset( offset = 32)
+    @ByteOffset( offset = 32)
     public short Color;
 
-    @byteoffset( offset = 34)
+    @ByteOffset( offset = 34)
     public short Group;
 
-    @byteoffset( offset = 36)
+    @ByteOffset( offset = 36)
     public short ImpLayer;
 
-    @byteoffset( offset = 38)
+    @ByteOffset( offset = 38)
     public byte LayoutFont;
 
-    @byteoffset( offset = 39)
+    @ByteOffset( offset = 39)
     public byte Res2;
 
     @Override

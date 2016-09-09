@@ -5,10 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.function.BooleanSupplier;
-import java.util.function.DoubleBinaryOperator;
 
 /**
  * Created by Artyom.Fomenko on 03.09.2016.

@@ -1,13 +1,17 @@
 package Algorithm.Texture;
 
 
-import Algorithm.Mesh.TexturedPatch;
-import Utils.*;
+import Utils.LineStringIterator;
+import Utils.PointRasterizer;
+import Utils.TextureUtils;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.Polygon;
 
 import java.awt.*;
-import java.awt.image.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferInt;
+import java.awt.image.WritableRaster;
 import java.util.List;
 
 /**

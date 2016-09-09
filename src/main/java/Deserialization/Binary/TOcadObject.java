@@ -1,28 +1,19 @@
 package Deserialization.Binary;
 
 import Utils.Curves.CurveString;
-import Utils.Constants;
 import Utils.Pair;
 import Utils.Properties.PropertiesLoader;
-import Utils.SymbolIdMatcher;
-import com.sun.org.apache.xpath.internal.functions.Function2Args;
 import com.vividsolutions.jts.geom.*;
 
-import javax.security.auth.callback.TextOutputCallback;
-import javax.swing.plaf.metal.OceanTheme;
 import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
 import java.util.ArrayList;
-import java.util.function.DoubleFunction;
 import java.util.function.Function;
-import java.util.function.IntFunction;
-import java.util.function.IntToDoubleFunction;
 
 class TDPoly {
-    @byteoffset( offset = 0)
+    @ByteOffset( offset = 0)
     public int x;
 
-    @byteoffset( offset = 4)
+    @ByteOffset( offset = 4)
     public int y;
 
 
@@ -125,8 +116,8 @@ class TDPoly {
  */
 public class TOcadObject extends ByteDeserializable {
 
-    private final int TDPoly_offset = 32;
-    private final int TDPoly_size = 8;
+    private static final int TDPOLY_OFFSET = 32;
+    private static final int TDPOLY_SIZE = 8;
     private final ArrayList<TDPoly> Poly = new ArrayList<>();
 
     public final ArrayList<OcadVertex> vertices = new ArrayList<>();
@@ -137,14 +128,18 @@ public class TOcadObject extends ByteDeserializable {
     }
 
     @Override
-    public void Deserialize(SeekableByteChannel s, int offset, ByteBuffer buf) {
-        super.Deserialize(s, offset, buf);
+    public void deserialize(ByteBuffer s, int offset) {
+        super.deserialize(s, offset);
         Object[] obj;
         try {
-            System.out.println("TOcadObject::deserialize(buffer, " + offset + "), nItem = " + this.nItem);
-            obj = readObjectArray(offset+TDPoly_offset, this.nItem+1, TDPoly_size, TDPoly.class);
+            obj = readObjectArray(offset + TDPOLY_OFFSET, this.nItem + 1, TDPOLY_SIZE, TDPoly.class);
         } catch (Exception ex) {
-            throw new RuntimeException("Invalid format");
+            ex.printStackTrace();
+            String message = ex.getMessage();
+            if (message == null) {
+                message =  ex.getClass().getName();
+            }
+            throw new RuntimeException("Invalid format: " + message);
         }
 
         Poly.clear();
@@ -219,7 +214,7 @@ public class TOcadObject extends ByteDeserializable {
 
     public Geometry getGeometry(GeometryFactory gf) throws Exception {
 
-        // Split into circles, if succeeded, means that it's polygon
+        // Split into circles, if succeeded, means that it'buffer polygon
 
         if (Otp == 3) {// Area object
 
@@ -256,50 +251,50 @@ public class TOcadObject extends ByteDeserializable {
         }
     }
 
-    @byteoffset( offset = 0)
+    @ByteOffset( offset = 0)
     public int Sym;
 
-    @byteoffset( offset = 4)
+    @ByteOffset( offset = 4)
     public byte Otp;
 
-    @byteoffset( offset = 5)
+    @ByteOffset( offset = 5)
     public byte _Customer;
 
-    @byteoffset( offset = 6)
+    @ByteOffset( offset = 6)
     public short Ang;
 
-    @byteoffset( offset = 8)
+    @ByteOffset( offset = 8)
     public int nItem;
 
-    @byteoffset( offset = 12)
+    @ByteOffset( offset = 12)
     public short nText;
 
-    @byteoffset( offset = 14)
+    @ByteOffset( offset = 14)
     public byte Mark;
 
-    @byteoffset( offset = 15)
+    @ByteOffset( offset = 15)
     public byte SnappingMark;
 
-    @byteoffset( offset = 16)
+    @ByteOffset( offset = 16)
     public int Col;
 
-    @byteoffset( offset = 20)
+    @ByteOffset( offset = 20)
     public short LineWidth;
 
-    @byteoffset( offset = 22)
+    @ByteOffset( offset = 22)
     public short DiamFlags;
 
-    @byteoffset( offset = 24)
+    @ByteOffset( offset = 24)
     public int ServerObjectId;
 
-    @byteoffset( offset = 28)
+    @ByteOffset( offset = 28)
     public int Height;
 
     @Override
     public String toString() {
         return "TOcadObject{" +
-            "TDPoly_offset=" + TDPoly_offset +
-            ", TDPoly_size=" + TDPoly_size +
+            "TDPoly_offset=" + TDPOLY_OFFSET +
+            ", TDPoly_size=" + TDPOLY_SIZE +
             ", isLineCache=" + isLineCache +
             ", isSlope_cache=" + isSlope_cache +
             ", line_type_cache=" + line_type_cache +

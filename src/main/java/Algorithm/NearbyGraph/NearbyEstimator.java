@@ -1,20 +1,20 @@
 package Algorithm.NearbyGraph;
 
-import Algorithm.LineConnection.Connection;
 import Display.GeometryWrapper;
-import Isolines.IIsoline;
-import Isolines.Isoline;
-import Utils.*;
-import com.vividsolutions.jts.geom.*;
+import Utils.CachedTracer;
+import Utils.CommandLineUtils;
+import Utils.Constants;
+import Utils.LineStringInterpolatedLineIterator;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineSegment;
+import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.math.Vector2D;
-import javafx.scene.paint.Color;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
-import sun.security.util.Length;
 
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.function.DoubleFunction;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Finds out all nearby lines of specific line with specified precision

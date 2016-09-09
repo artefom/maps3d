@@ -5,7 +5,6 @@ import com.vividsolutions.jts.algorithm.Angle;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineSegment;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;

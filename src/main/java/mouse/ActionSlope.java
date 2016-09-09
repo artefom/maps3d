@@ -3,16 +3,14 @@ package mouse;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
 import Utils.CachedTracer;
-import Utils.GeomUtils;
 import Utils.LineStringIterator;
-
 import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.LineSegment;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.math.Vector2D;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Created by Artem on 21.08.2016.

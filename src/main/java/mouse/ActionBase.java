@@ -1,10 +1,7 @@
 package mouse;
 
-import Isolines.IIsoline;
 import Isolines.IsolineContainer;
 import com.vividsolutions.jts.geom.Coordinate;
-
-import java.util.ArrayList;
 
 /**
  * Base class, exposing execution interface and container storage

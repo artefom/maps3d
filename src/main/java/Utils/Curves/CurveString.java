@@ -2,18 +2,16 @@ package Utils.Curves;
 
 
 import Deserialization.Binary.OcadVertex;
-import Utils.CommandLineUtils;
-import Utils.GeomUtils;
-import Utils.LineStringInterpolatedPointIterator;
 import Utils.Pair;
-import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.geom.util.GeometryEditor;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.CoordinateSequence;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.math.Vector2D;
 
-import java.util.*;
-import java.util.function.DoubleFunction;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * Created by Artem on 22.07.2016.

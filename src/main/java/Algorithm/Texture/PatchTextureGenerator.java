@@ -7,7 +7,6 @@ import Deserialization.DeserializedOCAD;
 import Utils.*;
 import Utils.Properties.PropertiesLoader;
 import com.google.gson.Gson;
-
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.Polygon;
 

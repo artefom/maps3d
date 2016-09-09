@@ -12,7 +12,7 @@ public class ByteDeserializableTest {
 //        SeekableByteChannel ch = Files.newByteChannel(path); // Defaults to read-only
 //        ch.position(0);
 //        OcadHeader dser = new OcadHeader();
-//        dser.Deserialize(ch,0);
+//        dser.deserialize(ch,0);
 //        assertEquals(3245,dser.OCADMark);
 //        assertEquals(0,   dser.FileType);
 //        assertEquals(0,   dser.FileStatus);

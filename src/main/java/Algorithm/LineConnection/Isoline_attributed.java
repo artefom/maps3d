@@ -2,7 +2,10 @@ package Algorithm.LineConnection;
 
 import Isolines.IIsoline;
 import Isolines.Isoline;
-import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineSegment;
+import com.vividsolutions.jts.geom.LineString;
 
 /**
  * Wrapper around {@link IIsoline}, containing all sufficient information about {@link LineEnd}s.

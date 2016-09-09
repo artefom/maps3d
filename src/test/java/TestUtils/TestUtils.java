@@ -1,16 +1,16 @@
 package TestUtils;
 
 import Algorithm.LineConnection.Isoline_attributed;
-import Isolines.Isoline;
 import Algorithm.LineConnection.LineEnd;
+import Isolines.Isoline;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineSegment;
 import com.vividsolutions.jts.geom.LineString;
+import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Assert;
 
 /**
  * Created by Artyom.Fomenko on 19.07.2016.
