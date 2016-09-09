@@ -42,4 +42,23 @@ public class OcadHeader extends ByteDeserializable {
 
     @ByteOffset( offset = 32)
     public int FirstStringIndexBlk;
+
+    @Override
+    public String toString() {
+        return "OcadHeader{" +
+            "OCADMark=" + OCADMark +
+            ", FileType=" + FileType +
+            ", FileStatus=" + FileStatus +
+            ", Version=" + Version +
+            ", Subversion=" + Subversion +
+            ", SubSubversion=" + SubSubversion +
+            ", FirstSymbolIndexBlk=" + FirstSymbolIndexBlk +
+            ", ObjectIndexBlock=" + ObjectIndexBlock +
+            ", OfflineSyncSerial=" + OfflineSyncSerial +
+            ", CurrentFileVersion=" + CurrentFileVersion +
+            ", Res2=" + Res2 +
+            ", Res3=" + Res3 +
+            ", FirstStringIndexBlk=" + FirstStringIndexBlk +
+            '}';
+    }
 }

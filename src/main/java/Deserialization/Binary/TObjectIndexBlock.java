@@ -1,5 +1,7 @@
 package Deserialization.Binary;
 
+import java.util.Arrays;
+
 /**
  * Created by Artem on 21.07.2016.
  */
@@ -12,4 +14,10 @@ public class TObjectIndexBlock extends ByteDeserializable {
     @ByteOffset(offset = 4)
     public TObjectIndex[] Table;
 
+    @Override
+    public String toString() {
+        return "TObjectIndexBlock{" +
+            "NextObjectIndexBlock=" + NextObjectIndexBlock +
+            '}';
+    }
 }

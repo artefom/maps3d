@@ -15,4 +15,14 @@ public class LRect {
 
     @ByteOffset( offset = 12)
     public int Bottom;
+
+    @Override
+    public String toString() {
+        return "LRect{" +
+            "Left=" + Left +
+            ", Top=" + Top +
+            ", Right=" + Right +
+            ", Bottom=" + Bottom +
+            '}';
+    }
 }

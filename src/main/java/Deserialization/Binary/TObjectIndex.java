@@ -44,4 +44,22 @@ public class TObjectIndex {
     @ByteOffset( offset = 39)
     public byte Res2;
 
+    @Override
+    public String toString() {
+        return "TObjectIndex{" +
+            "rc=" + rc +
+            ", Pos=" + Pos +
+            ", Len=" + Len +
+            ", Sym=" + Sym +
+            ", ObjType=" + ObjType +
+            ", EncryptedMode=" + EncryptedMode +
+            ", Status=" + Status +
+            ", ViewType=" + ViewType +
+            ", Color=" + Color +
+            ", Group=" + Group +
+            ", ImpLayer=" + ImpLayer +
+            ", LayoutFont=" + LayoutFont +
+            ", Res2=" + Res2 +
+            '}';
+    }
 }

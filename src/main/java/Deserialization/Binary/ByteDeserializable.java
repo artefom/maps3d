@@ -9,7 +9,7 @@ import java.nio.channels.SeekableByteChannel;
 /**
  * Created by Artem on 21.07.2016.
  */
-public class ByteDeserializable {
+public abstract class ByteDeserializable {
 
     protected ByteBuffer readbb(SeekableByteChannel s, int bytes) {
         ByteBuffer bb = ByteBuffer.allocate(bytes);
