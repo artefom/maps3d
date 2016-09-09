@@ -141,6 +141,7 @@ public class TOcadObject extends ByteDeserializable {
         super.Deserialize(s, offset, buf);
         Object[] obj;
         try {
+            System.out.println("TOcadObject::deserialize(buffer, " + offset + "), nItem = " + this.nItem);
             obj = readObjectArray(offset+TDPoly_offset, this.nItem+1, TDPoly_size, TDPoly.class);
         } catch (Exception ex) {
             throw new RuntimeException("Invalid format");
