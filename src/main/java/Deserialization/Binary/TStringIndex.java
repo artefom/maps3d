@@ -60,4 +60,13 @@ public class TStringIndex extends ByteDeserializable {
         }
     }
 
+    @Override
+    public String toString() {
+        return "TStringIndex{" +
+            "Pos=" + Pos +
+            ", Len=" + Len +
+            ", RecType=" + RecType +
+            ", ObjIndex=" + ObjIndex +
+            '}';
+    }
 }

@@ -290,4 +290,28 @@ public class TOcadObject extends ByteDeserializable {
 
     @ByteOffset( offset = 28)
     public int Height;
+
+    @Override
+    public String toString() {
+        return "TOcadObject{" +
+            "TDPoly_offset=" + TDPoly_offset +
+            ", TDPoly_size=" + TDPoly_size +
+            ", isLineCache=" + isLineCache +
+            ", isSlope_cache=" + isSlope_cache +
+            ", line_type_cache=" + line_type_cache +
+            ", Sym=" + Sym +
+            ", Otp=" + Otp +
+            ", _Customer=" + _Customer +
+            ", Ang=" + Ang +
+            ", nItem=" + nItem +
+            ", nText=" + nText +
+            ", Mark=" + Mark +
+            ", SnappingMark=" + SnappingMark +
+            ", Col=" + Col +
+            ", LineWidth=" + LineWidth +
+            ", DiamFlags=" + DiamFlags +
+            ", ServerObjectId=" + ServerObjectId +
+            ", Height=" + Height +
+            '}';
+    }
 }
