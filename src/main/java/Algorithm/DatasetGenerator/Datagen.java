@@ -1,34 +1,24 @@
 package Algorithm.DatasetGenerator;
 
-import Algorithm.LineConnection.*;
-import Algorithm.NearbyGraph.Isoline_attributed;
-import Algorithm.NearbyGraph.NearbyContainer;
-import Algorithm.NearbyGraph.NearbyEstimator;
-import Algorithm.NearbyGraph.NearbyGraphWrapper;
+import Algorithm.LineConnection.Connection;
+import Algorithm.LineConnection.RandomForestEvaluator;
 import Isolines.IIsoline;
 import Isolines.Isoline;
 import Isolines.IsolineContainer;
-import Utils.*;
-import Utils.Area.LSWAttributed;
-import com.google.gson.Gson;
+import Utils.CachedTracer;
+import Utils.CommandLineUtils;
+import Utils.OutputUtils;
+import Utils.Pair;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-
 import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.geom.impl.PackedCoordinateSequence;
-import com.vividsolutions.jts.operation.valid.SimpleNestedRingTester;
 import com.vividsolutions.jts.util.GeometricShapeFactory;
-import javafx.geometry.BoundingBox;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.function.BooleanSupplier;
-import java.util.stream.Collectors;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Random;
 
 /**
  * Created by Artyom.Fomenko on 16.08.2016.

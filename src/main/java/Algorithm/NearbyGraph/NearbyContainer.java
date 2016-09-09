@@ -1,13 +1,9 @@
 package Algorithm.NearbyGraph;
 
 import Isolines.IIsoline;
-import Isolines.IsolineContainer;
-import com.vividsolutions.jts.geom.Geometry;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Created by Artyom.Fomenko on 26.07.2016.

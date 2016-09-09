@@ -1,12 +1,7 @@
 package Isolines;
 
-import Utils.Constants;
-import Utils.LineStringInterpolatedIterator;
-import com.vividsolutions.jts.geom.*;
 import Utils.DebugUtils;
-
-import java.util.LinkedList;
-import java.util.List;
+import com.vividsolutions.jts.geom.*;
 
 /**
  * Created by Artyom.Fomenko on 15.07.2016.

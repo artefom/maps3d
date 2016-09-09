@@ -1,7 +1,5 @@
 package Algorithm.Interpolation;
 
-import Utils.CommandLineUtils;
-import Utils.Constants;
 import Utils.GeomUtils;
 import Utils.Properties.PropertiesLoader;
 import Utils.RasterUtils;

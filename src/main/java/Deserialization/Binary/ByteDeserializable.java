@@ -3,7 +3,6 @@ package Deserialization.Binary;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.SeekableByteChannel;
 
 
@@ -18,79 +17,45 @@ public class ByteDeserializable {
         return (ByteBuffer)bb.flip();
     }
 
-    SeekableByteChannel s;
-    ByteBuffer buf;
-
-    protected void readToBuffer(int offset) {
-        try {
-            s.position(offset);
-            buf.clear();
-            buf.position(0);
-            s.read(buf);
-            buf = (ByteBuffer) buf.rewind();
-        } catch (Exception ex) {
-            throw new RuntimeException("Invalid file format");
-        }
-    }
-
-    protected long readLong(int offset) {
-        readToBuffer(offset);
-        return buf.asLongBuffer().get();
-    }
-
-    protected int readInt(int offset) {
-        readToBuffer(offset);
-        return buf.asIntBuffer().get();
-    }
-
-    protected short readShort(int offset) {
-        readToBuffer(offset);
-        return buf.asShortBuffer().get();
-    }
-
-    protected byte readByte(int offset) {
-        readToBuffer(offset);
-        return buf.get();
-    }
+    ByteBuffer buffer;
 
     protected Object readObject(int offset, Class c) throws IllegalAccessException, InstantiationException {
         Object obj = c.newInstance();
         if ( ByteDeserializable.class.isInstance(obj) ) {
             ByteDeserializable bd = (ByteDeserializable)obj;
-            bd.Deserialize(this.s, offset, buf);
-            bd.buf = null;
-            bd.s = null;
+            bd.deserialize(this.buffer, offset);
         } else {
-            _deserialize(offset,obj);
+            doDeserialize(offset,obj);
         }
         return obj;
     }
 
     protected byte[] readByteArray(int offset, int size, int step) {
-        byte[] b1 = new byte[size];
+        byte[] bytes = new byte[size];
         for (int i = 0; i != size; ++i) {
-            b1[i] = readByte(offset);
+            bytes[i] = buffer.get(offset);
             offset += step;
         }
-        return b1;
+        return bytes;
     }
 
     protected Object[] readObjectArray(int offset, int size, int step, Class c) throws IllegalAccessException, InstantiationException {
         Object[] ret = new Object[size];
         for (int i = 0; i != size; ++i) {
             ret[i] = readObject(offset,c);
+            System.out.println(ret[i].toString());
             offset+=step;
         }
         return ret;
     }
 
 
-    protected void _deserialize(int offset, Object obj, Field field) throws IllegalAccessException, InstantiationException {
+    protected void doDeserialize(int offset, Object obj, Field field) throws IllegalAccessException, InstantiationException {
 
         Class cls = field.getType();
 
         if (cls.isArray()) {
-            serializedarray sz = field.getDeclaredAnnotation(serializedarray.class);
+            SerializedArray sz = field.getDeclaredAnnotation(SerializedArray.class);
             int size = sz.size();
             int step = sz.step();
             Class comp_type = cls.getComponentType();
@@ -120,13 +85,13 @@ public class ByteDeserializable {
         } else {
 
             if (long.class.isAssignableFrom(cls)) {
-                field.setLong(obj, readLong(offset));
+                field.setLong(obj, buffer.getLong(offset));
             } else if (int.class.isAssignableFrom(cls)) {
-                field.setInt(obj, readInt(offset));
+                field.setInt(obj, buffer.getInt(offset));
             } else if (short.class.isAssignableFrom(cls)) {
-                field.setShort(obj, readShort(offset));
+                field.setShort(obj, buffer.getShort(offset));
             } else if (byte.class.isAssignableFrom(cls)) {
-                field.setByte(obj, readByte(offset));
+                field.setByte(obj, buffer.get(offset));
             } else if (String.class.isAssignableFrom(cls)) {
                 throw new RuntimeException("Can't assign string!");
             } else {
@@ -137,17 +102,17 @@ public class ByteDeserializable {
 
     }
 
-    protected void _deserialize(int global_offset, Object obj) {
+    protected void doDeserialize(int global_offset, Object obj) {
         Field[] fields = obj.getClass().getFields();
 
         for (int i = 0; i != fields.length; ++i) {
             Field field = fields[i];
 
-            byteoffset ofs = field.getDeclaredAnnotation(byteoffset.class);
+            ByteOffset ofs = field.getDeclaredAnnotation(ByteOffset.class);
             if (ofs != null) {
                 int offset = ofs.offset() + global_offset;
                 try {
-                    _deserialize(offset, obj, field);
+                    doDeserialize(offset, obj, field);
                 } catch (IllegalAccessException ex) {
                     throw new RuntimeException("Unexpected case");
                 } catch (InstantiationException e) {
@@ -157,18 +122,8 @@ public class ByteDeserializable {
         }
     }
 
-    public void Deserialize(SeekableByteChannel s,int offset, ByteBuffer buf) {
-        this.s = s;
-        this.buf = buf;
-        _deserialize(offset,this);
-    }
-
-    public void Deserialize(SeekableByteChannel s, int offset) {
-        this.s = s;
-        buf = ByteBuffer.allocateDirect(8);
-        buf = buf.order(ByteOrder.LITTLE_ENDIAN);
-        Deserialize(s,offset,buf);
-        this.s = null;
-        this.buf = null;
+    public void deserialize(ByteBuffer buffer, int offset) {
+        this.buffer = buffer;
+        doDeserialize(offset, this);
     }
 }

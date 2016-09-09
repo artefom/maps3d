@@ -4,9 +4,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineSegment;
 import com.vividsolutions.jts.geom.LineString;
 
-import static Utils.CoordUtils.add;
-import static Utils.CoordUtils.div;
-import static Utils.CoordUtils.sub;
+import static Utils.CoordUtils.*;
 
 /**
  * Represents line end. Contains end index and line segment

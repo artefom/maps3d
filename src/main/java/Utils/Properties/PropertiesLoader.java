@@ -1,7 +1,6 @@
 package Utils.Properties;
 
 import Utils.CommandLineUtils;
-import Utils.Constants;
 import Utils.OutputUtils;
 import Utils.SymbolIdMatcher;
 

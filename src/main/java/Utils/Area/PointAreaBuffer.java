@@ -6,7 +6,6 @@ import com.vividsolutions.jts.geom.Coordinate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
 
 /**
  * Created by Artyom.Fomenko on 23.08.2016.

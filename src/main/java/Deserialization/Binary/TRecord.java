@@ -3,7 +3,6 @@ package Deserialization.Binary;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Created by Artyom.Fomenko on 19.08.2016.

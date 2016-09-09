@@ -1,11 +1,7 @@
 package Algorithm.LineConnection;
 
-import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineSegment;
-import com.vividsolutions.jts.geom.LineString;
-
-import static Utils.CoordUtils.*;
 
 /**
  * Represents connection of lines and it's score.

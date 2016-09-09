@@ -1,16 +1,20 @@
 package Algorithm.LineConnection;
 
-import Utils.*;
 import Utils.Area.CoordinateAttributed;
 import Utils.Area.LSWAttributed;
 import Utils.Area.LineSegmentWrapper;
 import Utils.Area.PointAreaBuffer;
-
+import Utils.*;
 import com.vividsolutions.jts.algorithm.Angle;
-import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineSegment;
 
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
 
 /**
  * Created by Artyom.Fomenko on 18.08.2016.

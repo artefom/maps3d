@@ -9,7 +9,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static TestUtils.TestUtils.createIsoline;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by Artem on 20.07.2016.

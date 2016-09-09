@@ -9,7 +9,6 @@ import com.vividsolutions.jts.geom.LineString;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.DoubleFunction;
 
 public class NodedFunction {
 

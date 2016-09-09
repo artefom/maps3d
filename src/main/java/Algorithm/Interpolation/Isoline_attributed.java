@@ -1,15 +1,7 @@
 package Algorithm.Interpolation;
 
 import Isolines.IIsoline;
-import Isolines.Isoline;
-import Utils.LineStringInterpolatedPointIterator;
-import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.CoordinateSequence;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineSegment;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Artyom.Fomenko on 27.07.2016.

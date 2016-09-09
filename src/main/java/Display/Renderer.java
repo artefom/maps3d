@@ -1,11 +1,12 @@
 package Display;
 
-import com.sun.org.apache.bcel.internal.generic.SWAP;
 import com.vividsolutions.jts.geom.*;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Created by Artyom.Fomenko on 15.07.2016.

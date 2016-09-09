@@ -1,8 +1,6 @@
 package Deserialization.Binary;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -10,16 +8,16 @@ import java.util.Arrays;
  */
 public class TStringIndex extends ByteDeserializable {
 
-    @byteoffset(offset = 0)
+    @ByteOffset(offset = 0)
     public int Pos = 0;
 
-    @byteoffset(offset = 4)
+    @ByteOffset(offset = 4)
     public int Len = 0;
 
-    @byteoffset(offset = 8)
+    @ByteOffset(offset = 8)
     public int RecType = 0;
 
-    @byteoffset(offset = 12)
+    @ByteOffset(offset = 12)
     public int ObjIndex = 0;
 
     private String string;
@@ -29,22 +27,22 @@ public class TStringIndex extends ByteDeserializable {
     }
 
     @Override
-    public void Deserialize(SeekableByteChannel s, int offset, ByteBuffer buf)  {
-        super.Deserialize(s, offset, buf);
+    public void deserialize(ByteBuffer s, int offset)  {
+        super.deserialize(s, offset);
 
         try {
             s.position(Pos);
-
             if (Len > 10000) {
-                System.out.println("ALARM!");
+                System.out.println("Warning! String index is too big!");
             }
-            ByteBuffer stringBuf = ByteBuffer.allocateDirect(Len);
             char[] chars = new char[Len];
             s.position(Pos);
-            s.read(stringBuf);
+            byte[] byteBuf = new byte[Len];
+            s.get(byteBuf,0,Len);
+            ByteBuffer stringBuf = ByteBuffer.wrap(byteBuf);
             stringBuf = (ByteBuffer) stringBuf.rewind();
 
-            int i = 0;
+            int i;
             for (i = 0; i != Len; ++i) {
                 byte b = stringBuf.get();
                 if (b == 0) break;
@@ -59,7 +57,6 @@ public class TStringIndex extends ByteDeserializable {
 
         } catch (Exception ex) {
             string = null;
-            return;
         }
     }
 

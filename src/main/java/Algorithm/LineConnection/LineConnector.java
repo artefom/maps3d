@@ -1,6 +1,9 @@
 package Algorithm.LineConnection;
 
-import Utils.*;
+import Utils.ArrayIterator;
+import Utils.ArrayReverseIterator;
+import Utils.CoordUtils;
+import Utils.Pair;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.CoordinateSequence;
 import com.vividsolutions.jts.geom.GeometryFactory;

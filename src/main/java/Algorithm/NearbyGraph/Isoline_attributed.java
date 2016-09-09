@@ -1,11 +1,6 @@
 package Algorithm.NearbyGraph;
 
 import Isolines.IIsoline;
-import com.vividsolutions.jts.geom.LineSegment;
-import com.vividsolutions.jts.geom.LineString;
-import org.jgrapht.graph.DefaultWeightedEdge;
-
-import java.util.*;
 
 /**
  * Created by Artyom.Fomenko on 25.07.2016.

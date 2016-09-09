@@ -5,10 +5,8 @@ import Isolines.Isoline;
 import Isolines.IsolineContainer;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
 import com.vividsolutions.jts.geom.LineString;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**

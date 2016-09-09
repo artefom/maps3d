@@ -1,15 +1,16 @@
 package Algorithm.Interpolation;
 
-import Utils.*;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
+import Utils.*;
 import Utils.Properties.PropertiesLoader;
-import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.math.Vector2D;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * This class performs rasterisation and interpolation of isoline map.

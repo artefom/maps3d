@@ -2,25 +2,24 @@ package Algorithm.Mesh;
 
 import Algorithm.Interpolation.DistanceFieldInterpolation;
 import Algorithm.LineConnection.MapEdge;
-import Algorithm.NearbyGraph.NearbyContainer;
-import Algorithm.NearbyGraph.NearbyEstimator;
-import Algorithm.NearbyGraph.NearbyGraphWrapper;
 import Algorithm.Texture.PatchTextureGenerator;
 import Deserialization.DeserializedOCAD;
 import Isolines.IsolineContainer;
-import Utils.*;
 import Utils.Area.PolygonAreaBuffer;
+import Utils.*;
 import Utils.Curves.CurveString;
 import Utils.FBX.FBXConverter;
 import Utils.Properties.PropertiesLoader;
-
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector3D;
 import com.vividsolutions.jts.triangulate.DelaunayTriangulationBuilder;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Class, representing 3-dimentional mesh

@@ -10,10 +10,8 @@ import Isolines.IsolineContainer;
 import Utils.Pair;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.impl.PackedCoordinateSequence;
 
 import java.util.ArrayList;
-import java.util.concurrent.Exchanger;
 
 /**
  * Created by Artem on 21.08.2016.

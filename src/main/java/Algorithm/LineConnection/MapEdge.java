@@ -1,14 +1,12 @@
 package Algorithm.LineConnection;
 
-import Isolines.Isoline;
 import Isolines.IsolineContainer;
 import Utils.CachedTracer;
 import Utils.Constants;
-
 import com.vividsolutions.jts.algorithm.ConvexHull;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;
-import org.opensphere.geometry.algorithm.*;
+import org.opensphere.geometry.algorithm.ConcaveHull;
 
 import java.util.ArrayList;
 import java.util.Collection;

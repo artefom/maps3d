@@ -5,15 +5,12 @@ import Isolines.Isoline;
 import Utils.CachedTracer;
 import Utils.Constants;
 import Utils.Pair;
-import Utils.Tracer_Legacy;
-import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.stream.Collectors;
 
 /**
  * Connects lines based on connection priority

@@ -1,13 +1,12 @@
 package Utils.Area;
 
-import Algorithm.Interpolation.Triangulation;
-import Utils.CoordUtils;
 import Utils.GeomUtils;
-import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.LineSegment;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * Created by Artyom.Fomenko on 04.09.2016.

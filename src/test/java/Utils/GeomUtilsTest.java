@@ -1,11 +1,12 @@
 package Utils;
 
-import Utils.GeomUtils;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import org.junit.Test;
-import static TestUtils.TestUtils.*;
+
+import static TestUtils.TestUtils.assertEquals;
+import static TestUtils.TestUtils.createLineString;
 
 /**
  * Created by Artyom.Fomenko on 19.07.2016.

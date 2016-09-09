@@ -1,10 +1,12 @@
 package Display;
 
 import Algorithm.LineConnection.MapEdge;
+import Deserialization.Interpolation.SlopeMark;
 import Isolines.IIsoline;
 import Isolines.IsolineContainer;
-import Deserialization.Interpolation.SlopeMark;
-import Utils.*;
+import Utils.Constants;
+import Utils.LineStringInterpolatedLineIterator;
+import Utils.LineStringInterpolatedPointIterator;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;
 import javafx.scene.paint.Color;

@@ -7,7 +7,6 @@ import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;
 
 import java.util.*;
-import java.util.function.DoubleFunction;
 import java.util.function.Function;
 
 import static Utils.GeomUtils.getSide;

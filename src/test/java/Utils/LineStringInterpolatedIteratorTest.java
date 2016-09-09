@@ -4,12 +4,10 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineSegment;
 import com.vividsolutions.jts.geom.LineString;
+import org.junit.Assert;
 import org.junit.Test;
 
-import static TestUtils.TestUtils.assertEquals;
-import static TestUtils.TestUtils.createLineSegment;
-import static TestUtils.TestUtils.createLineString;
-import org.junit.Assert;
+import static TestUtils.TestUtils.*;
 //import static org.junit.Assert.*;
 //import static org.junit.Assert.assertEquals;
 

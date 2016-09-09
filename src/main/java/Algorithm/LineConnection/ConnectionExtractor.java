@@ -1,12 +1,12 @@
 package Algorithm.LineConnection;
 
-import Utils.*;
-import com.vividsolutions.jts.geom.Geometry;
+import Utils.CachedTracer;
+import Utils.CommandLineUtils;
+import Utils.Constants;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 
 import java.util.ArrayList;
-import java.util.function.Function;
 
 /**
  * Extracts valid connections from line ends.

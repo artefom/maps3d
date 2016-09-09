@@ -1,12 +1,10 @@
 package mouse;
 
 import Isolines.IIsoline;
-import Isolines.Isoline;
 import Isolines.IsolineContainer;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**

@@ -6,7 +6,6 @@ import Algorithm.LineConnection.LineConnector;
 import Algorithm.LineConnection.LineEnd;
 import Isolines.IIsoline;
 import Isolines.Isoline;
-import Isolines.IsolineContainer;
 import Utils.CommandLineUtils;
 import Utils.Constants;
 import Utils.Pair;

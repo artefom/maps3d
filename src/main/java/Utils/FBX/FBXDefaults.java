@@ -1,7 +1,6 @@
 package Utils.FBX;
 
 import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.math.Vector3D;
 
 import java.util.ArrayList;
 import java.util.Collection;
