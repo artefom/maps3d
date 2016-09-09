@@ -294,8 +294,8 @@ public class TOcadObject extends ByteDeserializable {
     @Override
     public String toString() {
         return "TOcadObject{" +
-            "TDPoly_offset=" + TDPoly_offset +
-            ", TDPoly_size=" + TDPoly_size +
+            "TDPoly_offset=" + TDPOLY_OFFSET +
+            ", TDPoly_size=" + TDPOLY_SIZE +
             ", isLineCache=" + isLineCache +
             ", isSlope_cache=" + isSlope_cache +
             ", line_type_cache=" + line_type_cache +
