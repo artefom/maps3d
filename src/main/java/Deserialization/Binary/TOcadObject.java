@@ -132,7 +132,6 @@ public class TOcadObject extends ByteDeserializable {
         super.deserialize(s, offset);
         Object[] obj;
         try {
-            System.out.println("TOcadObject::deserialize(buffer, " + offset + "), nItem = " + this.nItem);
             obj = readObjectArray(offset + TDPOLY_OFFSET, this.nItem + 1, TDPOLY_SIZE, TDPoly.class);
         } catch (Exception ex) {
             ex.printStackTrace();

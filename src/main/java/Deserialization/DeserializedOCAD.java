@@ -101,7 +101,10 @@ public class DeserializedOCAD {
 
             for (int i = 0; i != 256; ++i) {
                 TObjectIndex oi = indexBlock.Table[i];
-                if (!( oi.ObjType >= 0 && oi.ObjType <= 7 )) {
+                if (oi.ObjType == 0) {
+                    continue;
+                }
+                if (!(oi.ObjType > 0 && oi.ObjType <= 7 )) {
                     throw new Exception("Invalid format: invalid object type");
                 }
                 TOcadObject obj = new TOcadObject(coordinateConverter);
