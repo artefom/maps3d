@@ -1,10 +1,17 @@
 package Algorithm.BuildingIndex;
 
 import Algorithm.Interpolation.Triangulation;
+import Algorithm.Mesh.Mesh3D;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Polygon;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by fdl on 8/9/16.
@@ -14,13 +21,13 @@ public class BaseMesh extends Mesh {
         super(objFileName);
     }
 
-    BaseMesh(Triangulation triangulation){
-        Arrays.asList(triangulation.getMeshVertexes()).forEach(vertexXZY -> {
+    public BaseMesh(Coordinate [] coord_array, List <int[]> tris){
+        Arrays.asList(coord_array).forEach(vertexXZY -> {
             vertexesXZ.add(vertexXZY);
             vertexesY.add(vertexXZY.z);
             boxXZ.update(vertexXZY.x, vertexXZY.z);
         });
-        triangulation.getTrianglesIndices().forEach(tri -> {
+        tris.forEach(tri -> {
             Triplet face = new Triplet(tri);
             faceIndices.add(face);
             Polygon polygon = gf.createPolygon(new Coordinate[]{
@@ -35,6 +42,15 @@ public class BaseMesh extends Mesh {
         boxXZ.acceptUpdates();
         initialVertexesCount = vertexesXZ.size();
         getInitialFacesCount = faceIndices.size();
+
+    }
+
+    BaseMesh(Triangulation triangulation){
+        this(triangulation.getMeshVertexes(), triangulation.getTrianglesIndices());
+    }
+
+    public BaseMesh(Mesh3D arteMesh) {
+        this(arteMesh.coord_array, arteMesh.tris);
     }
 
     @Override

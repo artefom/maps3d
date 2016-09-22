@@ -1,10 +1,14 @@
 package Algorithm.BuildingIndex;
 
+import Utils.CommandLineUtils;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 /**
@@ -118,6 +122,24 @@ public class QTree {
 //            return sb.toString();
         }
 
+        public void dfd(BufferedWriter bw) throws IOException{
+            bw.write('[');
+            if (isSplit) {
+                bw.write('1');
+                for (int i = 0; i < 4; ++i) {
+                    bw.write(',');
+                    quarters[i].dfd(bw);
+                }
+            } else {
+                bw.write('0');
+                for (Polygon face : containment) {
+                    bw.write(',');
+                    bw.write(((Integer)face.getUserData()).toString());
+                }
+            }
+            bw.write(']');
+        }
+
         protected int cnt() {
             int ans = 0;
             if (isSplit) {
@@ -128,6 +150,15 @@ public class QTree {
                 ans += containment.size();
             }
             return ans;
+        }
+
+        private void dumpToBoxes(PrintWriter pw){
+            if (depth > 10)
+                System.err.println("ga");
+            if (isSplit)
+                for (Node n : quarters) n.dumpToBoxes(pw);
+            else
+                pw.printf("%f %f %f %f %d\n", ownBox.x0, ownBox.z0, ownBox.x1, ownBox.z1, containment.size());
         }
     }
 
@@ -175,5 +206,16 @@ public class QTree {
 
     public Box getXZBox(){
         return root.ownBox;
+    }
+
+    void dumpToJS(BufferedWriter bw) throws IOException{
+//        bw.write("rootbb: " + root.ownBox.toString() + "\n");
+        bw.write("tree:\n");
+        root.dfd(bw);
+        CommandLineUtils.report();
+    }
+
+    void dumpToBoxes(PrintWriter pw){
+        root.dumpToBoxes(pw);
     }
 }
