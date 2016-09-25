@@ -47,6 +47,7 @@ public class PatchTextureGenerator {
         public String z_mask_bezier_definitions = "";
         public String angle_mask_bezier_definitions = "";
         public String texture;
+        public int width = 1;
 
         public boolean erode_first;
         public int dilate_size;
@@ -84,18 +85,18 @@ public class PatchTextureGenerator {
             return Mask.toRGB(fill_r,fill_g,fill_b,fill_a);
         }
 
-        public ArrayList<Integer> getSymbols() {
-            String[] symbols = symbol_ids.split("(\\s*,\\s*|\\s)");
-            ArrayList<Integer> ret = new ArrayList<>();
-            for (int i = 0; i != symbols.length; ++i) {
-                try {
-                     ret.add(Integer.parseInt(symbols[i]));
-                } catch (Exception ex) {
-                    CommandLineUtils.printWarning("Error parsing symbols at "+name+" material");
-                }
-            }
-            return ret;
-        }
+//        public ArrayList<Integer> getSymbols() {
+//            String[] symbols = symbol_ids.split("(\\s*,\\s*|\\s)");
+//            ArrayList<Integer> ret = new ArrayList<>();
+//            for (int i = 0; i != symbols.length; ++i) {
+//                try {
+//                     ret.add(Integer.parseInt(symbols[i]));
+//                } catch (Exception ex) {
+//                    CommandLineUtils.printWarning("Error parsing symbols at "+name+" material");
+//                }
+//            }
+//            return ret;
+//        }
 
         public boolean shouldBlurMask() {
             return mask_blur > 0;
@@ -260,8 +261,9 @@ public class PatchTextureGenerator {
                 List<Polygon> polygons = new ArrayList<>();
                 List<LineString> strings = new ArrayList<>();
 
-                map.getObjectsByIDs(b.getSymbols());
-                for (TOcadObject obj : map.getObjectsByIDs(b.getSymbols())) {
+                //map.getObjectsByMask(b.symbol_ids);
+                List<TOcadObject> objs = map.getObjectsByMask(b.symbol_ids);
+                for (TOcadObject obj : objs) {
                     Geometry col = null;
                     try {
                         col = obj.getGeometry(gf);
@@ -287,7 +289,7 @@ public class PatchTextureGenerator {
                 }
 
                 layer.fillPolygons(polygons, maskRast, (byte) (127));
-                layer.drawLines(strings, maskRast, (byte)(127), 4);
+                layer.drawLines(strings, maskRast, (byte)(127), b.width);
             }
 
             // Apply height mask

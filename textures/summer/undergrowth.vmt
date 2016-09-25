@@ -1,0 +1,17 @@
+
+{
+  "name"                                : "undergrowth",
+  "symbol_ids"                          : "407...",
+  "filled"                              : true,
+  "color"                               : "128, 128, 128",
+  "z_index"                             : 2010,
+  "width"                               : 15,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "undergrowth.png",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}

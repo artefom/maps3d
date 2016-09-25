@@ -1,0 +1,8 @@
+
+{
+  "name" : "background",
+  "z_index" : -1000,
+  "filled" : true,
+  "color" : "200,200,200",
+  "texture"                             : "background.png"
+}

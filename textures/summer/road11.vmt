@@ -1,0 +1,17 @@
+
+{
+  "name"                                : "road11",
+  "symbol_ids"                          : "505...,504...",
+  "filled"                              : false,
+  "color"                               : "80, 80, 80",
+  "z_index"                             : 3010,
+  "width"                               : 5,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}

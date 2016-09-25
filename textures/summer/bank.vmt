@@ -1,0 +1,17 @@
+
+{
+  "name"                                : "bank",
+  "symbol_ids"                          : "301...",
+  "filled"                              : false,
+  "color"                               : "128, 128, 128",
+  "z_index"                             : -900,
+  "width"                               : 15,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "rough_open_land.png",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}

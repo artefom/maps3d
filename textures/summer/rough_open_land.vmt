@@ -1,0 +1,17 @@
+
+{
+  "name"                                : "rough_open_land",
+  "symbol_ids"                          : "401...,403...,404...,402...",
+  "filled"                              : true,
+  "color"                               : "128, 128, 128",
+  "z_index"                             : 1990,
+  "width"                               : 15,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "rough_open_land.png",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}

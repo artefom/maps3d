@@ -1,0 +1,17 @@
+
+{
+  "name"                                : "river",
+  "symbol_ids"                          : "305..., 306..., 307..., 308...",
+  "filled"                              : false,
+  "color"                               : "128, 128, 255",
+  "z_index"                             : 2000,
+  "width"                               : 5,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}

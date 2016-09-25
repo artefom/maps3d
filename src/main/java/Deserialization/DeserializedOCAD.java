@@ -203,5 +203,65 @@ public class DeserializedOCAD {
         return ret;
     }
 
+    private static List<String> splitMask(String mask) {
+        List<String> ret = Arrays.asList(mask.split(","));
+        for (int i = 0; i != ret.size(); ++i) {
+            ret.set(i,ret.get(i).trim());
+        }
+        return ret;
+    }
+
+    private static boolean matchesMask(int symbol_id, String mask) {
+        int correction = 0;
+        boolean negate = false;
+        if (mask.charAt(0) == '~') {
+            negate = true;
+            correction = 1;
+        }
+        String mask_2 = Integer.toString(symbol_id);
+
+        boolean matches_all = true;
+        for (int i = 0; i != mask_2.length(); ++i) {
+
+            if ( mask_2.charAt(i) != mask.charAt(i+correction) ) {
+                if (mask.charAt(i+correction) != '.') {
+                    matches_all = false;
+                    break;
+                }
+            }
+
+        }
+        if (matches_all) return true; return false;
+    }
+
+    public static boolean matchesMask(int symbol_id, List<String> masks) {
+        boolean ret = false;
+        for (String mask_part : masks) {
+            //System.out.println(mask_part);
+            if (mask_part.charAt(0) == '~') {
+                if (matchesMask(symbol_id, mask_part)) {
+                    return false;
+                }
+            } else {
+                if (matchesMask(symbol_id, mask_part)) {
+                    ret = true;
+                }
+            }
+        }
+        return ret;
+    }
+
+    public List<TOcadObject> getObjectsByMask(String mask) {
+        List<String> masks = splitMask(mask);
+
+        List<TOcadObject> ret = new ArrayList<>();
+        for (TOcadObject obj : objects) {
+            if ( matchesMask(obj.Sym,masks) ) {
+                ret.add(obj);
+            }
+        }
+        return ret;
+    }
+
 
 }

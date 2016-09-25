@@ -1,0 +1,126 @@
+### bank.vmt
+{
+  "name"                                : "bank",
+  "symbol_ids"                          : "301...",
+  "filled"                              : false,
+  "color"                               : "128, 128, 128",
+  "z_index"                             : 2000,
+  "width"                               : 15,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}
+
+### river.vmt
+{
+  "name"                                : "river",
+  "symbol_ids"                          : "305..., 306..., 307..., 308...",
+  "filled"                              : false,
+  "color"                               : "128, 128, 255",
+  "z_index"                             : 2000,
+  "width"                               : 4,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}
+
+### riverbank.vmt
+{
+  "name"                                : "riverbank",
+  "symbol_ids"                          : "305..., 306..., 307..., 308...",
+  "filled"                              : false,
+  "color"                               : "250, 225, 185",
+  "z_index"                             : 1999,
+  "width"                               : 10,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}
+
+### road1.vmt
+{
+  "name"                                : "road1",
+  "symbol_ids"                          : "505...,504...",
+  "filled"                              : false,
+  "color"                               : "0, 0, 0",
+  "z_index"                             : 2000,
+  "width"                               : 9,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}
+
+### road11.vmt
+{
+  "name"                                : "road11",
+  "symbol_ids"                          : "505...,504...",
+  "filled"                              : false,
+  "color"                               : "80, 80, 80",
+  "z_index"                             : 2000,
+  "width"                               : 5,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}
+
+
+### road2.vmt
+{
+  "name"                                : "road2",
+  "symbol_ids"                          : "506...",
+  "filled"                              : false,
+  "color"                               : "0, 0, 0",
+  "z_index"                             : 2000,
+  "width"                               : 3,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}
+
+### road3.vmt
+{
+  "name"                                : "road3",
+  "symbol_ids"                          : "507...,508...,509...",
+  "filled"                              : false,
+  "color"                               : "0, 0, 0",
+  "z_index"                             : 2000,
+  "width"                               : 2,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}

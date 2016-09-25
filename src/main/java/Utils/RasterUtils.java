@@ -1092,6 +1092,10 @@ public class RasterUtils {
 
     }
 
+    public static short getA(int color) {
+        return (short)((color>>24)&0xFF);
+    }
+
     public static short getR(int color) {
         return (short)((color>>16)&0xFF);
     }

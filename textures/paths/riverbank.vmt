@@ -1,0 +1,17 @@
+
+{
+  "name"                                : "riverbank",
+  "symbol_ids"                          : "305..., 306..., 307..., 308...",
+  "filled"                              : false,
+  "color"                               : "250, 225, 185",
+  "z_index"                             : 1999,
+  "width"                               : 9,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}

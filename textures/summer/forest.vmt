@@ -1,0 +1,17 @@
+
+{
+  "name"                                : "forest",
+  "symbol_ids"                          : "406...,408...,410...,411...",
+  "filled"                              : true,
+  "color"                               : "128, 128, 128",
+  "z_index"                             : 1990,
+  "width"                               : 15,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "forest.png",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}

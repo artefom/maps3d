@@ -66,12 +66,16 @@ public class TextureUtils {
                 (double)RasterUtils.getB(col_10)*area_10+
                 (double)RasterUtils.getB(col_01)*area_01+
                 (double)RasterUtils.getB(col_11)*area_11;
-
+        double d_a = (double)RasterUtils.getA(col_00)*area_00+
+                (double)RasterUtils.getA(col_10)*area_10+
+                (double)RasterUtils.getA(col_01)*area_01+
+                (double)RasterUtils.getA(col_11)*area_11;
         int r = GeomUtils.clamp((int)Math.round(d_r),0,255);
         int g = GeomUtils.clamp((int)Math.round(d_g),0,255);
         int b = GeomUtils.clamp((int)Math.round(d_b),0,255);
+        int a = GeomUtils.clamp((int)Math.round(d_a),0,255);
 
-        return RasterUtils.asRGB(r,g,b,255);
+        return RasterUtils.asRGB(r,g,b,a);
     }
 
     public static byte bilinearInterpolation(double x, double y, byte col_00, byte col_10, byte col_01, byte col_11) {
@@ -164,6 +168,7 @@ public class TextureUtils {
                 double r_accum = 0;
                 double g_accum = 0;
                 double b_accum = 0;
+                double a_accum = 0;
                 int count = 0;
 
                 for (int interp_x = 0; interp_x != 4; ++interp_x) {
@@ -174,6 +179,7 @@ public class TextureUtils {
                         r_accum += RasterUtils.getR(c);
                         g_accum += RasterUtils.getG(c);
                         b_accum += RasterUtils.getB(c);
+                        a_accum += RasterUtils.getA(c);
                         count += 1;
                     }
                 }
@@ -182,19 +188,26 @@ public class TextureUtils {
                     r_accum /= count;
                     g_accum /= count;
                     b_accum /= count;
+                    a_accum /= count;
                 }
 
+                a_accum=((a_accum/255)*(a_accum/255))*255;
                 short dr = (short)GeomUtils.clamp( (int)Math.round(r_accum), 0, 255);
                 short dg = (short)GeomUtils.clamp( (int)Math.round(g_accum), 0, 255);
                 short db = (short)GeomUtils.clamp( (int)Math.round(b_accum), 0, 255);
+                short da = (short)GeomUtils.clamp( (int)Math.round(a_accum), 0, 255);
 
                 int scolor = image[row*width+column];
                 short sr = RasterUtils.getR(scolor);
                 short sg = RasterUtils.getG(scolor);
                 short sb = RasterUtils.getB(scolor);
+                //short sa = RasterUtils.getA(scolor);
 
-                float a = ((float) (mask[row*width+column] + 128) / 255);
+                float a = ((float)(mask[row*width+column] + 128) / 255)*((float)da/255);
                 float a2 = 1 - a;
+
+//                float a = ((float) (mask[row*width+column] + 128) / 255);
+//                float a2 = 1 - a;
 
                 if (blendMode == Mask.BlendMode.SCREEN) {
                     dr = (short)(255-(float)(255-dr)*(255-sr)/255);
