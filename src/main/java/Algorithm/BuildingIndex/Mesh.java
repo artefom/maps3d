@@ -1,13 +1,22 @@
 package Algorithm.BuildingIndex;
 
+import Algorithm.Interpolation.Triangulation;
+import Utils.GeomUtils;
+import Utils.TriangleUtils;
 import com.vividsolutions.jts.geom.*;
+import jdk.nashorn.internal.runtime.regexp.joni.Regex;
 
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Scanner;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Created by fdl on 8/8/16.
@@ -49,26 +58,25 @@ public class Mesh {
     protected int initialVertexesCount, getInitialFacesCount;
 
     protected static GeometryFactory gf = new GeometryFactory();
-    private static char[] V = {'v', ' '}, F = {'f', ' '};
 
-    static void printVertex(double x, double y, double z, BufferedWriter obj) throws IOException {
-        obj.write(V);
+    private static void printVertex(double x, double y, double z, String beginning, char separator, String ending, BufferedWriter obj) throws IOException {
+        obj.write(beginning);
         obj.write(Double.toString(x));
-        obj.write(' ');
+        obj.write(separator);
         obj.write(Double.toString(y));
-        obj.write(' ');
+        obj.write(separator);
         obj.write(Double.toString(z));
-        obj.newLine();
+        obj.write(ending);
     }
 
-    static void printFace(int v1, int v2, int v3, BufferedWriter obj) throws IOException {
-        obj.write(F);
+    private static void printFace(int v1, int v2, int v3, String beginning, char separator, String ending, BufferedWriter obj) throws IOException {
+        obj.write(beginning);
         obj.write(Integer.toString(v1));
-        obj.write(' ');
+        obj.write(separator);
         obj.write(Integer.toString(v2));
-        obj.write(' ');
+        obj.write(separator);
         obj.write(Integer.toString(v3));
-        obj.newLine();
+        obj.write(ending);
     }
 
     protected Mesh(){}
@@ -76,7 +84,8 @@ public class Mesh {
     Mesh(String objFileName) {
         try {
             Scanner obj = new Scanner(new FileReader(objFileName));
-            String token;
+            String token, lastSkipped = "v";
+            int cntSkipped = 0;
             double x, y, z;
             while (obj.hasNext()) {
                 switch (token = obj.next()) {
@@ -89,7 +98,16 @@ public class Mesh {
                         vertexesY.add(y);
                         break;
                     case "f":
-                        Triplet face = new Triplet(obj.nextInt() - 1, obj.nextInt() - 1, obj.nextInt() - 1);
+                        String[] numbers = obj.nextLine().split("\\s+");
+                        if (numbers[1].contains("/")) {
+                            for (int i = 1; i < 4; ++i) {
+                                numbers[i] = numbers[i].split("/")[0];
+                            }
+                        }
+                        Triplet face = new Triplet(Integer.parseInt(numbers[1]) - 1, Integer.parseInt(numbers[2]) - 1, Integer.parseInt(numbers[3]) - 1);
+                        if (face.a * face.b * face.c == 0) {
+                            System.out.println("zero-index is synced");
+                        }
                         faceIndices.add(face);
                         Polygon polygon = gf.createPolygon(new Coordinate[]{
                                 vertexesXZ.get(face.a),
@@ -102,7 +120,14 @@ public class Mesh {
                         break;
                     default:
                         String line = obj.nextLine();
-                        System.err.println("Designed to work only with sp4cerat's simplifier, skipping '" + token + " " + line + "'");
+                        if (!token.equals(lastSkipped)) {
+                            if (cntSkipped != 0) System.err.println("\t//+" + cntSkipped + " time(-s)");
+                            System.err.println("Supporting only v %f %f %f and f %d[/%d] %d[/%d] %d[/%d] strings. Skipping '" + token + " " + line + "'");
+                            lastSkipped = token;
+                            cntSkipped = 0;
+                        } else {
+                            ++cntSkipped;
+                        }
                         //throw new IOException("Unexpected token '" + token + "'");
                 }
             }
@@ -165,10 +190,10 @@ public class Mesh {
             BufferedWriter obj = new BufferedWriter(new FileWriter(fileName));
             for (int i = 0; i < vertexesY.size(); ++i) {
                 Coordinate coordinate = vertexesXZ.get(i);
-                printVertex(coordinate.x, vertexesY.get(i), coordinate.y, obj);
+                printVertex(coordinate.x, vertexesY.get(i), coordinate.y, "v ", ' ', "\n", obj);
             }
             for (Triplet face : faceIndices) {
-                printFace(face.a + 1, face.b + 1, face.c + 1, obj);
+                printFace(face.a + 1, face.b + 1, face.c + 1, "f ", ' ', "\n", obj);
             }
             obj.close();
         } catch (IOException e) {
@@ -176,6 +201,56 @@ public class Mesh {
         }
     }
 
+    private double scale = 1., dx = 0., dz = 0.;
+
+    public void dumpToJS(BufferedWriter bw){
+        try {
+            bw.write("dx:" + dx + ",\n");
+            bw.write("dz:" + dz + ",\n");
+            bw.write("scaling: " + scale + ",\n");
+            bw.write("vertexes: [\n");
+            for (int i = 0; i < vertexesY.size(); ++i) {
+                Coordinate coordinate = vertexesXZ.get(i);
+                printVertex(coordinate.x, vertexesY.get(i), coordinate.y, "[", ',',
+                        i == vertexesY.size()-1 ? "]" : "],",
+                        bw);
+            }
+            bw.write("\n],triplets: [\n");
+            for (int i = 0; i < faceIndices.size(); ++i) {
+                Triplet face = faceIndices.get(i);
+                printFace(face.a, face.b, face.c, "[", ',',
+                        i == faceIndices.size()-1 ? "]" : "],",
+                        bw);
+            }
+            bw.write("\n]");
+        } catch (IOException e) {
+            throw new RuntimeException("Can't export to js", e);
+        }
+    }
+
+    public double centerAndNormalize(){
+        dx = -(boxXZ.x0+boxXZ.x1)/2;
+        dz = -(boxXZ.z0+boxXZ.z1)/2;
+        double inv_scale = Math.max(boxXZ.xsize(), boxXZ.zsize()), full_scale = 2/inv_scale;
+        double htx = boxXZ.xsize()/inv_scale, htz = boxXZ.zsize()/inv_scale;
+
+        Consumer<Coordinate> tfm = c -> {
+            c.x = GeomUtils.map(c.x, boxXZ.x0, boxXZ.x1, -htx, htx);
+            c.y = GeomUtils.map(c.y, boxXZ.z0, boxXZ.z1, -htz, htz);
+        };
+
+        vertexesXZ.forEach(tfm);
+
+        for (int i = 0; i < vertexesXZ.size(); ++i) {
+            vertexesY.set(i, vertexesY.get(i)*full_scale);
+        }
+
+        boxXZ.apply(tfm);
+
+        this.scale = full_scale;
+        System.out.println("scaled by " + full_scale);
+        return full_scale;
+    }
 
 }
 

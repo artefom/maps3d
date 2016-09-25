@@ -1,3 +1,4 @@
+import Algorithm.BuildingIndex.BaseMesh;
 import Algorithm.BuildingIndex.Index;
 import Algorithm.Healing.Healer;
 import Algorithm.Interpolation.DistanceFieldInterpolation;
@@ -159,8 +160,9 @@ public class MainController {
 //    }
 
     public void buildIndex(){
-        index = triangulation == null ? new Index("sample.obj") : new Index(triangulation);
-        CommandLineUtils.report();
+//        index = triangulation == null ? new Index("sample.obj") : new Index(triangulation);
+        throw new RuntimeException("Not implemented");
+//        CommandLineUtils.report();
         //index.diamondRain();
     }
 
@@ -219,8 +221,8 @@ public class MainController {
             output_path = output_path.substring(0,output_path.length()-1-extension.length());
         }
 
-        getMesh().saveAsFbx(output_path);
-
+        Index index = new Index(getMesh().saveAsFbx(output_path), true);
+        index.dumpToJS("index.js");
     }
 
 }

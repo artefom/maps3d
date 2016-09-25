@@ -1,5 +1,7 @@
 package Algorithm.Mesh;
 
+import Algorithm.BuildingIndex.BaseMesh;
+import Algorithm.BuildingIndex.Mesh;
 import Algorithm.Interpolation.DistanceFieldInterpolation;
 import Algorithm.LineConnection.MapEdge;
 import Algorithm.Texture.PatchTextureGenerator;
@@ -16,10 +18,7 @@ import com.vividsolutions.jts.triangulate.DelaunayTriangulationBuilder;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * Class, representing 3-dimentional mesh
@@ -233,7 +232,7 @@ public class Mesh3D {
         return vertices;
     }
 
-    public void saveAsFbx(String path) {
+    public BaseMesh saveAsFbx(String path) {
 
         System.out.println("Dumping fbx");
 
@@ -292,6 +291,8 @@ public class Mesh3D {
             CommandLineUtils.reportException(ignored);
 
         };
+
+        return new BaseMesh(vertices, tris);
     }
 
     /**
