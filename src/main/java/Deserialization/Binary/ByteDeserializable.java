@@ -43,7 +43,7 @@ public abstract class ByteDeserializable {
         Object[] ret = new Object[size];
         for (int i = 0; i != size; ++i) {
             ret[i] = readObject(offset,c);
-            System.out.println(ret[i].toString());
+//            System.out.println(ret[i].toString());
             offset+=step;
         }
         return ret;
