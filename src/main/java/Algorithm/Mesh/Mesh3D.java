@@ -1,7 +1,6 @@
 package Algorithm.Mesh;
 
 import Algorithm.BuildingIndex.BaseMesh;
-import Algorithm.BuildingIndex.Mesh;
 import Algorithm.Interpolation.DistanceFieldInterpolation;
 import Algorithm.LineConnection.MapEdge;
 import Algorithm.Texture.PatchTextureGenerator;
@@ -18,7 +17,10 @@ import com.vividsolutions.jts.triangulate.DelaunayTriangulationBuilder;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Class, representing 3-dimentional mesh

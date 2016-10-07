@@ -13,7 +13,6 @@ import com.vividsolutions.jts.geom.Polygon;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -113,9 +112,11 @@ public class PatchTextureGenerator {
         public BufferedImage getTexture() {
             BufferedImage img = null;
             try {
-                String texture_folder = getTextureFolder();
-                String filename = texture_folder+"/"+this.texture;
-                img = ImageIO.read(new File(filename));
+                Path texture_folder = getTextureFolder();
+                if (texture != null) {
+                    Path texture = texture_folder.resolve(this.texture);
+                    img = ImageIO.read(texture.toFile());
+                }
             } catch (IOException ignored) {
                 CommandLineUtils.printError("Could not load texture image for texture "+getName());
                 CommandLineUtils.reportException(ignored);
@@ -160,33 +161,38 @@ public class PatchTextureGenerator {
         }
     }
 
-    public static String getTextureFolder() {
+    public static Path getTextureFolder() {
 
         PropertiesLoader.update();
 
-        String[] folders = new String[] {
-                (new File("")).getAbsolutePath(),
-                OutputUtils.GetExecutionPath(),
-                "" };
-
-        String specified_texture_folder = PropertiesLoader.texture.texture_folder;
-
-        if (specified_texture_folder.charAt(0) == '.') specified_texture_folder = specified_texture_folder.substring(1);
-        if (specified_texture_folder.charAt(0) != '\\' &&
-                specified_texture_folder.charAt(0) != '/') specified_texture_folder = '\\'+specified_texture_folder;
-
-        for (String folder : folders) {
-            while (folder.length() > 0 && folder.charAt(folder.length()-1) == '\\' || folder.charAt(folder.length()-1) == '/')
-                folder = folder.substring(0,folder.length()-1);
-
-            Path path = Paths.get( folder+specified_texture_folder );
-            File f = path.toFile();
-
-            if (f.exists()) {
-                return f.getAbsolutePath();
-            }
+        String specifiedTextureFolder = PropertiesLoader.texture.texture_folder;
+        if (specifiedTextureFolder == null) {
+            CommandLineUtils.printWarning("Property texture_folder is not set in properties.ini file");
+            return null;
         }
 
+        Path textureFolderPath = Paths.get(specifiedTextureFolder);
+        if (textureFolderPath.isAbsolute()) {
+            if (!Files.exists(textureFolderPath) || !Files.isDirectory(textureFolderPath)) {
+                CommandLineUtils.printWarning("Property texture_folder in properties.ini file does nt point to existing directory: " + textureFolderPath);
+                return null;
+            }
+            return textureFolderPath;
+        }
+
+        // path is relative
+        Path[] baseFolders = new Path[] {
+                Paths.get(".").toAbsolutePath(),
+                Paths.get(OutputUtils.GetExecutionPath()).toAbsolutePath()
+        };
+
+        for (Path baseFolder : baseFolders) {
+            Path path = baseFolder.resolve(textureFolderPath);
+            if (Files.exists(path) && Files.isDirectory(path)) {
+                return path.toAbsolutePath();
+            }
+        }
+        CommandLineUtils.printWarning("Property texture_folder in properties.ini file does nt point to existing directory: " + textureFolderPath);
         return null;
     }
 
@@ -199,11 +205,11 @@ public class PatchTextureGenerator {
 
         //float[] sobel = RasterUtils.sobel(heightmap,rast.getColumnCount(),rast.getRowCount());
 
-        String textures_folder = getTextureFolder(); //OutputUtils.GetExecutionPath()+"/textures";
+        Path textures_folder = getTextureFolder(); //OutputUtils.GetExecutionPath()+"/textures";
 
         ArrayList<Path> vmtFiles = new ArrayList<>();
         try {
-            Files.walk(Paths.get(textures_folder)).forEach(filePath -> {
+            Files.walk(textures_folder).forEach(filePath -> {
                 if (Files.isRegularFile(filePath)) {
                     if (OutputUtils.getExtension(filePath.toString()).equals("vmt")) {
                         vmtFiles.add(filePath);

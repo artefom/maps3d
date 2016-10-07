@@ -1,4 +1,3 @@
-import Algorithm.BuildingIndex.BaseMesh;
 import Algorithm.BuildingIndex.Index;
 import Algorithm.Healing.Healer;
 import Algorithm.Interpolation.DistanceFieldInterpolation;

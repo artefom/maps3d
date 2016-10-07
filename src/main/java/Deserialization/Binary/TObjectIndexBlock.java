@@ -1,7 +1,5 @@
 package Deserialization.Binary;
 
-import java.util.Arrays;
-
 /**
  * Created by Artem on 21.07.2016.
  */

@@ -1,22 +1,15 @@
 package Algorithm.BuildingIndex;
 
-import Algorithm.Interpolation.Triangulation;
 import Utils.GeomUtils;
-import Utils.TriangleUtils;
 import com.vividsolutions.jts.geom.*;
-import jdk.nashorn.internal.runtime.regexp.joni.Regex;
 
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.Buffer;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Scanner;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Created by fdl on 8/8/16.
