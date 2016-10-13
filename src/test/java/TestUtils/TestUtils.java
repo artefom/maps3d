@@ -1,13 +1,13 @@
 package TestUtils;
 
-import Algorithm.LineConnection.Isoline_attributed;
-import Algorithm.LineConnection.LineEnd;
-import Isolines.Isoline;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineSegment;
 import com.vividsolutions.jts.geom.LineString;
 import org.junit.Assert;
+import ru.ogpscenter.maps3d.algorithm.repair.AttributedIsoline;
+import ru.ogpscenter.maps3d.algorithm.repair.LineEnd;
+import ru.ogpscenter.maps3d.isolines.Isoline;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +49,7 @@ public class TestUtils {
                 gf);
     }
 
-    public static Isoline_attributed createIsoline(int type, int side, String str, GeometryFactory gf){
+    public static AttributedIsoline createIsoline(int type, int side, String str, GeometryFactory gf){
 
 
         List<Coordinate> coordinates = new ArrayList<>();
@@ -60,7 +60,7 @@ public class TestUtils {
             double y = Double.parseDouble(subtoken[1]);
             coordinates.add( new Coordinate(x,y));
         };
-        return new Isoline_attributed( new Isoline(
+        return new AttributedIsoline( new Isoline(
                 type,
                 side,
                 gf.getCoordinateSequenceFactory().create(
@@ -74,8 +74,8 @@ public class TestUtils {
 
     static double precision_tolerance = 0.00001;
 
-    public static Isoline_attributed createIsoline(Coordinate start, Coordinate end,GeometryFactory gf) {
-        Isoline_attributed il = new Isoline_attributed(
+    public static AttributedIsoline createIsoline(Coordinate start, Coordinate end,GeometryFactory gf) {
+        AttributedIsoline il = new AttributedIsoline(
                 new Isoline(0,0,gf.getCoordinateSequenceFactory().create(new Coordinate[] {start,end}),gf)
         );
         return il;
@@ -105,7 +105,7 @@ public class TestUtils {
         TestUtils.assertNotEquals(l2.p1,l2.p1);
     };
 
-    public static boolean equals(Isoline_attributed lhs, Isoline_attributed rhs) throws RuntimeException {
+    public static boolean equals(AttributedIsoline lhs, AttributedIsoline rhs) throws RuntimeException {
         if (lhs.getLineString().getNumPoints() != rhs.getLineString().getNumPoints()) return false;
         if (lhs.getType() != rhs.getType()) return false;
 
@@ -144,11 +144,11 @@ public class TestUtils {
         return false;
     }
 
-    public static void assertEquals(Isoline_attributed lhs, Isoline_attributed rhs) {
+    public static void assertEquals(AttributedIsoline lhs, AttributedIsoline rhs) {
         Assert.assertTrue(equals(lhs,rhs));
     }
 
-    public static void assertNotEquals(Isoline_attributed lhs, Isoline_attributed rhs) {
+    public static void assertNotEquals(AttributedIsoline lhs, AttributedIsoline rhs) {
         Assert.assertFalse(equals(lhs,rhs));
     }
 

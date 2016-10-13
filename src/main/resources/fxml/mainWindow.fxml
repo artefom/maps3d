@@ -2,10 +2,22 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.canvas.Canvas?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.text.Text?>
-<AnchorPane id="AnchorPane" fx:id="ap" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="MainApp">
+
+<AnchorPane id="AnchorPane" fx:id="ap" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" xmlns="http://javafx.com/javafx/8.0.102-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.ogpscenter.maps3d. MainApp">
   <GridPane alignment="CENTER" depthTest="DISABLE" hgap="0.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" mouseTransparent="false" pickOnBounds="true" prefWidth="-1.0" vgap="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
     <columnConstraints>
       <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="1071.0" />
@@ -13,18 +25,18 @@
     <padding>
       <Insets />
     </padding>
-    <AnchorPane fx:id="display_ap" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" GridPane.columnIndex="0" GridPane.columnSpan="2147483647" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="5" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS">
+    <AnchorPane fx:id="displayAnchorPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" GridPane.columnIndex="0" GridPane.columnSpan="2147483647" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="5" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS">
       <Canvas fx:id="display" height="300.0" onMouseEntered="#canvasMouseEntered" onMouseMoved="#canvasMouseMove" onMousePressed="#canvasMouseDown" onMouseReleased="#canvasMouseUp" onScroll="#canvasScroll" width="300.0" />
-      <Label fx:id="info_label" layoutY="0.0" text="" AnchorPane.leftAnchor="10.0" />
+      <Label fx:id="infoLabel" layoutY="0.0" text="" AnchorPane.leftAnchor="10.0" />
     </AnchorPane>
     <ToolBar maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="-1.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
       <items>
-        <Button fx:id="btn_heal" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_heal_pressed" prefHeight="10.0" prefWidth="80.0" text="Heal" />
-        <Button fx:id="btn_lines" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_lines_pressed" prefHeight="10.0" prefWidth="80.0" text="Connect Lines" />
-        <Button fx:id="btn_interpolate" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_interpolate_pressed" prefHeight="10.0" prefWidth="80.0" text="Save FBX" />
-        <Button fx:id="texBtn" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_texture_pressed" prefHeight="10.0" prefWidth="80.0" text="Make Texture" />
+        <Button fx:id="healButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_heal_pressed" prefHeight="10.0" prefWidth="80.0" text="Heal" />
+        <Button fx:id="linesButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_lines_pressed" prefHeight="10.0" prefWidth="80.0" text="Connect Lines" />
+        <Button fx:id="interpolateButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_interpolate_pressed" prefHeight="10.0" prefWidth="80.0" text="Save FBX" />
+        <Button fx:id="texButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_texture_pressed" prefHeight="10.0" prefWidth="80.0" text="Make Texture" />
         <!--<Button fx:id="btn_data" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_data_pressed" prefHeight="10.0" prefWidth="80.0" text="ML Data" />-->
-        <CheckBox fx:id="original_ch_b" mnemonicParsing="false" onAction="#onShowOriginalCHBAction" text="Show original" />
+        <CheckBox fx:id="showOriginalCheckBox" mnemonicParsing="false" onAction="#onShowOriginalCHBAction" text="Show original" />
       </items>
     </ToolBar>
     <ToolBar maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" orientation="HORIZONTAL" prefHeight="-1.0" prefWidth="-1.0" GridPane.columnIndex="0" GridPane.rowIndex="3">
@@ -34,10 +46,10 @@
         <Button id="btn_delete" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#tool_delete_pressed" prefHeight="10.0" prefWidth="80.0" text="Delete" />
         <Button id="btn_move" cancelButton="false" defaultButton="false" disable="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#tool_move_pressed" prefHeight="10.0" prefWidth="80.0" text="Move" />
         <Button id="btn_slope" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#tool_slope_pressed" prefHeight="10.0" prefWidth="80.0" text="Slope" />
-        <Label fx:id="action_label" text="Label" />
+        <Label fx:id="actionLabel" text="Label" />
       </items>
     </ToolBar>
-    <Text fx:id="statusText" strokeType="OUTSIDE" strokeWidth="0.0" text="Program loaded" GridPane.columnIndex="0" GridPane.columnSpan="2147483647" GridPane.halignment="LEFT" GridPane.rowIndex="6" GridPane.valignment="CENTER">
+    <Text fx:id="statusText" strokeType="OUTSIDE" strokeWidth="0.0" text="Program loaded" GridPane.columnIndex="0" GridPane.columnSpan="2147483647" GridPane.halignment="LEFT" GridPane.rowIndex="7" GridPane.valignment="CENTER">
       <GridPane.margin>
         <Insets left="10.0" />
       </GridPane.margin>
@@ -46,20 +58,24 @@
       <menus>
         <Menu mnemonicParsing="false" text="File">
           <items>
-            <MenuItem mnemonicParsing="false" onAction="#openButtonAction" text="Open ocad" fx:id="ocadOpenButton" />
-            <MenuItem mnemonicParsing="false" onAction="#openJsonButtonAction" text="Open json" />
-            <MenuItem mnemonicParsing="false" onAction="#saveJsonButtonAction" text="Save json as" />
+            <MenuItem fx:id="ocadOpenButton" mnemonicParsing="false" onAction="#openButtonAction" text="Open OCAD file ..." />
+            <MenuItem mnemonicParsing="false" onAction="#openJsonButtonAction" text="Open json ..." />
+            <MenuItem mnemonicParsing="false" onAction="#saveJsonButtonAction" text="Save json as ..." />
+            <SeparatorMenuItem />
+            <MenuItem mnemonicParsing="false" onAction="#exitJsonButtonAction" text="Exit" />
           </items>
         </Menu>
       </menus>
     </MenuBar>
+    <ProgressBar fx:id="progressBar" maxWidth="1.7976931348623157E308" prefHeight="3.0" prefWidth="1071.0" progress="0.0" GridPane.rowIndex="6" />
     <rowConstraints>
       <RowConstraints maxHeight="1.7976931348623157E308" minHeight="-Infinity" prefHeight="24.0" vgrow="NEVER" />
       <RowConstraints maxHeight="-Infinity" minHeight="-Infinity" prefHeight="20.0" vgrow="NEVER" />
       <RowConstraints maxHeight="0.0" prefHeight="0.0" vgrow="NEVER" />
       <RowConstraints maxHeight="-Infinity" minHeight="-Infinity" prefHeight="20.0" vgrow="NEVER" />
       <RowConstraints maxHeight="0.0" prefHeight="0.0" vgrow="NEVER" />
-      <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="698.0" valignment="TOP" vgrow="ALWAYS" />
+      <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="709.0" valignment="TOP" vgrow="ALWAYS" />
+         <RowConstraints maxHeight="24.0" minHeight="10.0" prefHeight="19.0" valignment="TOP" vgrow="NEVER" />
       <RowConstraints maxHeight="-Infinity" minHeight="-Infinity" prefHeight="30.0" valignment="TOP" vgrow="NEVER" />
     </rowConstraints>
   </GridPane>

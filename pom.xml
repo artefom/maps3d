@@ -31,7 +31,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>MainApp</mainClass>
+                            <mainClass>ru.ogpscenter.maps3d.MainApp</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -42,7 +42,7 @@
                 <groupId>com.zenjava</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>MainApp</mainClass>
+                    <mainClass>ru.ogpscenter.maps3d.MainApp</mainClass>
                 </configuration>
             </plugin>
 

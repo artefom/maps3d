@@ -2,14 +2,14 @@ package Deserialization;
 
 import Deserialization.Binary.*;
 import Deserialization.Interpolation.SlopeMark;
-import Isolines.IIsoline;
-import Isolines.Isoline;
-import Utils.Constants;
-import Utils.Curves.CurveString;
-import Utils.GeomUtils;
-import Utils.Pair;
-import Utils.Properties.PropertiesLoader;
 import com.vividsolutions.jts.geom.*;
+import ru.ogpscenter.maps3d.isolines.IIsoline;
+import ru.ogpscenter.maps3d.isolines.Isoline;
+import ru.ogpscenter.maps3d.utils.Constants;
+import ru.ogpscenter.maps3d.utils.GeomUtils;
+import ru.ogpscenter.maps3d.utils.Pair;
+import ru.ogpscenter.maps3d.utils.curves.CurveString;
+import ru.ogpscenter.maps3d.utils.properties.PropertiesLoader;
 
 import java.io.File;
 import java.io.RandomAccessFile;

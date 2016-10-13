@@ -1,9 +1,9 @@
 package Deserialization.Binary;
 
-import Utils.Curves.CurveString;
-import Utils.Pair;
-import Utils.Properties.PropertiesLoader;
 import com.vividsolutions.jts.geom.*;
+import ru.ogpscenter.maps3d.utils.Pair;
+import ru.ogpscenter.maps3d.utils.curves.CurveString;
+import ru.ogpscenter.maps3d.utils.properties.PropertiesLoader;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

@@ -1,10 +1,10 @@
-import Algorithm.LineConnection.*;
 import TestUtils.TestUtils;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import ru.ogpscenter.maps3d.algorithm.repair.*;
 
 import static TestUtils.TestUtils.*;
 
@@ -95,7 +95,7 @@ public class TestLineConnections {
     is6_lbeg,       is6_lend,
     is6_lbeg_copy,  is6_lend_copy;
 
-    Isoline_attributed is1,is2,is3,is4,is5,is6,
+    AttributedIsoline is1,is2,is3,is4,is5,is6,
     is4_t1_s1,
     is4_t1_s2,
     is5_t1_s1,
