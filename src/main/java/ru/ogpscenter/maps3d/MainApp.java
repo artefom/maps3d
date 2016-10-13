@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -177,11 +178,40 @@ public class MainApp extends Application implements Initializable {
 
     }
 
-    abstract class BackgroundTask extends Task<Void> {
+    abstract class BackgroundTask extends Task<String> {
+
+        private final String taskName;
+
+        BackgroundTask(String taskName) {
+            super();
+            this.taskName = taskName;
+        }
+
         @Override
-        protected Void call() throws Exception {
+        protected String call() throws Exception {
             callWithProgress(this::updateProgress);
+            updateProgress(100,100);
             return null;
+        }
+
+        @Override
+        protected void failed() {
+            super.failed();
+            updateProgress(0,1);
+            statusText.setText(taskName + " failed");
+        }
+
+        @Override
+        protected void succeeded() {
+            super.succeeded();
+            updateProgress(1,1);
+        }
+
+        @Override
+        protected void cancelled() {
+            super.cancelled();
+            updateProgress(0,1);
+            statusText.setText(taskName + " cancelled");
         }
 
         abstract void callWithProgress(BiConsumer<Integer, Integer> progressUpdate);
@@ -194,7 +224,7 @@ public class MainApp extends Application implements Initializable {
         fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
         File ocadFile = fileChooser.showOpenDialog(stage);
         if (ocadFile != null) {
-            executeAsBackgroundTask(new BackgroundTask() {
+            executeAsBackgroundTask(new BackgroundTask("Open OCAD file action") {
                 @Override public void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
                     try {
                         updateProgress(0,100);
@@ -202,15 +232,19 @@ public class MainApp extends Application implements Initializable {
                         statusText.setText("Added " + mc.IsolineCount() + " isolines. Bbox: " + mc.isolineContainer.getEnvelope());
                         originalContainer = new IsolineContainer(mc.isolineContainer);
                         displayedContainer = mc.isolineContainer;
-                        redraw();
-                        renderer.Fit();
-                        render();
                     } catch (FileNotFoundException e) {
                         statusText.setText("File not found");
                     } catch (Exception e) {
                         statusText.setText("File parsing error: "+e.getMessage());
                     }
-                    updateProgress(100,100);
+                }
+
+                @Override
+                protected void succeeded() {
+                    super.succeeded();
+                    redraw();
+                    renderer.Fit();
+                    render();
                 }
             });
         }
@@ -398,10 +432,15 @@ public class MainApp extends Application implements Initializable {
     }
 
     @FXML void onAlgorithmHealPressed() {
-        executeAsBackgroundTask(new BackgroundTask() {
+        executeAsBackgroundTask(new BackgroundTask("Heal isolines action") {
             @Override
             void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
                 mc.heal(progressUpdate);
+            }
+
+            @Override
+            protected void succeeded() {
+                super.succeeded();
                 redraw();
                 render();
             }
@@ -415,11 +454,16 @@ public class MainApp extends Application implements Initializable {
 //    }
 
     @FXML void onAlgorithmLinesPressed() {
-        executeAsBackgroundTask(new BackgroundTask() {
+        executeAsBackgroundTask(new BackgroundTask("Connect action") {
             @Override
             void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
                 mc.connectLines(progressUpdate);
                 displayedContainer = mc.isolineContainer;
+            }
+
+            @Override
+            protected void succeeded() {
+                super.succeeded();
                 redraw();
                 render();
             }
@@ -448,10 +492,15 @@ public class MainApp extends Application implements Initializable {
 
         String path = file.getAbsolutePath();
 
-        executeAsBackgroundTask(new BackgroundTask() {
+        executeAsBackgroundTask(new BackgroundTask("Interpolate action") {
             @Override
             void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
                 mc.saveMesh(path, progressUpdate);
+            }
+
+            @Override
+            protected void succeeded() {
+                super.succeeded();
                 redraw();
                 render();
             }
@@ -470,7 +519,7 @@ public class MainApp extends Application implements Initializable {
           return;
         }
 
-        executeAsBackgroundTask(new BackgroundTask() {
+        executeAsBackgroundTask(new BackgroundTask("Generate textures action") {
             @Override
             void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
                 String texture_output_path = file.getAbsolutePath();
@@ -518,7 +567,7 @@ public class MainApp extends Application implements Initializable {
         }
 
         String path = file.getAbsolutePath();
-        executeAsBackgroundTask(new BackgroundTask() {
+        executeAsBackgroundTask(new BackgroundTask("Generate data action") {
             @Override
             void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
                 Datagen.generateData(mc.isolineContainer, path, progressUpdate);

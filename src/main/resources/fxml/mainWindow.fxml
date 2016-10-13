@@ -31,10 +31,10 @@
     </AnchorPane>
     <ToolBar maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="-1.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
       <items>
-        <Button fx:id="healButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAlgorithmHealPressed" prefHeight="10.0" prefWidth="80.0" text="Heal" />
-        <Button fx:id="linesButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAlgorithmLinesPressed" prefHeight="10.0" prefWidth="80.0" text="Connect Lines" />
-        <Button fx:id="interpolateButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAlgorithmInterpolatePressed" prefHeight="10.0" prefWidth="80.0" text="Save FBX" />
-        <Button fx:id="texButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAlgorithmTexturePressed" prefHeight="10.0" prefWidth="80.0" text="Make Texture" />
+        <Button fx:id="healButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAlgorithmHealPressed" prefHeight="26.0" prefWidth="53.0" text="Heal" />
+        <Button fx:id="linesButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAlgorithmLinesPressed" prefHeight="26.0" prefWidth="118.0" text="Connect Lines" />
+        <Button fx:id="interpolateButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAlgorithmInterpolatePressed" prefHeight="26.0" prefWidth="116.0" text="Save FBX..." />
+        <Button fx:id="texButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAlgorithmTexturePressed" prefHeight="26.0" prefWidth="142.0" text="Make Textures..." />
         <!--<Button fx:id="btn_data" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAlgorithmDataPressed" prefHeight="10.0" prefWidth="80.0" text="ML Data" />-->
         <CheckBox fx:id="showOriginalCheckBox" mnemonicParsing="false" onAction="#onShowOriginalCHBAction" text="Show original" />
       </items>
@@ -70,11 +70,11 @@
     <ProgressBar fx:id="progressBar" maxWidth="1.7976931348623157E308" prefHeight="3.0" prefWidth="1071.0" progress="0.0" GridPane.rowIndex="6" />
     <rowConstraints>
       <RowConstraints maxHeight="1.7976931348623157E308" minHeight="-Infinity" prefHeight="24.0" vgrow="NEVER" />
-      <RowConstraints maxHeight="-Infinity" minHeight="-Infinity" prefHeight="20.0" vgrow="NEVER" />
-      <RowConstraints maxHeight="0.0" prefHeight="0.0" vgrow="NEVER" />
-      <RowConstraints maxHeight="-Infinity" minHeight="-Infinity" prefHeight="20.0" vgrow="NEVER" />
-      <RowConstraints maxHeight="0.0" prefHeight="0.0" vgrow="NEVER" />
-      <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="709.0" valignment="TOP" vgrow="ALWAYS" />
+      <RowConstraints maxHeight="31.0" minHeight="-Infinity" prefHeight="31.0" vgrow="NEVER" />
+      <RowConstraints maxHeight="20.0" minHeight="0.0" prefHeight="0.0" vgrow="NEVER" />
+      <RowConstraints maxHeight="37.0" minHeight="-Infinity" prefHeight="29.0" vgrow="NEVER" />
+      <RowConstraints maxHeight="20.0" minHeight="0.0" prefHeight="0.0" vgrow="NEVER" />
+      <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="689.0" valignment="TOP" vgrow="ALWAYS" />
          <RowConstraints maxHeight="24.0" minHeight="10.0" prefHeight="19.0" valignment="TOP" vgrow="NEVER" />
       <RowConstraints maxHeight="-Infinity" minHeight="-Infinity" prefHeight="30.0" valignment="TOP" vgrow="NEVER" />
     </rowConstraints>
