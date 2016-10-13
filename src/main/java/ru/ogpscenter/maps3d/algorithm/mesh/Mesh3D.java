@@ -177,7 +177,7 @@ public class Mesh3D {
 
         TexturedPatch.splitRecursivly(initial, texturedPatches, max_width, max_height, max_area, max_triangle_count, max_vertex_count, mantain_aspect);
 
-        CommandLineUtils.report();
+        CommandLineUtils.reportFinish();
 
         return texturedPatches;
     }

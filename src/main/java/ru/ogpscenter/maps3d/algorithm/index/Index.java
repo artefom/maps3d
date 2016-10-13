@@ -83,7 +83,7 @@ public class Index {
             addDiamond(x, z, drawDiamonds);
         }
         this.mesh.saveAsObj("diamond-test.obj");
-        CommandLineUtils.report("created diamond-test.obj");
+        CommandLineUtils.reportFinish("created diamond-test.obj");
     }
 
     public void dumpToJS(String fileName){

@@ -79,6 +79,7 @@ public class MainApp extends Application implements Initializable {
 
     private int renderAction_draw_limit = 10;
     private int renderAction_draw_count = 0;
+    private DeserializedOCAD texture_ocad_cache = null;
 
     public MainApp() {
         this.mc = new MainController();
@@ -176,15 +177,25 @@ public class MainApp extends Application implements Initializable {
 
     }
 
+    abstract class BackgroundTask extends Task<Void> {
+        @Override
+        protected Void call() throws Exception {
+            callWithProgress(this::updateProgress);
+            return null;
+        }
+
+        abstract void callWithProgress(BiConsumer<Integer, Integer> progressUpdate);
+    }
+
     @FXML
-    public void openButtonAction(ActionEvent event) throws Exception {
+    public void openOcadAction(ActionEvent event) throws Exception {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Open ocad map");
         fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
         File ocadFile = fileChooser.showOpenDialog(stage);
         if (ocadFile != null) {
-            Task task = new Task<Void>() {
-                @Override public Void call() {
+            executeAsBackgroundTask(new BackgroundTask() {
+                @Override public void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
                     try {
                         updateProgress(0,100);
                         mc.openFile(ocadFile, this::updateProgress);
@@ -200,13 +211,15 @@ public class MainApp extends Application implements Initializable {
                         statusText.setText("File parsing error: "+e.getMessage());
                     }
                     updateProgress(100,100);
-                    return null;
                 }
-            };
-            progressBar.progressProperty().unbind();
-            progressBar.progressProperty().bind(task.progressProperty());
-            new Thread(task).start();
+            });
         }
+    }
+
+    private void executeAsBackgroundTask(final BackgroundTask task) {
+        progressBar.progressProperty().unbind();
+        progressBar.progressProperty().bind(task.progressProperty());
+        new Thread(task).start();
     }
 
     @FXML
@@ -384,10 +397,15 @@ public class MainApp extends Application implements Initializable {
         redrawHighlights();
     }
 
-    @FXML void algorithm_heal_pressed() {
-        mc.heal();
-        redraw();
-        render();
+    @FXML void onAlgorithmHealPressed() {
+        executeAsBackgroundTask(new BackgroundTask() {
+            @Override
+            void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
+                mc.heal(progressUpdate);
+                redraw();
+                render();
+            }
+        });
     }
 //
 //    @FXML void algorithm_edge_pressed() {
@@ -396,11 +414,16 @@ public class MainApp extends Application implements Initializable {
 //        render();
 //    }
 
-    @FXML void algorithm_lines_pressed() {
-        mc.connectLines();
-        displayedContainer = mc.isolineContainer;
-        redraw();
-        render();
+    @FXML void onAlgorithmLinesPressed() {
+        executeAsBackgroundTask(new BackgroundTask() {
+            @Override
+            void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
+                mc.connectLines(progressUpdate);
+                displayedContainer = mc.isolineContainer;
+                redraw();
+                render();
+            }
+        });
     }
 
 //    @FXML void algorithm_graph_pressed() {
@@ -409,28 +432,33 @@ public class MainApp extends Application implements Initializable {
 //        render();
 //    }
 
-    @FXML void algorithm_interpolate_pressed() {
+    @FXML void onAlgorithmInterpolatePressed() {
 
-        FileChooser fileChooser1 = new FileChooser();
-        fileChooser1.setTitle("Save dataset as");
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save mesh as");
 
+        fileChooser.setInitialFileName("sample");
+        fileChooser.setInitialDirectory( (new File(".")).getAbsoluteFile() );
 
-        fileChooser1.setInitialFileName("sample");
-        fileChooser1.setInitialDirectory( (new File(".")).getAbsoluteFile() );
+        File file = fileChooser.showSaveDialog(stage);
 
-        File file = fileChooser1.showSaveDialog(stage);
-
-        if (file == null || file.getAbsolutePath() == null) return;
+        if (file == null) {
+            return;
+        }
 
         String path = file.getAbsolutePath();
 
-        mc.saveMesh(path);
-        redraw();
-        render();
+        executeAsBackgroundTask(new BackgroundTask() {
+            @Override
+            void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
+                mc.saveMesh(path, progressUpdate);
+                redraw();
+                render();
+            }
+        });
     }
 
-    DeserializedOCAD texture_ocad_cache = null;
-    @FXML void algorithm_texture_pressed() {
+    @FXML void onAlgorithmTexturePressed() {
         FileChooser saveFileChooser = new FileChooser();
         saveFileChooser.setTitle("Save texture as");
 
@@ -442,54 +470,60 @@ public class MainApp extends Application implements Initializable {
           return;
         }
 
-        String texture_output_path = file.getAbsolutePath();
-        if (!mc.generateTexture(texture_output_path)) {
-
-            if (texture_ocad_cache == null) {
-                FileChooser ocadFileChooser = new FileChooser();
-                ocadFileChooser.setTitle("Open ocad map");
-                ocadFileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
-                File ocadFile = ocadFileChooser.showOpenDialog(stage);
-                if (ocadFile != null) {
-                    try {
-                        texture_ocad_cache = new DeserializedOCAD();
-                        texture_ocad_cache.DeserializeMap(ocadFile, null);
-                    } catch (FileNotFoundException ex) {
-                        statusText.setText("File not found");
-                    } catch (IOException ex) {
-                        statusText.setText("File reading error: "+ex.getMessage());
-                    } catch (Exception ex) {
-                        statusText.setText("File parsing error: "+ex.getMessage());
+        executeAsBackgroundTask(new BackgroundTask() {
+            @Override
+            void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
+                String texture_output_path = file.getAbsolutePath();
+                if (!mc.generateTexture(texture_output_path, progressUpdate)) {
+                    if (texture_ocad_cache == null) {
+                        FileChooser ocadFileChooser = new FileChooser();
+                        ocadFileChooser.setTitle("Open ocad map");
+                        ocadFileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+                        File ocadFile = ocadFileChooser.showOpenDialog(stage);
+                        if (ocadFile != null) {
+                            try {
+                                texture_ocad_cache = new DeserializedOCAD();
+                                texture_ocad_cache.DeserializeMap(ocadFile, null);
+                            } catch (FileNotFoundException ex) {
+                                statusText.setText("File not found");
+                            } catch (IOException ex) {
+                                statusText.setText("File reading error: "+ex.getMessage());
+                            } catch (Exception ex) {
+                                statusText.setText("File parsing error: "+ex.getMessage());
+                            }
+                        }
                     }
+                    mc.generateTexture(texture_output_path, texture_ocad_cache, progressUpdate);
                 }
             }
-            if (texture_output_path != null) {
-                mc.generateTexture(texture_output_path, texture_ocad_cache);
-            }
-
-        }
+        });
     }
 
     @FXML
-    void algorithm_data_pressed() {
+    void onAlgorithmDataPressed() {
 
-        FileChooser fileChooser1 = new FileChooser();
-        fileChooser1.setTitle("Save dataset as");
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save dataset as");
 
         FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv");
-        fileChooser1.getExtensionFilters().add(extFilter);
+        fileChooser.getExtensionFilters().add(extFilter);
 
-        fileChooser1.setInitialFileName("connections_dataset_0");
-        fileChooser1.setSelectedExtensionFilter(extFilter);
-        fileChooser1.setInitialDirectory( (new File(".")).getAbsoluteFile() );
+        fileChooser.setInitialFileName("connections_dataset_0");
+        fileChooser.setSelectedExtensionFilter(extFilter);
+        fileChooser.setInitialDirectory( (new File(".")).getAbsoluteFile() );
 
-        File file = fileChooser1.showSaveDialog(stage);
-
-        if (file == null || file.getAbsolutePath() == null) return;
+        File file = fileChooser.showSaveDialog(stage);
+        if (file == null) {
+            return;
+        }
 
         String path = file.getAbsolutePath();
-
-        Datagen.generateData(mc.isolineContainer,path);
+        executeAsBackgroundTask(new BackgroundTask() {
+            @Override
+            void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
+                Datagen.generateData(mc.isolineContainer, path, progressUpdate);
+            }
+        });
     }
 
 

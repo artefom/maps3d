@@ -11,10 +11,7 @@ import ru.ogpscenter.maps3d.utils.area.LineSegmentWrapper;
 import ru.ogpscenter.maps3d.utils.area.PointAreaBuffer;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Artyom.Fomenko on 18.08.2016.
@@ -396,7 +393,7 @@ public class RandomForestEvaluator {
         this.intersector = intersector;
     }
 
-    public static ArrayList< Connection > evaluateConnectionsRandomForest(ArrayList< Connection_attributed > pre_ret, String path ) {
+    public static List< Connection > evaluateConnectionsRandomForest(ArrayList< Connection_attributed > pre_ret, String path ) {
 
         RandomForestRegressor regressor = new RandomForestRegressor();
         try {
@@ -405,7 +402,7 @@ public class RandomForestEvaluator {
             regressor.loadModelFromFile(is);
         } catch (Exception ex) {
             CommandLineUtils.reportException(ex);
-            return null;
+            return Collections.emptyList();
         }
 
         ArrayList<Connection> result = new ArrayList<>();

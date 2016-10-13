@@ -31,11 +31,11 @@
     </AnchorPane>
     <ToolBar maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="-1.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
       <items>
-        <Button fx:id="healButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_heal_pressed" prefHeight="10.0" prefWidth="80.0" text="Heal" />
-        <Button fx:id="linesButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_lines_pressed" prefHeight="10.0" prefWidth="80.0" text="Connect Lines" />
-        <Button fx:id="interpolateButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_interpolate_pressed" prefHeight="10.0" prefWidth="80.0" text="Save FBX" />
-        <Button fx:id="texButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_texture_pressed" prefHeight="10.0" prefWidth="80.0" text="Make Texture" />
-        <!--<Button fx:id="btn_data" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#algorithm_data_pressed" prefHeight="10.0" prefWidth="80.0" text="ML Data" />-->
+        <Button fx:id="healButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAlgorithmHealPressed" prefHeight="10.0" prefWidth="80.0" text="Heal" />
+        <Button fx:id="linesButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAlgorithmLinesPressed" prefHeight="10.0" prefWidth="80.0" text="Connect Lines" />
+        <Button fx:id="interpolateButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAlgorithmInterpolatePressed" prefHeight="10.0" prefWidth="80.0" text="Save FBX" />
+        <Button fx:id="texButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAlgorithmTexturePressed" prefHeight="10.0" prefWidth="80.0" text="Make Texture" />
+        <!--<Button fx:id="btn_data" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAlgorithmDataPressed" prefHeight="10.0" prefWidth="80.0" text="ML Data" />-->
         <CheckBox fx:id="showOriginalCheckBox" mnemonicParsing="false" onAction="#onShowOriginalCHBAction" text="Show original" />
       </items>
     </ToolBar>
@@ -58,7 +58,7 @@
       <menus>
         <Menu mnemonicParsing="false" text="File">
           <items>
-            <MenuItem fx:id="ocadOpenButton" mnemonicParsing="false" onAction="#openButtonAction" text="Open OCAD..." />
+            <MenuItem mnemonicParsing="false" onAction="#openOcadAction" text="Open OCAD..." />
             <MenuItem mnemonicParsing="false" onAction="#openJsonButtonAction" text="Open json..." />
             <MenuItem mnemonicParsing="false" onAction="#saveJsonButtonAction" text="Save json as..." />
             <SeparatorMenuItem />

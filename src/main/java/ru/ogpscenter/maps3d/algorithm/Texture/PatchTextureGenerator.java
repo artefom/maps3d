@@ -403,6 +403,6 @@ public class PatchTextureGenerator {
 
         RasterUtils.save(tex,path);
 
-        CommandLineUtils.report();
+        CommandLineUtils.reportFinish();
     }
 }

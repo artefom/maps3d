@@ -212,7 +212,7 @@ public class QTree {
 //        bw.write("rootbb: " + root.ownBox.toString() + "\n");
         bw.write("tree:\n");
         root.dfd(bw);
-        CommandLineUtils.report();
+        CommandLineUtils.reportFinish();
     }
 
     void dumpToBoxes(PrintWriter pw){

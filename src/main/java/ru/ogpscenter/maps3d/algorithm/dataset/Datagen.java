@@ -20,6 +20,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
+import java.util.function.BiConsumer;
 
 /**
  * Created by Artyom.Fomenko on 16.08.2016.
@@ -27,10 +28,8 @@ import java.util.Random;
 public class Datagen {
 
 
-    IsolineContainer cont;
-    public Datagen(IsolineContainer cont) {
-        this.cont = cont;
-        cont.serialize("sample_isolines.json");
+    public Datagen(IsolineContainer isolineContainer) {
+        isolineContainer.serialize("sample_isolines.json");
     }
 
     public static void cutMap(IsolineContainer cont) {
@@ -194,7 +193,7 @@ public class Datagen {
         }
 
 
-        CommandLineUtils.report();
+        CommandLineUtils.reportFinish();
     }
 
     public static double getStd(Collection<Double> values) {
@@ -215,7 +214,7 @@ public class Datagen {
 
     public static double getMedian(Collection<Double> values) {
         ArrayList<Double> newArray = new ArrayList<>(values);
-        newArray.sort((lhs,rhs)->Double.compare(lhs,rhs));
+        newArray.sort(Double::compare);
         if (values.size() == 0) return -1;
         double median;
         if (newArray.size() % 2 == 0)
@@ -296,7 +295,7 @@ public class Datagen {
         for (IIsoline i : cont)
             isos.add(new AttributedIsoline(i));
 
-        CachedTracer<AttributedIsoline> intersector = new CachedTracer<>(isos,(x)->x.getGeometry(), gf);
+        CachedTracer<AttributedIsoline> intersector = new CachedTracer<>(isos, AttributedIsoline::getGeometry, gf);
         RandomForestEvaluator rf_eval = new RandomForestEvaluator(intersector);
         ArrayList<RandomForestEvaluator.Connection_attributed> cons = rf_eval.getConnections(isos,cont.getFactory(),false);
 
@@ -307,7 +306,9 @@ public class Datagen {
 
     }
 
-    public static void generateData(IsolineContainer input_cont, String output_path) {
+    public static void generateData(IsolineContainer input_cont, String output_path, BiConsumer<Integer, Integer> progressUpdate) {
+
+        // todo(MS): update progress
 
         String extension = OutputUtils.getExtension(output_path);
         input_cont.serialize(output_path.substring(0,output_path.length()-extension.length()-1)+"_map.json");

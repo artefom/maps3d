@@ -16,6 +16,7 @@ import ru.ogpscenter.maps3d.utils.Pair;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.BiConsumer;
 
 /**
  * Created by Artem on 22.08.2016.
@@ -41,8 +42,9 @@ public class Healer {
         ls2.geometryChanged();
     }
 
-    public static void heal(Collection<IIsoline> in, GeometryFactory gf) {
+    public static void heal(Collection<IIsoline> in, GeometryFactory gf, BiConsumer<Integer, Integer> progressUpdate) {
 
+        // todo(MS): update progress
 
         ArrayList<IIsoline> ret = new ArrayList<>();
         in.forEach(ret::add);

@@ -22,7 +22,7 @@ public class OutputUtils {
 
     public static void saveAsOBJ(Triangulation triangulation){
         triangulation.writeToFile(name);
-        CommandLineUtils.report(" file dumped");
+        CommandLineUtils.reportFinish(" file dumped");
     }
 
     public static String GetExecutionPath(){
@@ -52,7 +52,7 @@ public class OutputUtils {
             out.println();
         }
         out.close();
-        CommandLineUtils.report("TXT file dumped");
+        CommandLineUtils.reportFinish("TXT file dumped");
     }
 
     public static void saveAsPNG(double[][] heightmap){
@@ -84,7 +84,7 @@ public class OutputUtils {
         } catch (IOException e) {
             throw new RuntimeException("Could not save " + name + ".png");
         }
-        CommandLineUtils.report("PMG file dumped");
+        CommandLineUtils.reportFinish("PMG file dumped");
     }
 
     public static String getExtension(String fpath) {

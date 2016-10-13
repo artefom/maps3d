@@ -19,11 +19,11 @@ public class CommandLineUtils {
         System.out.println("\u001B[31mError: " + message + " at " + stackTraceElement.getClassName() + "." + stackTraceElement.getMethodName() + "\u001B[0m");
     }
 
-    public static void report(){
+    public static void reportFinish(){
         printReport("finished successfully");
     }
 
-    public static void report(String customMessage){
+    public static void reportFinish(String customMessage){
         printReport(customMessage);
     }
 

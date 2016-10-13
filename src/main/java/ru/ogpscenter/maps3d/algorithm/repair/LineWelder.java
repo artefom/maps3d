@@ -11,6 +11,9 @@ import ru.ogpscenter.maps3d.utils.Pair;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 /**
  * Connects lines based on connection priority
@@ -84,9 +87,12 @@ public class LineWelder {
      * Perform welding operating on all ru.ogpscenter.maps3d.isolines.
      * Connections with higher score are welded first and than welded connections with less score (if they still remain valid (see {@link Connection#isValid()}))
      * @param cont
+     * @param progressUpdate
      * @return
      */
-    public LinkedList<IIsoline> WeldAll(Collection<IIsoline> cont) {
+    public LinkedList<IIsoline> weldAll(Collection<IIsoline> cont, BiConsumer<Integer, Integer> progressUpdate) {
+
+        // todo(MS): update progress
 
         ArrayList<AttributedIsoline> isos = new ArrayList<>(cont.size());
         for (IIsoline i : cont)
@@ -99,7 +105,7 @@ public class LineWelder {
 //            }
 //        }
 
-        CachedTracer<AttributedIsoline> intersector = new CachedTracer<>(isos,(x)->x.getGeometry(), gf);
+        CachedTracer<AttributedIsoline> intersector = new CachedTracer<>(isos, AttributedIsoline::getGeometry, gf);
         //Tracer_Legacy<Geometry> legacy_tracer = new Tracer_Legacy<>(isos.stream().map(AttributedIsoline::getGeometry).collect(Collectors.toList()), (x)->x,gf);
         //SteepDetector steepDetector = new SteepDetector(steeps, Constants.CONNECTIONS_NEAR_STEEP_THRESHOLD, gf);
 
@@ -107,39 +113,29 @@ public class LineWelder {
         //rf_eval.getConnections(isos,gf);
         //ConnectionExtractor extr = new ConnectionExtractor(intersector, steepDetector, eval, gf, edge);
 
-        ArrayList<Connection> cons_array = RandomForestEvaluator.evaluateConnectionsRandomForest( rf_eval.getConnections(isos,gf,true), "forest.txt") ;
+        List<Connection> connections = RandomForestEvaluator.evaluateConnectionsRandomForest( rf_eval.getConnections(isos,gf,true), "forest.txt") ;
 
         //Sort by descending order
-        cons_array.sort((lhs,rhs)->Double.compare(rhs.score,lhs.score));
+        connections.sort((lhs,rhs)->Double.compare(rhs.score,lhs.score));
 
-        LinkedList<AttributedIsoline> welded_lines = new LinkedList<>();
-        for (Connection con : cons_array) {
-            //if (con.score > RandomForestEvaluator.finalSocre95PercentPrecisionThreshold) {
-                welded_lines.add( Weld(con) );
-            //};
-        }
+        LinkedList<AttributedIsoline> welded_lines = connections.stream()
+//            .filter(con -> con.score > RandomForestEvaluator.finalSocre95PercentPrecisionThreshold)
+            .map(this::Weld).collect(Collectors.toCollection(LinkedList::new));
 
-        LinkedList<IIsoline> ret = new LinkedList<>();
+        LinkedList<IIsoline> result = new LinkedList<>();
+        setEdgeToEdge(isos, result);
+        setEdgeToEdge(welded_lines, result);
+        return result;
+    }
 
-        for (AttributedIsoline iso: isos)
-            if (iso != null && iso.isValid()) {
-                IIsoline iline = iso.getIsoline();
-                if (iline != null) {
-                    iline.setEdgeToEdge(iso.isEdgeToEdge(edge));
-                    ret.add(iline);
-                }
+    private void setEdgeToEdge(Collection<AttributedIsoline> isolines, LinkedList<IIsoline> result) {
+        isolines.stream().filter(isoline -> isoline != null && isoline.isValid()).forEach(validIsoline -> {
+            IIsoline iline = validIsoline.getIsoline();
+            if (iline != null) {
+                iline.setEdgeToEdge(validIsoline.isEdgeToEdge(edge));
+                result.add(iline);
             }
-
-        for (AttributedIsoline iso: welded_lines)
-            if (iso != null && iso.isValid()) {
-                IIsoline iline = iso.getIsoline();
-                if (iline != null) {
-                    iline.setEdgeToEdge(iso.isEdgeToEdge(edge));
-                    ret.add(iline);
-                }
-            }
-
-        return ret;
+        });
     }
 
 }

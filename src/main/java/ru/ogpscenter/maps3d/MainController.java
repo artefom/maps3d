@@ -22,6 +22,7 @@ import ru.ogpscenter.maps3d.utils.OutputUtils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
@@ -83,17 +84,17 @@ public class MainController {
         isolines.forEach(isolineContainer::add);
         deserializedOCAD.slopeMarks.forEach(slopeMarks::add);
         System.out.println(("Added " + IsolineCount() + " ru.ogpscenter.maps3d.isolines, bounding box: " + isolineContainer.getEnvelope()));
-        CommandLineUtils.report();
+        CommandLineUtils.reportFinish();
     }
 
     public void openJsonFile(File f) throws Exception {
         isolineContainer = IsolineContainer.deserialize(f.getAbsolutePath());
-        CommandLineUtils.report();
+        CommandLineUtils.reportFinish();
     }
 
     public void saveJsonFile(File f) throws Exception {
         isolineContainer.serialize(f.getAbsolutePath());
-        CommandLineUtils.report();
+        CommandLineUtils.reportFinish();
     }
 
     public int IsolineCount() {
@@ -107,22 +108,22 @@ public class MainController {
         );
     }
 
-    public void heal() {
-
-        Healer.heal(isolineContainer,isolineContainer.getFactory());
+    public void heal(BiConsumer<Integer, Integer> progressUpdate) {
+        Healer.heal(isolineContainer,isolineContainer.getFactory(), progressUpdate);
     }
 
-    public void connectLines() {
+    public void connectLines(BiConsumer<Integer, Integer> progressUpdate) {
         if (edge == null) return;
         LineWelder lw = new LineWelder(gf,edge);
-        isolineContainer = new IsolineContainer(gf,lw.WeldAll(isolineContainer));
-        CommandLineUtils.report();
+        LinkedList<IIsoline> isolines = lw.weldAll(isolineContainer, progressUpdate);
+        isolineContainer = new IsolineContainer(gf, isolines);
+        CommandLineUtils.reportFinish();
     }
 
 //    public void detectEdge() {
 //        edge = MapEdge.fromIsolines(isolineContainer, Constants.EDGE_CONCAVE_THRESHOLD);
 //
-//        CommandLineUtils.report();
+//        CommandLineUtils.reportFinish();
 //    }
 
 //    public void buildGraph() {
@@ -135,8 +136,8 @@ public class MainController {
 //        graph.recoverAllHeights();
 //        //isolineContainer.serialize("cached_isolines.json");
 //
-//        CommandLineUtils.report("Graph was built successfully");
-//        CommandLineUtils.report();
+//        CommandLineUtils.reportFinish("Graph was built successfully");
+//        CommandLineUtils.reportFinish();
 //    }
 //
 //    double [][] heightmap = null;
@@ -155,20 +156,20 @@ public class MainController {
 //
 //        triangulation = new Triangulation(heightmap);
 //        triangulation.writeToFile(name);
-//        CommandLineUtils.report();
+//        CommandLineUtils.reportFinish();
 //    }
 
     public void buildIndex(){
 //        index = triangulation == null ? new Index("sample.obj") : new Index(triangulation);
         throw new RuntimeException("Not implemented");
-//        CommandLineUtils.report();
+//        CommandLineUtils.reportFinish();
         //index.diamondRain();
     }
 
-    public boolean generateTexture(String output_path) {
+    public boolean generateTexture(String output_path, BiConsumer<Integer, Integer> progressUpdate) {
 
         if (deserializedOCAD != null) {
-            generateTexture(output_path,deserializedOCAD);
+            generateTexture(output_path,deserializedOCAD, progressUpdate);
             return true;
         }
 
@@ -176,7 +177,7 @@ public class MainController {
     }
 
 
-    public boolean generateTexture(String output_path, DeserializedOCAD ocad) {
+    public boolean generateTexture(String output_path, DeserializedOCAD ocad, BiConsumer<Integer, Integer> progressUpdate) {
 
         if (ocad != null) {
             String extension = OutputUtils.getExtension(output_path);
@@ -186,7 +187,7 @@ public class MainController {
             } else {
                 extension = "png";
             }
-            getMesh().generateTexture(ocad, output_path, extension);
+            getMesh(progressUpdate).generateTexture(ocad, output_path, extension);
             return true;
         }
 
@@ -197,7 +198,8 @@ public class MainController {
 
     private boolean heights_calculated = false;
 
-    private Mesh3D getMesh() {
+    private Mesh3D getMesh(BiConsumer<Integer, Integer> progressUpdate) {
+        // todo(MS): update progress
         if (mesh_cache != null) return mesh_cache;
         if (!heights_calculated) {
             NearbyContainer cont = new NearbyContainer(isolineContainer);
@@ -213,14 +215,14 @@ public class MainController {
         return mesh_cache;
     }
 
-    public void saveMesh(String output_path) {
+    public void saveMesh(String output_path, BiConsumer<Integer, Integer> progressUpdate) {
 
         String extension = OutputUtils.getExtension(output_path);
         if (extension.length() > 0) {
             output_path = output_path.substring(0,output_path.length()-1-extension.length());
         }
 
-        Index index = new Index(getMesh().saveAsFbx(output_path), true);
+        Index index = new Index(getMesh(progressUpdate).saveAsFbx(output_path), true);
         index.dumpToJS("index.js");
     }
 
