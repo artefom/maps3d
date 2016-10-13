@@ -31,12 +31,10 @@ public class IsolineContainer extends HashSet<IIsoline> {
         stream.forEach(this::add);
     }
 
-    public IsolineContainer(GeometryFactory gf, Collection<IIsoline> ilines) {
-        super(ilines.size());
+    public IsolineContainer(GeometryFactory gf, Collection<IIsoline> isolines) {
+        super(isolines.size());
         this.gf = gf;
-        for ( IIsoline i : ilines ) {
-            this.add(i);
-        }
+        isolines.forEach(this::add);
     }
 
 
@@ -48,9 +46,7 @@ public class IsolineContainer extends HashSet<IIsoline> {
     public IsolineContainer(IsolineContainer other) {
         super(other.size());
         this.gf = other.gf;
-        other.stream().forEach((x)->{
-            this.add(new Isoline(x));
-        });
+        other.forEach((x) -> this.add(new Isoline(x)));
     }
 
     /**
@@ -64,11 +60,10 @@ public class IsolineContainer extends HashSet<IIsoline> {
 
     /**
      * Get convex hull of the map
-     * @return
      */
     public ConvexHull convexHull() {
         Coordinate[] points_list = this.stream().flatMap(
-                (il)-> Arrays.stream(il.getGeometry().getCoordinates())).toArray((size)->new Coordinate[size]);
+                (il)-> Arrays.stream(il.getGeometry().getCoordinates())).toArray(Coordinate[]::new);
         return new ConvexHull(points_list,gf);
     }
 
@@ -83,7 +78,7 @@ public class IsolineContainer extends HashSet<IIsoline> {
             return Interpolator.InterpolateAlongLocal(ls,0,offset,step_size);
         else
             return Interpolator.InterpolateAlongLocal(ls,1,1-offset,step_size);
-    };
+    }
 
     public GeometryFactory getFactory() {
         return gf;
@@ -91,19 +86,14 @@ public class IsolineContainer extends HashSet<IIsoline> {
 
     public ArrayList<Geometry> getIsolinesAsGeometry() {
         ArrayList<Geometry> ret = new ArrayList<>(this.size());
-        for (IIsoline i : this) {
-            ret.add(i.getGeometry());
-        }
+        ret.addAll(this.stream().map(IIsoline::getGeometry).collect(Collectors.toList()));
         return ret;
     }
 
     public void serialize(String path) {
-
         GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
         gsonBuilder.registerTypeAdapter(LineString.class, new LineStringAdapter(gf));
-
         String result = gsonBuilder.create().toJson(this);
-
         try {
             PrintWriter writer = new PrintWriter(path, "UTF-8");
             writer.println(result);
@@ -121,12 +111,7 @@ public class IsolineContainer extends HashSet<IIsoline> {
     }
 
     public List<IIsoline> getIntersecting(LineString ls) {
-
-        ArrayList<IIsoline> ret = new ArrayList<>();
-        for (IIsoline iso : this) {
-            if (iso.getLineString().intersects(ls)) ret.add(iso);
-        }
-        return ret;
+        return this.stream().filter(iso -> iso.getLineString().intersects(ls)).collect(Collectors.toCollection(ArrayList::new));
     }
 
 
@@ -165,15 +150,14 @@ public class IsolineContainer extends HashSet<IIsoline> {
                                      JsonSerializationContext context)
         {
             JsonObject obj = new JsonObject();
-            Coordinate[] coords = src.getCoordinates();
+            Coordinate[] coordinates = src.getCoordinates();
             JsonArray       x_array         = new JsonArray();
             JsonArray       y_array         = new JsonArray();
 
-            for (int i = 0; i != coords.length; ++i) {
-                x_array.add( new JsonPrimitive(coords[i].x));
-                y_array.add( new JsonPrimitive(coords[i].y));
+            for (int i = 0; i != coordinates.length; ++i) {
+                x_array.add( new JsonPrimitive(coordinates[i].x));
+                y_array.add( new JsonPrimitive(coordinates[i].y));
             }
-            Gson g = new Gson();
             obj.add("xs",  x_array );
             obj.add("ys",  y_array );
             return obj;
@@ -190,19 +174,19 @@ public class IsolineContainer extends HashSet<IIsoline> {
             Iterator<JsonElement> x_it = xs_json.iterator();
             Iterator<JsonElement> y_it = ys_json.iterator();
 
-            ArrayList<Coordinate> coords = new ArrayList<>();
+            ArrayList<Coordinate> coordinates = new ArrayList<>();
 
             while (x_it.hasNext() && y_it.hasNext()) {
-                coords.add( new Coordinate(x_it.next().getAsDouble(),y_it.next().getAsDouble()));
+                coordinates.add( new Coordinate(x_it.next().getAsDouble(),y_it.next().getAsDouble()));
             }
-            return gf.createLineString(coords.toArray(new Coordinate[coords.size()]));
+            return gf.createLineString(coordinates.toArray(new Coordinate[coordinates.size()]));
         }
     }
 
-    public static class IsolineAdapter implements JsonDeserializer<Isoline> {
+    private static class IsolineAdapter implements JsonDeserializer<Isoline> {
 
         GeometryFactory gf;
-        public IsolineAdapter(GeometryFactory gf) {
+        IsolineAdapter(GeometryFactory gf) {
             this.gf = gf;
         }
         @Override
@@ -229,10 +213,10 @@ public class IsolineContainer extends HashSet<IIsoline> {
         }
     }
 
-    public static class IsolineContainerAdapter implements JsonDeserializer<IsolineContainer> {
+    private static class IsolineContainerAdapter implements JsonDeserializer<IsolineContainer> {
 
         GeometryFactory gf;
-        public IsolineContainerAdapter(GeometryFactory gf) {
+        IsolineContainerAdapter(GeometryFactory gf) {
             this.gf = gf;
         }
         @Override

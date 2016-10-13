@@ -22,6 +22,7 @@ import ru.ogpscenter.maps3d.utils.OutputUtils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 /**
@@ -73,15 +74,13 @@ public class MainController {
 //        }
 //    }
 
-    public void openFile(File f) throws Exception {
+    public void openFile(File ocadFile, BiConsumer<Integer, Integer> progressUpdate) throws Exception {
         deserializedOCAD = new DeserializedOCAD();
         isolineContainer = new IsolineContainer(gf);
-        String f_path = f.getPath();
-        //String configPath = f_path.substring(0, f_path.length()-OutputUtils.getExtension(f_path).length())+"ini";
-        deserializedOCAD.DeserializeMap(f_path,null);
-        ArrayList<IIsoline> isos = deserializedOCAD.toIsolines(1,gf);
+        deserializedOCAD.DeserializeMap(ocadFile, progressUpdate);
+        ArrayList<IIsoline> isolines = deserializedOCAD.toIsolines(1, gf);
         slopeMarks = new ArrayList<>();
-        isos.forEach(isolineContainer::add);
+        isolines.forEach(isolineContainer::add);
         deserializedOCAD.slopeMarks.forEach(slopeMarks::add);
         System.out.println(("Added " + IsolineCount() + " ru.ogpscenter.maps3d.isolines, bounding box: " + isolineContainer.getEnvelope()));
         CommandLineUtils.report();

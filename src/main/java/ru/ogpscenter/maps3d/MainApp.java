@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 /**
@@ -93,8 +94,8 @@ public class MainApp extends Application implements Initializable {
     @Override
     public void start(Stage stage) throws Exception {
         this.stage = stage;
-        String fxmlFile = "fxml/mainWindow.fxml";
-        String styleFile = "fxml/mainWindow.css";
+        String fxmlFile = "/fxml/mainWindow.fxml";
+        String styleFile = "/fxml/mainWindow.css";
         FXMLLoader loader = new FXMLLoader();
         Parent root = loader.load(getClass().getResourceAsStream(fxmlFile));
         stage.setTitle("3d map builder");
@@ -185,23 +186,24 @@ public class MainApp extends Application implements Initializable {
             Task task = new Task<Void>() {
                 @Override public Void call() {
                     try {
-                        mc.openFile(ocadFile);
-                        statusText.setText("Added " + mc.IsolineCount() + " ru.ogpscenter.maps3d.isolines. Bbox: " + mc.isolineContainer.getEnvelope());
+                        updateProgress(0,100);
+                        mc.openFile(ocadFile, this::updateProgress);
+                        statusText.setText("Added " + mc.IsolineCount() + " isolines. Bbox: " + mc.isolineContainer.getEnvelope());
                         originalContainer = new IsolineContainer(mc.isolineContainer);
                         displayedContainer = mc.isolineContainer;
                         redraw();
                         renderer.Fit();
                         render();
-                    } catch (FileNotFoundException ex) {
+                    } catch (FileNotFoundException e) {
                         statusText.setText("File not found");
-                    } catch (IOException ex) {
-                        statusText.setText("File reading error: "+ex.getMessage());
-                    } catch (Exception ex) {
-                        statusText.setText("File parsing error: "+ex.getMessage());
+                    } catch (Exception e) {
+                        statusText.setText("File parsing error: "+e.getMessage());
                     }
+                    updateProgress(100,100);
                     return null;
                 }
             };
+            progressBar.progressProperty().unbind();
             progressBar.progressProperty().bind(task.progressProperty());
             new Thread(task).start();
         }
@@ -257,10 +259,6 @@ public class MainApp extends Application implements Initializable {
     @FXML
     public void exitJsonButtonAction(ActionEvent event) throws Exception {
         Platform.exit();
-    }
-
-    public static void main(String[] args) throws Exception {
-        launch(args);
     }
 
     boolean mouseIsDown;
@@ -433,32 +431,29 @@ public class MainApp extends Application implements Initializable {
 
     DeserializedOCAD texture_ocad_cache = null;
     @FXML void algorithm_texture_pressed() {
+        FileChooser saveFileChooser = new FileChooser();
+        saveFileChooser.setTitle("Save texture as");
 
+        saveFileChooser.setInitialFileName(TexturedPatch.getDefaultTextureNameBase());
+        saveFileChooser.setInitialDirectory( (new File(".")).getAbsoluteFile() );
 
-        FileChooser fileChooser1 = new FileChooser();
-        fileChooser1.setTitle("Save texture as");
+        File file = saveFileChooser.showSaveDialog(stage);
+        if (file == null) {
+          return;
+        }
 
-
-        fileChooser1.setInitialFileName(TexturedPatch.getDefaultTextureNameBase());
-        fileChooser1.setInitialDirectory( (new File(".")).getAbsoluteFile() );
-
-        File file = fileChooser1.showSaveDialog(stage);
-
-        if (file == null) return;
         String texture_output_path = file.getAbsolutePath();
-
         if (!mc.generateTexture(texture_output_path)) {
 
             if (texture_ocad_cache == null) {
-                FileChooser fileChooser = new FileChooser();
-                fileChooser.setTitle("Open ocad map");
-                fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
-                File f = fileChooser.showOpenDialog(stage);
-                if (f != null) {
+                FileChooser ocadFileChooser = new FileChooser();
+                ocadFileChooser.setTitle("Open ocad map");
+                ocadFileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+                File ocadFile = ocadFileChooser.showOpenDialog(stage);
+                if (ocadFile != null) {
                     try {
-                        String f_path = f.getPath();
                         texture_ocad_cache = new DeserializedOCAD();
-                        texture_ocad_cache.DeserializeMap(f_path,null);
+                        texture_ocad_cache.DeserializeMap(ocadFile, null);
                     } catch (FileNotFoundException ex) {
                         statusText.setText("File not found");
                     } catch (IOException ex) {
