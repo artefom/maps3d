@@ -59,20 +59,20 @@ public class Connection {
      *
      * Both {@link LineEnd}s are valid (see {@link LineEnd#isValid()}).
      *
-     * Slope side of two connecting ru.ogpscenter.maps3d.isolines match.
+     * Slope side of two connecting isolines match.
      * Type of two connecting isolies match
      *
      * @return
      */
     public boolean isValid() {
 
-        // Test none of ru.ogpscenter.maps3d.isolines is null
+        // Test none of isolines is null
         if (l1 == null || l2 == null || l1.isoline == null || l2.isoline == null
                 || !l1.isoline.isValid() || !l2.isoline.isValid() ) return false;
 
         if (l1.isoline == l2.isoline) return true;
 
-        //Get resulting slope side from first and second ru.ogpscenter.maps3d.isolines
+        //Get resulting slope side from first and second isolines
         int result_ss = -l1.isoline.getSlopeSide()*l1.end_index;
         int second_ss = l2.isoline.getSlopeSide()*l2.end_index;
 

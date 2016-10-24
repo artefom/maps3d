@@ -1,10 +1,11 @@
+
 {
-  "name"                                : "small_foot_path",
-  "symbol_ids"                          : "507..., 508...",
-  "filled"                              : false,
-  "color"                               : "50, 50, 50",
-  "z_index"                             : 2000,
-  "width"                               : 2,
+  "name"                                : "undergrowth_difficult",
+  "symbol_ids"                          : "409...",
+  "filled"                              : true,
+  "color"                               : "0, 128, 0",
+  "z_index"                             : 2010,
+  "width"                               : 15,
   "mask_blur"                           : 0,
   "z_mask_bezier_definitions"           : "",
   "angle_mask_bezier_definitions"       : "",

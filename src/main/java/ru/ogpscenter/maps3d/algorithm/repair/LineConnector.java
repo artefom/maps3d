@@ -19,11 +19,11 @@ import java.util.List;
 public class LineConnector {
 
     /**
-     * Merge two ru.ogpscenter.maps3d.isolines into one
+     * Merge two isolines into one
      * Coordinates of first line are guaranteed to be before coordinates of second line
      * (First N coordinates of resulting line are combination of first line's coordinates,
      * where N is number of first line's coordinates)
-     * @param con Connection, describing wich ru.ogpscenter.maps3d.isolines and wich ends are to be connected
+     * @param con Connection, describing which isolines and which ends are to be connected
      * @return IIsoline created by merging two
      */
     public static Pair<LineString,Integer> connect (Connection con, GeometryFactory gf, boolean collapse) {

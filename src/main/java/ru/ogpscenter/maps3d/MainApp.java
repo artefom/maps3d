@@ -44,7 +44,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -80,7 +79,7 @@ public class MainApp extends Application implements Initializable {
 
     private int renderAction_draw_limit = 10;
     private int renderAction_draw_count = 0;
-    private DeserializedOCAD texture_ocad_cache = null;
+    private DeserializedOCAD cachedOCAD = null;
 
     public MainApp() {
         this.mc = new MainController();
@@ -228,7 +227,7 @@ public class MainApp extends Application implements Initializable {
                 @Override public void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
                     try {
                         updateProgress(0,100);
-                        mc.openFile(ocadFile, this::updateProgress);
+                        cachedOCAD = mc.openFile(ocadFile, this::updateProgress);
                         statusText.setText("Added " + mc.IsolineCount() + " isolines. Bbox: " + mc.isolineContainer.getEnvelope());
                         originalContainer = new IsolineContainer(mc.isolineContainer);
                         displayedContainer = mc.isolineContainer;
@@ -268,7 +267,7 @@ public class MainApp extends Application implements Initializable {
                 if (mc.isolineContainer == null) {
                     throw new IOException("Could not parse file");
                 }
-                statusText.setText("Added " + mc.IsolineCount() + " ru.ogpscenter.maps3d.isolines. Bbox: " + mc.isolineContainer.getEnvelope());
+                statusText.setText("Added " + mc.IsolineCount() + " isolines. Bbox: " + mc.isolineContainer.getEnvelope());
                 originalContainer = new IsolineContainer(mc.isolineContainer);
                 displayedContainer = mc.isolineContainer;
                 redraw();
@@ -341,9 +340,9 @@ public class MainApp extends Application implements Initializable {
 
         List<IIsoline> isolines = mc.getIsolinesInCircle(mp_shifted_top.x, mp_shifted_top.y, distance, displayedContainer).collect(Collectors.toList());
         if (isolines.size() > 1) {
-            infoLabel.setText("Hover over multiple ru.ogpscenter.maps3d.isolines");
+            infoLabel.setText("Hover over multiple isolines");
         } else if (isolines.size() == 0) {
-            infoLabel.setText("No ru.ogpscenter.maps3d.isolines under ru.ogpscenter.maps3d.mouse");
+            infoLabel.setText("No isolines under mouse");
         } else {
 
             IIsoline il = isolines.get(0);
@@ -519,15 +518,15 @@ public class MainApp extends Application implements Initializable {
           return;
         }
 
-        if (texture_ocad_cache == null) {
+        if (cachedOCAD == null) {
             FileChooser ocadFileChooser = new FileChooser();
             ocadFileChooser.setTitle("Open ocad map");
             ocadFileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
             File ocadFile = ocadFileChooser.showOpenDialog(stage);
             if (ocadFile != null) {
                 try {
-                    texture_ocad_cache = new DeserializedOCAD();
-                    texture_ocad_cache.DeserializeMap(ocadFile, null);
+                    cachedOCAD = new DeserializedOCAD();
+                    cachedOCAD.DeserializeMap(ocadFile, null);
                 } catch (FileNotFoundException ex) {
                     statusText.setText("File not found");
                 } catch (IOException ex) {
@@ -543,7 +542,7 @@ public class MainApp extends Application implements Initializable {
             void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
                 String texture_output_path = file.getAbsolutePath();
                 if (!mc.generateTexture(texture_output_path, progressUpdate)) {
-                    mc.generateTexture(texture_output_path, texture_ocad_cache, progressUpdate);
+                    mc.generateTexture(texture_output_path, cachedOCAD, progressUpdate);
                 }
             }
         });

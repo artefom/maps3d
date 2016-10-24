@@ -75,7 +75,7 @@ public class MainController {
 //        }
 //    }
 
-    public void openFile(File ocadFile, BiConsumer<Integer, Integer> progressUpdate) throws Exception {
+    public DeserializedOCAD openFile(File ocadFile, BiConsumer<Integer, Integer> progressUpdate) throws Exception {
         deserializedOCAD = new DeserializedOCAD();
         isolineContainer = new IsolineContainer(gf);
         deserializedOCAD.DeserializeMap(ocadFile, progressUpdate);
@@ -83,8 +83,9 @@ public class MainController {
         slopeMarks = new ArrayList<>();
         isolines.forEach(isolineContainer::add);
         deserializedOCAD.slopeMarks.forEach(slopeMarks::add);
-        System.out.println(("Added " + IsolineCount() + " ru.ogpscenter.maps3d.isolines, bounding box: " + isolineContainer.getEnvelope()));
+        System.out.println(("Added " + IsolineCount() + " isolines, bounding box: " + isolineContainer.getEnvelope()));
         CommandLineUtils.reportFinish();
+        return deserializedOCAD;
     }
 
     public void openJsonFile(File f) throws Exception {

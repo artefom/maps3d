@@ -4,7 +4,7 @@
   "filled"                              : false,
   "color"                               : "140, 61, 0",
   "z_index"                             : 1000,
-  "width"                               : 2,
+  "width"                               : 1,
   "mask_blur"                           : 0,
   "z_mask_bezier_definitions"           : "",
   "angle_mask_bezier_definitions"       : "",

@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 /**
  *
- * provides container for ru.ogpscenter.maps3d.isolines,
+ * provides container for isolines,
  * high-level geometry operations,
  * isoline indexing
  */
@@ -50,7 +50,7 @@ public class IsolineContainer extends HashSet<IIsoline> {
     }
 
     /**
-     * @return Bounding box of all ru.ogpscenter.maps3d.isolines (eg. usage: fitting view to whole map)
+     * @return Bounding box of all isolines (eg. usage: fitting view to whole map)
      */
     public Envelope getEnvelope() {
         Envelope e = new Envelope();

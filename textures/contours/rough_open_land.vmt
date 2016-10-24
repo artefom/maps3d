@@ -1,10 +1,11 @@
+
 {
-  "name"                                : "small_foot_path",
-  "symbol_ids"                          : "507..., 508...",
-  "filled"                              : false,
-  "color"                               : "50, 50, 50",
-  "z_index"                             : 2000,
-  "width"                               : 2,
+  "name"                                : "rough_open_land",
+  "symbol_ids"                          : "401...,403...,404...,402...",
+  "filled"                              : true,
+  "color"                               : "0, 200, 200",
+  "z_index"                             : 1990,
+  "width"                               : 15,
   "mask_blur"                           : 0,
   "z_mask_bezier_definitions"           : "",
   "angle_mask_bezier_definitions"       : "",

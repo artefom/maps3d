@@ -42,7 +42,7 @@ public class LineWelder {
 
     /**
      * Used only for test purposes.
-     * After perfoming this operation, {@link LineEnd}s of returned isoline ought to be extracted, since none of them does not equal to line ends of connected ru.ogpscenter.maps3d.isolines
+     * After perfoming this operation, {@link LineEnd}s of returned isoline ought to be extracted, since none of them does not equal to line ends of connected isolines
      * @param con
      * @return
      */
@@ -61,10 +61,10 @@ public class LineWelder {
     /**
      * Performs weld operation
      *
-     * WARNING: after two ru.ogpscenter.maps3d.isolines were connected, ther {@link LineEnd}s are not valid. After weld operation, they
+     * WARNING: after two isolines were connected, ther {@link LineEnd}s are not valid. After weld operation, they
      * refer to newformed isoline or to null (if {@link LineEnd}s were ones that being connected by this weld).
-     * LineEnds ARE MOVED from old ru.ogpscenter.maps3d.isolines to new one, so all {@link Connection}s remain valid.
-     * This is used to avoid re-calculating scores of connections after two ru.ogpscenter.maps3d.isolines were welded
+     * LineEnds ARE MOVED from old isolines to new one, so all {@link Connection}s remain valid.
+     * This is used to avoid re-calculating scores of connections after two isolines were welded
      * @param con
      * @return
      */
@@ -84,7 +84,7 @@ public class LineWelder {
     };
 
     /**
-     * Perform welding operating on all ru.ogpscenter.maps3d.isolines.
+     * Perform welding operating on all isolines.
      * Connections with higher score are welded first and than welded connections with less score (if they still remain valid (see {@link Connection#isValid()}))
      * @param cont
      * @param progressUpdate

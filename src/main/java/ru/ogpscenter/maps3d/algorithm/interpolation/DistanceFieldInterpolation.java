@@ -14,14 +14,14 @@ import java.util.List;
 
 /**
  * This class performs rasterisation and interpolation of isoline map.
- * Before doing this, make sure ru.ogpscenter.maps3d.isolines have recovered height.
+ * Before doing this, make sure isolines have recovered height.
  *
  * This algorithm tries to copy the way human does estimation of point height between lines.
  *
- * It takes distance to 2 closest ru.ogpscenter.maps3d.isolines and takes a weighted summ of their heights,
- * where wheights are distances to ru.ogpscenter.maps3d.isolines.
+ * It takes distance to 2 closest isolines and takes a weighted summ of their heights,
+ * where wheights are distances to isolines.
  *
- * It uses distance field algorithm to calculate 2 closes ru.ogpscenter.maps3d.isolines sitting on different heights for each pixel
+ * It uses distance field algorithm to calculate 2 closes isolines sitting on different heights for each pixel
  * of resulting image. Distance field algorithm implemented using 3x3 kernel as described here: https://habrahabr.ru/post/245729/
  */
 public class DistanceFieldInterpolation {
@@ -33,7 +33,7 @@ public class DistanceFieldInterpolation {
 
     /**
      * Constructor
-     * @param container container of ru.ogpscenter.maps3d.isolines to be interpolated
+     * @param container container of isolines to be interpolated
      */
     public DistanceFieldInterpolation(IsolineContainer container) {
         envelope = container.getEnvelope();
@@ -53,7 +53,7 @@ public class DistanceFieldInterpolation {
     PointRasterizer rasterizer;
 
     /**
-     * Get min height of ru.ogpscenter.maps3d.isolines in passed to constructor {@link IsolineContainer}
+     * Get min height of isolines in passed to constructor {@link IsolineContainer}
      * @return
      */
     public double getMinHeight() {
@@ -268,7 +268,7 @@ public class DistanceFieldInterpolation {
     /**
      * Information about distance to some isoline and it's height
      *
-     * Currently supposed to measure distances to 2 closes ru.ogpscenter.maps3d.isolines
+     * Currently supposed to measure distances to 2 closes isolines
      *
      * Guaranteed: distance1 < distance2
      * Guaranteed: height_index1 != height_index2
@@ -481,7 +481,7 @@ public class DistanceFieldInterpolation {
 
     /**
      * Apply {@link DistanceFieldInterpolation#applyDownPassKernel3x3(int, int, pixelInfo[][], int[][])} to each pixel
-     * @param source Rasterized information about ru.ogpscenter.maps3d.isolines. Pivot pixels (with distance1 = 0) should be rasterized.
+     * @param source Rasterized information about isolines. Pivot pixels (with distance1 = 0) should be rasterized.
      * @param mask Mask with rasterized isoline heights. Height of isoline with height index x can't propagate through pixels of mask with value y, where x != y
      */
     private void DistanceCalculationDownPass(pixelInfo[][] source, int[][] mask) {
@@ -497,7 +497,7 @@ public class DistanceFieldInterpolation {
 
     /**
      * Apply {@link DistanceFieldInterpolation#applyUpPassKernel3x3(int, int, pixelInfo[][], int[][])} to each pixel
-     * @param source Rasterized information about ru.ogpscenter.maps3d.isolines. Pivot pixels (with distance1 = 0) should be rasterized.
+     * @param source Rasterized information about isolines. Pivot pixels (with distance1 = 0) should be rasterized.
      * @param mask Mask with rasterized isoline heights. Height of isoline with height index x can't propagate through pixels of mask with value y, where x != y
      */
     private void DistanceCalculationUpPass(pixelInfo[][] source, int[][] mask) {
@@ -515,7 +515,7 @@ public class DistanceFieldInterpolation {
     /**
      * Applies up and down passes several times, so distance measurements can propagate around conners
      * (see{@link DistanceFieldInterpolation})
-     * @param source Rasterized information about ru.ogpscenter.maps3d.isolines. Pivot pixels (with distance1 = 0) should be rasterized.
+     * @param source Rasterized information about isolines. Pivot pixels (with distance1 = 0) should be rasterized.
      * @param mask Mask with rasterized isoline heights. Height of isoline with height index x can't propagate through pixels of mask with value y, where x != y
      */
     private void maskedDistanceField(pixelInfo[][] source, int[][] mask) {
@@ -532,7 +532,7 @@ public class DistanceFieldInterpolation {
 
     /**
      * Applies up and down passes once. Used after performing {@link DistanceFieldInterpolation#maskedDistanceFieldSimple(pixelInfo[][], int[][])} to fill remaining gaps.
-     * @param source Rasterized information about ru.ogpscenter.maps3d.isolines. Pivot pixels (with distance1 = 0) should be rasterized.
+     * @param source Rasterized information about isolines. Pivot pixels (with distance1 = 0) should be rasterized.
      * @param mask Mask with rasterized isoline heights. Height of isoline with height index x can't propagate through pixels of mask with value y, where x != y
      */
     private void maskedDistanceFieldSimple(pixelInfo[][] source, int[][] mask) {
@@ -542,7 +542,7 @@ public class DistanceFieldInterpolation {
 
 
     /**
-     * Used to calculate smooth transition between ru.ogpscenter.maps3d.isolines, taking in account slope angle and make hills.
+     * Used to calculate smooth transition between isolines, taking in account slope angle and make hills.
      * Based on bezier curves.
      * @param t1 first slope angle (positive - hill)
      * @param t2 second slope angle (positive - hill)
@@ -550,7 +550,7 @@ public class DistanceFieldInterpolation {
      * @param h2 height of second isoline
      * @param d1 distance from first isoline
      * @param d2 distance from second isoline
-     * @return height of point between ru.ogpscenter.maps3d.isolines
+     * @return height of point between isolines
      */
     public double heightCalc(double t1,double t2,double h1,double h2,double d1,double d2) {
         t2 = -t2;

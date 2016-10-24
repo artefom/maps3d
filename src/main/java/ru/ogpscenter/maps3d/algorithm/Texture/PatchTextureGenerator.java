@@ -73,7 +73,7 @@ public class PatchTextureGenerator {
             short fill_g = 0;
             short fill_b = 0;
             short fill_a = 255;
-            String[] color_values = color.split("(\\s*,\\s*|\\s)");
+            String[] color_values = color.split("(\\s*,\\s*|\\s+)");
             if (color_values.length >= 3 ) {
                 fill_r = Short.parseShort(color_values[0]);
                 fill_g = Short.parseShort(color_values[1]);
@@ -94,7 +94,7 @@ public class PatchTextureGenerator {
         }
 
         public boolean hasTexture() {
-            return texture != null && texture.length() != 0;
+            return texture != null && texture.trim().length() != 0;
         }
 
         public BufferedImage getTexture() {

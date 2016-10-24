@@ -29,9 +29,9 @@ public class ConnectionEvaluator implements Function<Connection, Double> {
 
 
     /**
-     * Tries to determine, weather two ru.ogpscenter.maps3d.isolines are parallel or not.
+     * Tries to determine, weather two isolines are parallel or not.
      *
-     * Parallel ru.ogpscenter.maps3d.isolines are sitting on different heights of same slope.
+     * Parallel isolines are sitting on different heights of same slope.
      */
     public static double parallelScore(Connection con) {
         if (con.first().isoline == con.second().isoline)

@@ -64,7 +64,7 @@ public class NearbyEstimator {
 
         int total = cont.getIsolines().size();
         int current = 0;
-        //Iterate through ru.ogpscenter.maps3d.isolines to calculate all neighbours for each isoline
+        //Iterate through isolines to calculate all neighbours for each isoline
         CommandLineUtils.reportProgressBegin("Tracing perpendiculars");
         for (AttributedIsoline iso : cont.getIsolines()) {
             current += 1;
@@ -86,7 +86,7 @@ public class NearbyEstimator {
                 // Direction for detection of negative - sided slopes
                 Vector2D trace_negative_vec = Vector2D.create(trace_positive_vec).negate();
 
-                // Trace!, retrieve ru.ogpscenter.maps3d.isolines for both sides
+                // Trace!, retrieve isolines for both sides
                 CachedTracer<AttributedIsoline>.traceres traceres_positive =
                     tracer.trace(trace_base,trace_positive_vec, Constants.NEARBY_TRACE_OFFSET,Constants.NEARBY_TRACE_LENGTH);
                 CachedTracer<AttributedIsoline>.traceres  traceres_negative =
@@ -104,7 +104,7 @@ public class NearbyEstimator {
                         edge = ret.addEdge(from_side,to_side);
                         ret.setEdgeWeight(edge,0);
                     }
-                    // Weight of connection is 1/distance, so closer ru.ogpscenter.maps3d.isolines are more likely to be "nearby"
+                    // Weight of connection is 1/distance, so closer isolines are more likely to be "nearby"
                     edge.addTrace(traceres_positive.distance);
                     ret.setEdgeWeight(edge,ret.getEdgeWeight(edge)-(1/(traceres_positive.distance+5)));
                 }
@@ -119,7 +119,7 @@ public class NearbyEstimator {
                         edge = ret.addEdge(from_side,to_side);
                         ret.setEdgeWeight(edge,0);
                     }
-                    // Weight of connection is 1/distance, so closer ru.ogpscenter.maps3d.isolines are more likely to be "nearby"
+                    // Weight of connection is 1/distance, so closer isolines are more likely to be "nearby"
                     edge.addTrace(traceres_negative.distance);
                     ret.setEdgeWeight(edge,ret.getEdgeWeight(edge)-(1/(traceres_negative.distance+5)));
                 }

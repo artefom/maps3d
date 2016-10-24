@@ -140,7 +140,7 @@ public class NearbyGraphWrapper {
     }
 
     /**
-     * Recover heights of ru.ogpscenter.maps3d.isolines, slope side of each isoline should be known. Also, it's recommended
+     * Recover heights of isolines, slope side of each isoline should be known. Also, it's recommended
      * to perform a line-connection pre-processing.
      */
     public void recoverAllHeights() {
