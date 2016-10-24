@@ -71,7 +71,7 @@ public class DeserializedOCAD {
             nextIndexBlock = indexBlock.NextObjectIndexBlock;
             total += 256;
         }
-        progressUpdate.accept(0, total);
+        updateProgress(progressUpdate, 0, total);
 
         int progress = 0;
         nextStringIB = header.FirstStringIndexBlk;
@@ -121,10 +121,27 @@ public class DeserializedOCAD {
             for (int i = 0; i != 256; ++i) {
                 TObjectIndex oi = indexBlock.Table[i];
                 if (oi.ObjType == 0) {
+                    // stop process block on 0 object type
+                    break;
+                }
+                // 1 = Point object
+                // 2 = Line object
+                // 3 = Area object
+                // 4 = Unformatted text
+                // 5 = Formatted text
+                // 6 = Line text
+                // 7 = Rectangle object
+                if (oi.ObjType < 1 || oi.ObjType > 7) {
+                    // do not process unknown types
                     continue;
                 }
-                if (!(oi.ObjType > 0 && oi.ObjType <= 7 )) {
-                    throw new Exception("Invalid format: invalid object type");
+                // 0 = deleted (not undo) (eg from symbol editor or course setting)
+                // 1 = normal
+                // 2 = hidden
+                // 3 = deleted for undo
+                if (oi.Status != 1) {
+                    // do not process objects if State not equals to 'normal'
+                    continue;
                 }
                 TOcadObject obj = new TOcadObject(coordinateConverter);
                 obj.deserialize(buffer,oi.Pos);
@@ -152,8 +169,8 @@ public class DeserializedOCAD {
 
     public ArrayList<SlopeMark> slopeMarks;
 
-    public ArrayList<IIsoline> toIsolines(double interpolation_step ,GeometryFactory gf) throws Exception {
-        if (interpolation_step <= 0) throw new Exception("Invalid interpolation step");
+    public ArrayList<IIsoline> toIsolines(double interpolationStep ,GeometryFactory gf) throws Exception {
+        if (interpolationStep <= 0) throw new Exception("Invalid interpolation step");
 
         slopeMarks = new ArrayList<>();
         slopeMarks.addAll(objects.stream().filter(TOcadObject::isSlope).map(SlopeMark::new).collect(Collectors.toList()));
@@ -175,26 +192,23 @@ public class DeserializedOCAD {
                     }
                 }
 
-                int slope_side = 0;
+                int slopeSide = 0;
                 if (slope != null) {
-                    double precision = Constants.tangent_precision/ls.getLength();
-                    double projectionFactor = GeomUtils.projectionFactor(slope.origin,ls);
-                    double pos1 = GeomUtils.clamp(projectionFactor-precision,0,1);
-                    double pos2 = GeomUtils.clamp(projectionFactor+precision,0,1);
-                    Coordinate c1 = GeomUtils.pointAlong(ls,pos1);
-                    Coordinate c2 = GeomUtils.pointAlong(ls,pos2);
-                    LineSegment seg = new LineSegment(c1,c2);
-                    slope_side = GeomUtils.getSide(seg,slope.pointAlong(Constants.slope_length));
-                    // Find out slope side
-                    //Coordinate endpoint = Vector2D.create(slope.origin).add(slope.vec.multiply(Constants.slope_length)).toCoordinate();
-                    //Coordinate p1;
+                    double precision = Constants.tangent_precision / ls.getLength();
+                    double projectionFactor = GeomUtils.projectionFactor(slope.origin, ls);
+                    double pos1 = GeomUtils.clamp(projectionFactor-precision, 0, 1);
+                    double pos2 = GeomUtils.clamp(projectionFactor+precision, 0, 1);
+                    Coordinate c1 = GeomUtils.pointAlong(ls, pos1);
+                    Coordinate c2 = GeomUtils.pointAlong(ls, pos2);
+                    LineSegment seg = new LineSegment(c1, c2);
+                    slopeSide = GeomUtils.getSide(seg, slope.pointAlong(Constants.slope_length));
                 }
                 if (ls.getLength() < 0.01) {
                     System.out.println("Too small line string, skip");
                 } else if  (ls.getNumPoints() < 2) {
                     System.out.println("Invalid line string, skip");
                 } else {
-                    ret.add(new Isoline(obj.getType(), slope_side, ls.getCoordinateSequence(), gf));
+                    ret.add(new Isoline(obj.getType(), slopeSide, ls.getCoordinateSequence(), gf));
                 }
             }
         }
@@ -202,12 +216,12 @@ public class DeserializedOCAD {
         return ret;
     }
 
-    public List<TOcadObject> getObjectsByID(int symbol_id) {
-        return objects.stream().filter(obj -> obj.Sym == symbol_id).collect(Collectors.toList());
+    public List<TOcadObject> getObjectsByID(int symbolId) {
+        return objects.stream().filter(obj -> obj.Sym == symbolId).collect(Collectors.toList());
     }
 
-    public List<TOcadObject> getObjectsByIDs(List<Integer> symbol_ids) {
-        return objects.stream().filter(obj -> symbol_ids.contains(obj.Sym)).collect(Collectors.toList());
+    public List<TOcadObject> getObjectsByIDs(List<Integer> symbolIds) {
+        return objects.stream().filter(obj -> symbolIds.contains(obj.Sym)).collect(Collectors.toList());
     }
 
     private static List<String> splitMask(String mask) {
@@ -218,53 +232,28 @@ public class DeserializedOCAD {
         return result;
     }
 
-    private static boolean matchesMask(int symbol_id, String mask) {
-        int correction = 0;
-        if (mask.charAt(0) == '~') {
-            correction = 1;
+    private static boolean matchesMask(int symbolId, String mask) {
+        String symbolIdString = Integer.toString(symbolId);
+        int symbolIdLength = symbolIdString.length();
+        if (symbolIdLength != mask.length()) {
+            return false;
         }
-        String mask_2 = Integer.toString(symbol_id);
-
-        boolean matches_all = true;
-        for (int i = 0; i != mask_2.length(); ++i) {
-
-            if ( mask_2.charAt(i) != mask.charAt(i+correction) ) {
-                if (mask.charAt(i+correction) != '.') {
-                    matches_all = false;
-                    break;
-                }
-            }
-
-        }
-        return matches_all;
-    }
-
-    private static boolean matchesMask(int symbol_id, List<String> masks) {
-        boolean ret = false;
-        for (String mask_part : masks) {
-            //System.out.println(mask_part);
-            if (mask_part.charAt(0) == '~') {
-                if (matchesMask(symbol_id, mask_part)) {
+        for (int i = 0; i != symbolIdLength; ++i) {
+            if (symbolIdString.charAt(i) != mask.charAt(i) ) {
+                if (mask.charAt(i) != '.') {
                     return false;
                 }
-            } else {
-                if (matchesMask(symbol_id, mask_part)) {
-                    ret = true;
-                }
             }
         }
-        return ret;
+        return true;
+    }
+
+    private static boolean matchesMasks(int symbolId, List<String> masks) {
+        return masks.stream().anyMatch(obj -> matchesMask(symbolId, obj));
     }
 
     public List<TOcadObject> getObjectsByMask(String mask) {
         List<String> masks = splitMask(mask);
-
-        List<TOcadObject> ret = new ArrayList<>();
-        for (TOcadObject obj : objects) {
-            if ( matchesMask(obj.Sym,masks) ) {
-                ret.add(obj);
-            }
-        }
-        return ret;
+        return objects.stream().filter(obj -> matchesMasks(obj.Sym, masks)).collect(Collectors.toList());
     }
 }

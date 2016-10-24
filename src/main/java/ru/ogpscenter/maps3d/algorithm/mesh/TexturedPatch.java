@@ -156,7 +156,7 @@ public class TexturedPatch {
         if (extension.length() > 0) {
             file_name = str.substring(0, str.length() - extension.length()-1);
         }
-        if (extension == null || extension.length() == 0) {
+        if (extension.length() == 0) {
             extension = "png";
         }
         return file_name+"_"+index+"."+extension;
@@ -264,8 +264,8 @@ public class TexturedPatch {
 
     public PointRasterizer getTextureRasterizer() {
 
-        Envelope square_envelope = new Envelope( UVtoXY( new Coordinate(0,0)), UVtoXY(new Coordinate(1,1)) );
-        return new PointRasterizer(getTexturePatchWidth(),getTexturePatchHeight(),square_envelope);
+        Envelope squareEnvelope = new Envelope( UVtoXY( new Coordinate(0,0)), UVtoXY(new Coordinate(1,1)) );
+        return new PointRasterizer(getTexturePatchWidth(), getTexturePatchHeight(), squareEnvelope);
 
     }
 

@@ -128,7 +128,7 @@ public class TOcadObject extends ByteDeserializable {
     }
 
     @Override
-    public void deserialize(ByteBuffer s, int offset) {
+    public void deserialize(ByteBuffer s, final int offset) {
         super.deserialize(s, offset);
         Object[] obj;
         try {
@@ -165,6 +165,7 @@ public class TOcadObject extends ByteDeserializable {
             }
         }
         this.nItem = this.Poly.size();
+//        System.out.println(offset + " " + this.toString());
     }
 
     int isLineCache = 0;

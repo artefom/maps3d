@@ -519,29 +519,30 @@ public class MainApp extends Application implements Initializable {
           return;
         }
 
+        if (texture_ocad_cache == null) {
+            FileChooser ocadFileChooser = new FileChooser();
+            ocadFileChooser.setTitle("Open ocad map");
+            ocadFileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+            File ocadFile = ocadFileChooser.showOpenDialog(stage);
+            if (ocadFile != null) {
+                try {
+                    texture_ocad_cache = new DeserializedOCAD();
+                    texture_ocad_cache.DeserializeMap(ocadFile, null);
+                } catch (FileNotFoundException ex) {
+                    statusText.setText("File not found");
+                } catch (IOException ex) {
+                    statusText.setText("File reading error: "+ex.getMessage());
+                } catch (Exception ex) {
+                    statusText.setText("File parsing error: "+ex.getMessage());
+                }
+            }
+        }
+
         executeAsBackgroundTask(new BackgroundTask("Generate textures action") {
             @Override
             void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
                 String texture_output_path = file.getAbsolutePath();
                 if (!mc.generateTexture(texture_output_path, progressUpdate)) {
-                    if (texture_ocad_cache == null) {
-                        FileChooser ocadFileChooser = new FileChooser();
-                        ocadFileChooser.setTitle("Open ocad map");
-                        ocadFileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
-                        File ocadFile = ocadFileChooser.showOpenDialog(stage);
-                        if (ocadFile != null) {
-                            try {
-                                texture_ocad_cache = new DeserializedOCAD();
-                                texture_ocad_cache.DeserializeMap(ocadFile, null);
-                            } catch (FileNotFoundException ex) {
-                                statusText.setText("File not found");
-                            } catch (IOException ex) {
-                                statusText.setText("File reading error: "+ex.getMessage());
-                            } catch (Exception ex) {
-                                statusText.setText("File parsing error: "+ex.getMessage());
-                            }
-                        }
-                    }
                     mc.generateTexture(texture_output_path, texture_ocad_cache, progressUpdate);
                 }
             }

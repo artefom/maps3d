@@ -3,6 +3,7 @@ package ru.ogpscenter.maps3d.utils.JNIWrappers;
 public class TextureBlender {
 
     static {
+        // todo(MS): make configurable (???)
         System.load("C:\\Users\\Artyom.Fomenko\\maps3d\\src\\main\\cpp\\src\\Utils_JNIWrappers_TextureBlender.dll"); // Load native library at runtime
         // hello.dll (Windows) or libhello.so (Unixes)
     }

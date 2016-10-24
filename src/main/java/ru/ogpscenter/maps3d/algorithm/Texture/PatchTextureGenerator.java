@@ -11,7 +11,6 @@ import ru.ogpscenter.maps3d.utils.*;
 import ru.ogpscenter.maps3d.utils.properties.PropertiesLoader;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.FileReader;
 import java.io.IOException;
@@ -29,14 +28,16 @@ public class PatchTextureGenerator {
     DeserializedOCAD map;
     TexturedPatch patch;
     Mesh3D mesh;
+    private List<PatchTextureGenerator.Brush> brushes;
 
-    public PatchTextureGenerator(DeserializedOCAD map, TexturedPatch texturedPatch, Mesh3D mesh) {
+    public PatchTextureGenerator(DeserializedOCAD map, TexturedPatch texturedPatch, Mesh3D mesh, List<PatchTextureGenerator.Brush> brushes) {
         this.map = map;
         this.patch = texturedPatch;
         this.mesh = mesh;
+        this.brushes = brushes;
     }
 
-    private class Brush {
+    public class Brush {
         public String name = "Unknown";
         public String symbol_ids = "";
         public boolean filled;
@@ -83,19 +84,6 @@ public class PatchTextureGenerator {
             }
             return Mask.toRGB(fill_r,fill_g,fill_b,fill_a);
         }
-
-//        public ArrayList<Integer> getSymbols() {
-//            String[] symbols = symbol_ids.split("(\\s*,\\s*|\\s)");
-//            ArrayList<Integer> ret = new ArrayList<>();
-//            for (int i = 0; i != symbols.length; ++i) {
-//                try {
-//                     ret.add(Integer.parseInt(symbols[i]));
-//                } catch (Exception ex) {
-//                    CommandLineUtils.printWarning("Error parsing symbols at "+name+" material");
-//                }
-//            }
-//            return ret;
-//        }
 
         public boolean shouldBlurMask() {
             return mask_blur > 0;
@@ -161,6 +149,7 @@ public class PatchTextureGenerator {
         }
     }
 
+    // todo(MS): move to PropertiesLoader???
     public static Path getTextureFolder() {
 
         PropertiesLoader.update();
@@ -197,114 +186,62 @@ public class PatchTextureGenerator {
     }
 
     public void writeToFile(String path) {
-
-
-        GeometryFactory gf = new GeometryFactory();
-
-        PointRasterizer rast = patch.getTextureRasterizer();
-
-        //float[] sobel = RasterUtils.sobel(heightmap,rast.getColumnCount(),rast.getRowCount());
-
-        Path textures_folder = getTextureFolder(); //OutputUtils.GetExecutionPath()+"/textures";
-
-        ArrayList<Path> vmtFiles = new ArrayList<>();
-        try {
-            Files.walk(textures_folder).forEach(filePath -> {
-                if (Files.isRegularFile(filePath)) {
-                    if (OutputUtils.getExtension(filePath.toString()).equals("vmt")) {
-                        vmtFiles.add(filePath);
-                    }
-                }
-            });
-        } catch (Exception ignored) {
-            CommandLineUtils.printWarning("Could not find textures folder");
-            return;
-        };
-
-        BufferedImage tex = new BufferedImage(rast.getColumnCount(),rast.getRowCount(),BufferedImage.TYPE_INT_ARGB);
-        Graphics2D tex_g = (Graphics2D)tex.getGraphics();
-
-        List<Brush> brushes = new ArrayList<>();
-        for (Path p : vmtFiles) {
-            try {
-                FileReader reader = new FileReader(p.toString());
-                Gson g = new Gson();
-                Brush b = g.fromJson(reader, Brush.class);
-                brushes.add(b);
-            } catch (Exception ignored) {
-                CommandLineUtils.printWarning("Failed reading " + p.toString() + " reason: " + ignored.getMessage());
-            }
-        }
-
-        // Sort by z-index
-        brushes.sort((lhs,rhs)->Integer.compare(lhs.z_index,rhs.z_index));
+        GeometryFactory geometryFactory = new GeometryFactory();
+        PointRasterizer rasterizer = patch.getTextureRasterizer();
 
         CommandLineUtils.reportProgressBegin("Rasterizing textures");
 
-        int current = 1;
-        int total = brushes.size();
+        PointRasterizer maskRasterizer = patch.getMaskRasterizer();
+        Mask layer = new Mask(maskRasterizer.getColumnCount(),maskRasterizer.getRowCount());
 
-        PointRasterizer maskRast = patch.getMaskRasterizer();
-        Mask layer = new Mask(maskRast.getColumnCount(),maskRast.getRowCount());
+        BufferedImage textureImage = new BufferedImage(rasterizer.getColumnCount(), rasterizer.getRowCount(), BufferedImage.TYPE_INT_ARGB);
+        int brushNumber = -1;
+        for (Brush brush : brushes) {
+            brushNumber++;
+            CommandLineUtils.reportProgress(brushNumber, brushes.size());
 
-        for (int i = 0; i != brushes.size(); ++i) {
-
-
-            CommandLineUtils.reportProgress(i,brushes.size());
-            Brush b = brushes.get(i);
-
-            if (b.isOverlay() && b.shouldFill()) {
+            if (brush.isOverlay() && brush.shouldFill()) {
                 layer.fill((byte)127);
-//                tex_g.setBackground( new Color(b.getColor()) );
-//                tex_g.fillRect(0,0,rast.getColumnCount(),rast.getRowCount());
-            } else {
-
-                if (map == null) continue;
-
+            }
+            else {
+                if (map == null) {
+                    continue;
+                }
                 layer.clean();
-                //BufferedImage mask_buf = new BufferedImage(rast.getColumnCount(),rast.getRowCount(),BufferedImage.TYPE_USHORT_GRAY);
 
                 List<Polygon> polygons = new ArrayList<>();
                 List<LineString> strings = new ArrayList<>();
 
-                //map.getObjectsByMask(b.symbol_ids);
-                List<TOcadObject> objs = map.getObjectsByMask(b.symbol_ids);
+                List<TOcadObject> objs = map.getObjectsByMask(brush.symbol_ids);
                 for (TOcadObject obj : objs) {
                     Geometry col = null;
                     try {
-                        col = obj.getGeometry(gf);
+                        col = obj.getGeometry(geometryFactory);
                     } catch (Exception ex) {
-                        //System.out.println("Failed to read geometry for " + obj.Sym + " " + obj.getType());
+                        // todo(MS): is it ok?
+                        System.out.println("Failed to read geometry for " + obj.Sym + " " + obj.getType());
                     }
                     if (col == null) {
                         continue;
                     }
 
-                    if (Polygon.class.isAssignableFrom(col.getClass()) && b.shouldFill()) {
+                    if (Polygon.class.isAssignableFrom(col.getClass()) && brush.shouldFill()) {
                         Polygon poly = (Polygon) col;
-
                         polygons.add(poly);
-//                        strings.add(poly.getExteriorRing());
-//                        for (int ringN = 0; ringN != poly.getNumInteriorRing(); ++ringN) {
-//                            strings.add(poly.getInteriorRingN(ringN));
-//                        }
                     } else if (LineString.class.isAssignableFrom(col.getClass())) {
                         LineString ls = (LineString) col;
                         strings.add(ls);
                     }
                 }
 
-                layer.fillPolygons(polygons, maskRast, (byte) (127));
-                layer.drawLines(strings, maskRast, (byte)(127), b.width);
+                layer.fillPolygons(polygons, maskRasterizer, (byte) (127));
+                layer.drawLines(strings, maskRasterizer, (byte)(127), brush.width);
             }
 
             // Apply height mask
-            NodedFunction nf = b.getZMaskFilter();
+            NodedFunction nf = brush.getZMaskFilter();
             Coordinate ret = new Coordinate();
             if (nf != null) {
-//                for (int j = 0; j != layer.pixels.length; ++j) {
-//                    layer.pixels[j] = (byte)GeomUtils.map(j,0,layer.pixels.length,-128,127);
-//                }
                 for (int row = 0; row != layer.height; ++row) {
                     for (int column = 0; column != layer.width; ++column) {
 
@@ -325,17 +262,14 @@ public class PatchTextureGenerator {
                 }
             }
 
-            //Calculate angle
-            nf = b.getAngleFilter();
+            // Calculate angle
+            nf = brush.getAngleFilter();
             if (nf != null) {
-//                for (int j = 0; j != layer.pixels.length; ++j) {
-//                    layer.pixels[j] = (byte)GeomUtils.map(j,0,layer.pixels.length,-128,127);
-//                }
                 for (int row = 0; row != layer.height; ++row) {
                     for (int column = 0; column != layer.width; ++column) {
 
-                        double u = GeomUtils.map(column+0.5,0,layer.width,0,1);
-                        double v = GeomUtils.map(row+0.5,0,layer.height,0,1);
+                        double u = GeomUtils.map(column + 0.5, 0, layer.width, 0, 1);
+                        double v = GeomUtils.map(row + 0.5, 0, layer.height, 0, 1);
 
                         patch.UVtoXY(u,v,ret);
                         double x = ret.x;
@@ -350,59 +284,62 @@ public class PatchTextureGenerator {
                     }
                 }
             }
-//            if (nf != null) {
-//                for (int pixel = 0; pixel != layer.pixels.length; ++pixel) {
-//                    layer.pixels[pixel] = (byte)(nf.apply(Math.atan(sobel[pixel]*50)/1.5)); //(byte)(GeomUtils.clamp( 255.0*heightmap[pixel], 0, 255 ) - 128 );
-//                }
-//            }
-
-//            if (b.shouldErodeFirst()) {
-//                if (b.getErodeSize() != 0) RasterUtils.erode(layer.pixels,layer.width,layer.height,b.getErodeSize());
-//                if (b.getDilateSize() != 0) RasterUtils.dilate(layer.pixels,layer.width,layer.height,b.getDilateSize());
-//            } else {
-//                if (b.getDilateSize() != 0) RasterUtils.dilate(layer.pixels,layer.width,layer.height,b.getDilateSize());
-//                if (b.getErodeSize() != 0) RasterUtils.erode(layer.pixels,layer.width,layer.height,b.getErodeSize());
-//            }
-
-            if (b.getBlurSize() > 0) {
-                RasterUtils.gauss(layer.pixels,layer.width,layer.height,b.getBlurSize(),3);
+            if (brush.getBlurSize() > 0) {
+                RasterUtils.gauss(layer.pixels,layer.width,layer.height,brush.getBlurSize(),3);
             }
 
-//            Envelope textureEnvelope = new Envelope(
-//                    patch.XYtoUV(0,0),
-//                    patch.XYtoUV(tex.getWidth()/patch.getTexturePointsPerUnit(),tex.getHeight()/patch.getTexturePointsPerUnit())
-//            );
-
-
             Coordinate texture_min = patch.XYtoUV(0,0);
-            Coordinate texture_max = patch.XYtoUV(tex.getWidth()*PropertiesLoader.texture.scale,tex.getHeight()*PropertiesLoader.texture.scale);
+            Coordinate texture_max = patch.XYtoUV(textureImage.getWidth()*PropertiesLoader.texture.scale,textureImage.getHeight()*PropertiesLoader.texture.scale);
 
-            texture_min.x = GeomUtils.map(texture_min.x,0,1,0,tex.getWidth());
-            texture_min.y = GeomUtils.map(texture_min.y,0,1,0,tex.getHeight());
-            texture_max.x = GeomUtils.map(texture_max.x,0,1,0,tex.getWidth());
-            texture_max.y = GeomUtils.map(texture_max.y,0,1,0,tex.getHeight());
+            texture_min.x = GeomUtils.map(texture_min.x,0,1,0,textureImage.getWidth());
+            texture_min.y = GeomUtils.map(texture_min.y,0,1,0,textureImage.getHeight());
+            texture_max.x = GeomUtils.map(texture_max.x,0,1,0,textureImage.getWidth());
+            texture_max.y = GeomUtils.map(texture_max.y,0,1,0,textureImage.getHeight());
 
             Envelope textureEnvelope = new Envelope(texture_min,texture_max);
 
-            layer.calcImgPixels(tex.getWidth(),tex.getHeight());
+            layer.calcImgPixels(textureImage.getWidth(),textureImage.getHeight());
 
-            //Write layer to texture
-            if (b.hasTexture()) {
-                BufferedImage texture = b.getTexture();
+            // Write layer to texture
+            if (brush.hasTexture()) {
+                BufferedImage texture = brush.getTexture();
                 if (texture == null) {
-                    CommandLineUtils.printWarning("Could not load texture for brush: "+b.getName()+", skipping");
+                    CommandLineUtils.printWarning("Could not load texture for brush: "+brush.getName()+", skipping");
                 } else {
-                    layer.overlay(tex, texture, b.getBlendMode(), textureEnvelope);
+                    layer.overlay(textureImage, texture, brush.getBlendMode(), textureEnvelope);
                 }
             } else {
-                layer.overlay(tex, b.getColor(), b.getBlendMode());
+                layer.overlay(textureImage, brush.getColor(), brush.getBlendMode());
             }
 
         }
         CommandLineUtils.reportProgressEnd();
-
-        RasterUtils.save(tex,path);
-
+        RasterUtils.save(textureImage,path);
         CommandLineUtils.reportFinish();
+    }
+
+    public static List<Brush> loadBrushes(Path textureFolder) {
+        List<Brush> brushes = new ArrayList<>();
+        try {
+            Files.walk(textureFolder).forEach(filePath -> {
+                if (Files.isRegularFile(filePath)) {
+                    if (OutputUtils.getExtension(filePath.toString()).equals("vmt")) {
+                        try {
+                            FileReader reader = new FileReader(filePath.toString());
+                            Brush brush = new Gson().fromJson(reader, Brush.class);
+                            brushes.add(brush);
+                        } catch (Exception ignored) {
+                            CommandLineUtils.printWarning("Failed reading " + filePath.toString() + " reason: " + ignored.getMessage());
+                        }
+                    }
+                }
+            });
+        } catch (Exception ignored) {
+            CommandLineUtils.printWarning("Could not find textures folder");
+            return null;
+        }
+        // Sort brushes by z-index
+        brushes.sort((lhs, rhs)->Integer.compare(lhs.z_index, rhs.z_index));
+        return brushes;
     }
 }

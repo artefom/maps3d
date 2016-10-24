@@ -17,10 +17,7 @@ import ru.ogpscenter.maps3d.utils.properties.PropertiesLoader;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * Class, representing 3-dimentional mesh
@@ -383,13 +380,16 @@ public class Mesh3D {
     public void generateTexture(DeserializedOCAD ocad, String out_path, String extension) {
         System.out.println("Generating texture");
 
-        int patch_id = 0;
-        for (TexturedPatch tp : getTexturedPatches()) {
+        // Load brushes from vmt files
+        List<PatchTextureGenerator.Brush> brushes = PatchTextureGenerator.loadBrushes(PatchTextureGenerator.getTextureFolder());
 
-            PatchTextureGenerator PTGen = new PatchTextureGenerator(ocad,tp,this);
+        int patch_id = 0;
+        for (TexturedPatch texturedPatch : getTexturedPatches()) {
+
+            PatchTextureGenerator patchTextureGenerator = new PatchTextureGenerator(ocad, texturedPatch, this, brushes);
 
             String full_path = TexturedPatch.extendTextureName(out_path,patch_id);
-            PTGen.writeToFile(full_path);
+            patchTextureGenerator.writeToFile(full_path);
 
             patch_id += 1;
 

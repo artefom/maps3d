@@ -1,0 +1,16 @@
+{
+  "name"                                : "vehicle_track",
+  "symbol_ids"                          : "505...",
+  "filled"                              : false,
+  "color"                               : "0, 0, 0",
+  "z_index"                             : 3000,
+  "width"                               : 8,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}
