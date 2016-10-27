@@ -80,6 +80,7 @@ public class MainApp extends Application implements Initializable {
     private int renderAction_draw_limit = 10;
     private int renderAction_draw_count = 0;
     private DeserializedOCAD cachedOCAD = null;
+    private File lastOpenedDir;
 
     public MainApp() {
         this.mc = new MainController();
@@ -220,9 +221,10 @@ public class MainApp extends Application implements Initializable {
     public void openOcadAction(ActionEvent event) throws Exception {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Open ocad map");
-        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        fileChooser.setInitialDirectory(getLastOpenedDir());
         File ocadFile = fileChooser.showOpenDialog(stage);
         if (ocadFile != null) {
+            lastOpenedDir = ocadFile.getParentFile();
             executeAsBackgroundTask(new BackgroundTask("Open OCAD file action") {
                 @Override public void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
                     try {
@@ -259,11 +261,12 @@ public class MainApp extends Application implements Initializable {
     public void openJsonButtonAction(ActionEvent event) throws Exception {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Open json map");
-        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
-        File f = fileChooser.showOpenDialog(stage);
-        if (f != null) {
+        fileChooser.setInitialDirectory(getLastOpenedDir());
+        File jsonFile = fileChooser.showOpenDialog(stage);
+        if (jsonFile != null) {
             try {
-                mc.openJsonFile(f);
+                lastOpenedDir = jsonFile.getParentFile();
+                mc.openJsonFile(jsonFile);
                 if (mc.isolineContainer == null) {
                     throw new IOException("Could not parse file");
                 }
@@ -292,7 +295,7 @@ public class MainApp extends Application implements Initializable {
         fileChooser1.setTitle("Save json map as");
 
 
-        fileChooser1.setInitialDirectory( (new File(".")).getAbsoluteFile() );
+        fileChooser1.setInitialDirectory(getLastOpenedDir());
 
         File file = fileChooser1.showSaveDialog(stage);
 
@@ -481,7 +484,7 @@ public class MainApp extends Application implements Initializable {
         fileChooser.setTitle("Save mesh as");
 
         fileChooser.setInitialFileName("sample");
-        fileChooser.setInitialDirectory( (new File(".")).getAbsoluteFile() );
+        fileChooser.setInitialDirectory(getLastOpenedDir());
 
         File file = fileChooser.showSaveDialog(stage);
 
@@ -511,7 +514,7 @@ public class MainApp extends Application implements Initializable {
         saveFileChooser.setTitle("Save texture as");
 
         saveFileChooser.setInitialFileName(TexturedPatch.getDefaultTextureNameBase());
-        saveFileChooser.setInitialDirectory( (new File(".")).getAbsoluteFile() );
+        saveFileChooser.setInitialDirectory(getLastOpenedDir());
 
         File file = saveFileChooser.showSaveDialog(stage);
         if (file == null) {
@@ -521,10 +524,11 @@ public class MainApp extends Application implements Initializable {
         if (cachedOCAD == null) {
             FileChooser ocadFileChooser = new FileChooser();
             ocadFileChooser.setTitle("Open ocad map");
-            ocadFileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+            ocadFileChooser.setInitialDirectory(getLastOpenedDir());
             File ocadFile = ocadFileChooser.showOpenDialog(stage);
             if (ocadFile != null) {
                 try {
+                    lastOpenedDir = ocadFile.getParentFile();
                     cachedOCAD = new DeserializedOCAD();
                     cachedOCAD.DeserializeMap(ocadFile, null);
                 } catch (FileNotFoundException ex) {
@@ -548,6 +552,13 @@ public class MainApp extends Application implements Initializable {
         });
     }
 
+    private File getLastOpenedDir() {
+        if (lastOpenedDir == null) {
+            lastOpenedDir = new File(System.getProperty("user.dir"));
+        }
+        return lastOpenedDir;
+    }
+
     @FXML
     void onAlgorithmDataPressed() {
 
@@ -559,7 +570,7 @@ public class MainApp extends Application implements Initializable {
 
         fileChooser.setInitialFileName("connections_dataset_0");
         fileChooser.setSelectedExtensionFilter(extFilter);
-        fileChooser.setInitialDirectory( (new File(".")).getAbsoluteFile() );
+        fileChooser.setInitialDirectory(getLastOpenedDir());
 
         File file = fileChooser.showSaveDialog(stage);
         if (file == null) {
