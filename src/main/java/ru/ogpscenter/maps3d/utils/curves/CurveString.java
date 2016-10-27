@@ -18,11 +18,7 @@ import java.util.Iterator;
  */
 public class CurveString {
 
-    ArrayList<Curve> curves;
-
-    public CurveString() {
-        curves = new ArrayList<>();
-    }
+    ArrayList<Curve> curves = new ArrayList<>();
 
     public Coordinate pointAlong(double pos) {
         if (pos <= 0) {
@@ -226,29 +222,26 @@ public class CurveString {
         int i = 0;
         CurveString cs = new CurveString();
         while (i < poly.length-1) {
-            Curve c = null;
-            if (i+3 < poly.length && (c=BezierQuadraticCurve.fromOcadVertices(poly[i],poly[i+1],poly[i+2],poly[i+3]))!=null) {
-                if (cs == null || cs.curves == null) {
-                    cs.curves.add(c);
-                }
-                cs.curves.add(c);
+            Curve curve;
+            if (i+3 < poly.length && (curve=BezierQuadraticCurve.fromOcadVertices(poly[i], poly[i+1], poly[i+2], poly[i+3])) != null) {
+                cs.curves.add(curve);
                 i += 3;
-            } else if (i+2 < poly.length && (c=BezierCubicCurve.fromOcadVertices(poly[i],poly[i+1],poly[i+2]))!=null) {
-                cs.curves.add(c);
+            } else if (i+2 < poly.length && (curve=BezierCubicCurve.fromOcadVertices(poly[i], poly[i+1], poly[i+2])) != null) {
+                cs.curves.add(curve);
                 i+=2;
-            } else if (i+1 < poly.length && (c=Line.fromOcadVertices(poly[i],poly[i+1]))!=null) {
-                cs.curves.add(c);
+            } else if (i+1 < poly.length && (curve=Line.fromOcadVertices(poly[i], poly[i+1])) != null) {
+                cs.curves.add(curve);
                 i+=1;
             } else {
-                i += 1;
                 throw new Exception("Invalid poly array");
             }
         }
         return cs;
     }
 
+
     public static CurveString fromOcadVertices(Collection<OcadVertex> polyCollection) throws Exception {
-        //Conver to ArrayList for random access
+        // Convert to ArrayList for random access
         return fromOcadVertices(polyCollection.toArray( new OcadVertex[polyCollection.size()]) );
     }
 }

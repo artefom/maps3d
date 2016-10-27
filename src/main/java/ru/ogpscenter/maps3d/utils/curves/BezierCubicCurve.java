@@ -23,8 +23,9 @@ public class BezierCubicCurve extends Curve {
     }
 
     public static BezierCubicCurve fromOcadVertices(OcadVertex begin, OcadVertex bezier, OcadVertex end) {
-        if (begin.isBezier() || !bezier.isBezier() || end.isBezier())
+        if (begin.isBezier() || !bezier.isBezier() || end.isBezier()) {
             return null;
+        }
         return new BezierCubicCurve(begin,bezier,end);
     }
 

@@ -16,44 +16,20 @@ class TDPoly {
     @ByteOffset( offset = 4)
     public int y;
 
-
-    // For internal use for parsing values from file
-    static int INTERNAL_BEZIER_FIRST	= (1 << 0);
-    static int INTERNAL_BEZIER_SECOND	= (1 << 1);
-    static int INTERNAL_EMPTY_LEFT 	= (1 << 2);
-    static int INTERNAL_AREA_BORDER	= (1 << 3);
-
-    static int INTERNAL_CONNER		    = (1 << 0);
-    static int INTERNAL_HOLE_FIRST	    = (1 << 1);
-    static int INTERNAL_EMPTY_RIGHT    = (1 << 2);
-    static int INTERNAL_IS_DASH	 	= (1 << 3);
-
     // Flags for public use. Use them in coupe with getFlags()
     // As may be seen, yFlags are upper bits and xFlags are lower.
-    public static int BEZIER_FIRST	    = (1 << 0);
+    public static int BEZIER_FIRST	= (1     );
     public static int BEZIER_SECOND	= (1 << 1);
     public static int EMPTY_LEFT 		= (1 << 2);
     public static int AREA_BORDER	 	= (1 << 3);
-    public static int CONNER			= (1 << 4);
+    public static int CONNER			  = (1 << 4);
     public static int HOLE_FIRST		= (1 << 5);
     public static int EMPTY_RIGHT 	    = (1 << 6);
     public static int IS_DASH	 		= (1 << 7);
 
     public int getFlags() {
         return (x&((1 << 4)-1)) | ((y&((1 << 4)-1))<<4);
-    };
-
-//    public double getX() {
-//        return realX;
-//        //return (x >> 4) / Constants.map_scale_fix;
-//    }
-//
-//    public double getY() {
-//        return realY;
-//        //return (y >> 4) / Constants.map_scale_fix;
-//    }
-//
-//    public void
+    }
 
     public int getXOriginal() {
         return x >> 4;
@@ -204,7 +180,7 @@ public class TOcadObject extends ByteDeserializable {
             }
             buf.add(v);
         }
-        // Enclose buf residue and add it into ret.\
+        // Enclose buf residue and add it into ret.
         if (buf.size() >= 3) {
             buf.add(buf.get(0));
             ret.add(buf);
@@ -214,9 +190,7 @@ public class TOcadObject extends ByteDeserializable {
 
 
     public Geometry getGeometry(GeometryFactory gf) throws Exception {
-
         // Split into circles, if succeeded, means that it'buffer polygon
-
         if (Otp == 3) {// Area object
 
             ArrayList<TDPoly> poly = new ArrayList<>();
@@ -225,9 +199,8 @@ public class TOcadObject extends ByteDeserializable {
 
             // Exterior ring - first element of this array, other are holes
             ArrayList< ArrayList<OcadVertex> > exteriorAndHoles = splitByHoleFirst(vertices);
-
             if (exteriorAndHoles.size() == 0) {
-                throw new RuntimeException("Ocad object has no geometry");
+                throw new Exception("Ocad object has no geometry");
             }
 
             ArrayList<OcadVertex> exterior = exteriorAndHoles.get(0);
@@ -236,20 +209,28 @@ public class TOcadObject extends ByteDeserializable {
                 holes.add(exteriorAndHoles.get(i));
             }
 
-            LineString exterior_string = CurveString.fromOcadVertices(exterior).interpolate(gf);
-            LinearRing exterior_ring = gf.createLinearRing(exterior_string.getCoordinateSequence());
-            ArrayList<LinearRing> interior_rings = new ArrayList<>();
+            LineString exteriorString = CurveString.fromOcadVertices(exterior).interpolate(gf);
+            LinearRing exteriorRing = gf.createLinearRing(exteriorString.getCoordinateSequence());
+            ArrayList<LinearRing> holeRings = new ArrayList<>();
+            holes.forEach(hole -> {
+                try {
+                    LineString holeString = CurveString.fromOcadVertices(hole).interpolate(gf);
+                    holeRings.add(gf.createLinearRing(holeString.getCoordinateSequence()));
+                }
+                catch (Exception e) {
+                    System.out.println("Invalid area object: " + e.getMessage());
+                }
+            });
 
             // Rings gathered. Now transform them into polygon
+            return gf.createPolygon(exteriorRing, holeRings.toArray(new LinearRing[holeRings.size()]));
 
-            return gf.createPolygon(exterior_ring,interior_rings.toArray(new LinearRing[interior_rings.size()]));
-
-        } else if (Otp == 2) { // Line Object
+        }
+        else if (Otp == 2) { // Line Object
             CurveString cs = CurveString.fromOcadVertices(vertices);
             return cs.interpolate(gf);
-        } else {
-            return null;
         }
+        return null;
     }
 
     @ByteOffset( offset = 0)

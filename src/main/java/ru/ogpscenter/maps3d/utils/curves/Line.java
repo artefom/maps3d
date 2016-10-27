@@ -21,8 +21,9 @@ public class Line extends Curve {
     }
 
     public static Line fromOcadVertices(OcadVertex begin, OcadVertex end) {
-        if (begin.isBezier() || end.isBezier())
+        if (begin.isBezier() || end.isBezier()) {
             return null;
+        }
         return new Line(begin,end);
     }
 

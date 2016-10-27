@@ -8,7 +8,7 @@ import com.vividsolutions.jts.geom.Coordinate;
  */
 public class BezierQuadraticCurve extends Curve {
 
-    Coordinate p1,b1,b2,p2;
+    private Coordinate p1, b1, b2, p2;
 
     public BezierQuadraticCurve() {
         p1 = new Coordinate();
@@ -25,9 +25,10 @@ public class BezierQuadraticCurve extends Curve {
     }
 
     public static BezierQuadraticCurve fromOcadVertices(OcadVertex begin, OcadVertex bezier1, OcadVertex bezier2, OcadVertex end) {
-        if (begin.isBezier() || !bezier1.isBezier() || !bezier2.isBezier() || end.isBezier())
+        if (begin.isBezier() || !bezier1.isBezier() || !bezier2.isBezier() || end.isBezier()) {
             return null;
-        return new BezierQuadraticCurve(begin,bezier1,bezier2,end);
+        }
+        return new BezierQuadraticCurve(begin, bezier1, bezier2, end);
     }
 
     @Override
