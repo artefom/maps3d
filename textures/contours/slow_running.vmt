@@ -1,10 +1,11 @@
+
 {
-  "name"                                : "vehicle_track",
-  "symbol_ids"                          : "505...",
-  "filled"                              : false,
-  "color"                               : "50, 50, 50",
-  "z_index"                             : 2009,
-  "width"                               : 6,
+  "name"                                : "slow_running",
+  "symbol_ids"                          : "406...",
+  "filled"                              : true,
+  "color"                               : "196, 255, 185, 128",
+  "z_index"                             : 1999,
+  "width"                               : 1,
   "mask_blur"                           : 0,
   "z_mask_bezier_definitions"           : "",
   "angle_mask_bezier_definitions"       : "",

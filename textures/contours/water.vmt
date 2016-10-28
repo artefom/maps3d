@@ -1,10 +1,10 @@
 {
   "name"                                : "undergrowth",
-  "symbol_ids"                          : "301...,302...",
+  "symbol_ids"                          : "302...",
   "filled"                              : true,
   "color"                               : "0, 0, 200",
   "z_index"                             : 2020,
-  "width"                               : 15,
+  "width"                               : 1,
   "mask_blur"                           : 0,
   "z_mask_bezier_definitions"           : "",
   "angle_mask_bezier_definitions"       : "",

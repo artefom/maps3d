@@ -1,11 +1,11 @@
 
 {
   "name"                                : "rough_open_land",
-  "symbol_ids"                          : "401...,403...,404...,402...",
+  "symbol_ids"                          : "401...,403...,404...,402...,801...",
   "filled"                              : true,
   "color"                               : "243, 218, 11, 128",
-  "z_index"                             : 1990,
-  "width"                               : 15,
+  "z_index"                             : 2000,
+  "width"                               : 4,
   "mask_blur"                           : 0,
   "z_mask_bezier_definitions"           : "",
   "angle_mask_bezier_definitions"       : "",
