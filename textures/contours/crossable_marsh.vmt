@@ -3,7 +3,7 @@
   "name"                                : "crossable_marsh",
   "symbol_ids"                          : "310...,311...",
   "filled"                              : true,
-  "color"                               : "0, 0, 50",
+  "color"                               : "130, 181, 232, 200",
   "z_index"                             : 1995,
   "width"                               : 15,
   "mask_blur"                           : 0,

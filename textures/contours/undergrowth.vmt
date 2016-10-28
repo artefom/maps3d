@@ -3,7 +3,7 @@
   "name"                                : "undergrowth",
   "symbol_ids"                          : "407...",
   "filled"                              : true,
-  "color"                               : "0, 30, 0",
+  "color"                               : "107, 219, 107, 128",
   "z_index"                             : 2010,
   "width"                               : 15,
   "mask_blur"                           : 0,

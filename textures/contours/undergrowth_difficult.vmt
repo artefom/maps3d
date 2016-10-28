@@ -3,7 +3,7 @@
   "name"                                : "undergrowth_difficult",
   "symbol_ids"                          : "409...",
   "filled"                              : true,
-  "color"                               : "0, 128, 0",
+  "color"                               : "31, 117, 24, 128",
   "z_index"                             : 2010,
   "width"                               : 15,
   "mask_blur"                           : 0,

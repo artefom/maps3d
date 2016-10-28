@@ -3,7 +3,7 @@
   "name"                                : "river",
   "symbol_ids"                          : "305..., 306..., 307..., 308...",
   "filled"                              : false,
-  "color"                               : "128, 128, 255",
+  "color"                               : "0, 0, 255",
   "z_index"                             : 2000,
   "width"                               : 5,
   "mask_blur"                           : 0,

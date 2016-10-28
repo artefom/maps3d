@@ -3,7 +3,7 @@
   "name"                                : "uncrossable_marsh",
   "symbol_ids"                          : "309...",
   "filled"                              : true,
-  "color"                               : "0, 0, 128",
+  "color"                               : "51, 51, 255, 200",
   "z_index"                             : 1995,
   "width"                               : 1,
   "mask_blur"                           : 0,

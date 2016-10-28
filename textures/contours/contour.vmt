@@ -1,6 +1,6 @@
 {
   "name"                                : "contour",
-  "symbol_ids"                          : "101..., 102..., 103...",
+  "symbol_ids"                          : "101..., 102..., 103..., 104..., 106...",
   "filled"                              : false,
   "color"                               : "140, 61, 0",
   "z_index"                             : 1000,
