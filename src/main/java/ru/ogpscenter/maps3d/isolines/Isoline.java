@@ -10,17 +10,17 @@ public class Isoline implements IIsoline {
 
     private final LineString lineString;
     private int type;
-    private int slope_side;
+    private SlopeSide slopeSide;
     private int id;
-    private boolean isedgetoedge;
+    private boolean isEdgeToEdge;
     private double height;
 
-    public Isoline(int type, int side, CoordinateSequence cs, GeometryFactory gf) {
+    public Isoline(int type, SlopeSide side, CoordinateSequence cs, GeometryFactory gf) {
         lineString = new LineString(cs,gf);
         id = ++DebugUtils.isoline_last_id;
-        slope_side = side;
+        slopeSide = side;
         this.type = type;
-        isedgetoedge = false;
+        isEdgeToEdge = false;
         height = 0;
     }
 
@@ -28,9 +28,9 @@ public class Isoline implements IIsoline {
         lineString = new LineString(other.getLineString().getCoordinateSequence(),
                 other.getLineString().getFactory());
         id = ++DebugUtils.isoline_last_id;
-        slope_side = other.getSlopeSide();
+        slopeSide = other.getSlopeSide();
         type = other.getType();
-        isedgetoedge = other.isEdgeToEdge();
+        isEdgeToEdge = other.isEdgeToEdge();
         height = other.getHeight();
     }
 
@@ -44,12 +44,12 @@ public class Isoline implements IIsoline {
     }
 
     public void setEdgeToEdge(boolean isedgetoedge) {
-        this.isedgetoedge = isedgetoedge;
+        this.isEdgeToEdge = isedgetoedge;
     }
 
     @Override
     public boolean isEdgeToEdge() {
-        return isedgetoedge;
+        return isEdgeToEdge;
     }
 
     @Override
@@ -81,13 +81,13 @@ public class Isoline implements IIsoline {
 //    }
 
     @Override
-    public int getSlopeSide() {
-        return slope_side;
+    public SlopeSide getSlopeSide() {
+        return slopeSide;
     }
 
     @Override
-    public void setSlopeSide(int side) {
-        slope_side = side;
+    public void setSlopeSide(SlopeSide side) {
+        slopeSide = side;
     }
 
 
@@ -95,8 +95,8 @@ public class Isoline implements IIsoline {
     public int hashCode() {
         Coordinate p1 = lineString.getCoordinateN(0);
         Coordinate p2 = lineString.getCoordinateN(lineString.getNumPoints() - 1);
-        if (slope_side != 0) {
-            if (slope_side == 1) {
+        if (slopeSide != SlopeSide.NONE) {
+            if (slopeSide == SlopeSide.LEFT) {
                 return ((31 * Double.hashCode(p2.x) - 51 * Double.hashCode(p2.y))
                         -(3 * Double.hashCode(p1.x) - 17 * Double.hashCode(p1.y))) + 129 * type;
             } else {
@@ -140,13 +140,13 @@ public class Isoline implements IIsoline {
         }
 
         if (exact_match) {
-            if (Isoline.this.slope_side == other.slope_side) return true;
+            if (Isoline.this.slopeSide == other.slopeSide) return true;
         }
         if (reversed_match) {
-            if (Isoline.this.slope_side == -other.slope_side) return true;
+            return Isoline.this.slopeSide.isOppositeTo(other.slopeSide);
         }
 
-        //if (this.slope_side != other.slope_side) return false;
+        //if (this.slopeSide != other.slopeSide) return false;
         return false;
     }
 

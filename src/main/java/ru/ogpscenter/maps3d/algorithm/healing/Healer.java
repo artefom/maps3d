@@ -10,6 +10,7 @@ import ru.ogpscenter.maps3d.algorithm.repair.LineConnector;
 import ru.ogpscenter.maps3d.algorithm.repair.LineEnd;
 import ru.ogpscenter.maps3d.isolines.IIsoline;
 import ru.ogpscenter.maps3d.isolines.Isoline;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 import ru.ogpscenter.maps3d.utils.CommandLineUtils;
 import ru.ogpscenter.maps3d.utils.Constants;
 import ru.ogpscenter.maps3d.utils.Pair;
@@ -106,7 +107,7 @@ public class Healer {
                                         if (iso1.getType() == iso2.getType()) {
                                             welded_count += 1;
                                             Connection con = Connection.fromLineEnds(le1, le2);
-                                            Pair<LineString, Integer> new_line = LineConnector.connect(con, gf, true);
+                                            Pair<LineString, SlopeSide> new_line = LineConnector.connect(con, gf, true);
                                             if (new_line != null) ret.add(new Isoline(iso1.getType(), new_line.v2, new_line.v1.getCoordinateSequence(), gf));
                                             connected = true;
                                             break;

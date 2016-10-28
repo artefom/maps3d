@@ -1,6 +1,7 @@
 package ru.ogpscenter.maps3d.algorithm.NearbyGraph;
 
 import ru.ogpscenter.maps3d.isolines.IIsoline;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 
 /**
  * Created by Artyom.Fomenko on 25.07.2016.
@@ -79,9 +80,9 @@ public class AttributedIsoline {
      * Get Line side by it's index (-1 for negative side, 1 for positive side)
      * if id != -1 and id != 1 throws Runtime exception
      */
-    public LineSide getSideByIndex(int id) {
-        if (id == -1) return getSideNegative();
-        if (id == 1) return getSidePositive();
+    public LineSide getSideByIndex(SlopeSide id) {
+        if (id == SlopeSide.RIGHT) return getSideNegative();
+        if (id == SlopeSide.LEFT) return getSidePositive();
         throw new RuntimeException("Unknown side index");
     }
 

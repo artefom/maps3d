@@ -7,6 +7,7 @@ import ru.ogpscenter.maps3d.algorithm.repair.AttributedIsoline;
 import ru.ogpscenter.maps3d.algorithm.repair.Connection;
 import ru.ogpscenter.maps3d.algorithm.repair.LineEnd;
 import ru.ogpscenter.maps3d.algorithm.repair.LineWelder;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 
 import static TestUtils.TestUtils.createIsoline;
 import static org.junit.Assert.assertFalse;
@@ -59,16 +60,16 @@ public class LineWelderTest {
     public void setupIsolines() {
         gf = new GeometryFactory();
         welder = new LineWelder(gf,null);
-        is1 = createIsoline(0,0,"0 0.1,31 1,3 4",gf);
-        is2 = createIsoline(0, 0, "-2 3, 0 12, 3 -3, -8 12",gf);
-        is3 = createIsoline(0, 0, "0 0, 1 1, 2 2",gf);
-        is4 = createIsoline(0,0,"2 2, 1 1, 0 0",gf);
-        is4_t1_s1 = createIsoline(1,1,"2 2, 1 1, 0 0",gf);
-        is4_t1_s2 = createIsoline(1,-1,"2 2, 1 1, 0 0",gf);
-        is5 = createIsoline(1, 0, "0 0, 1 1, 2 2",gf);
-        is5_t1_s1 = createIsoline(1, 1, "0 0, 1 1, 2 2",gf);
-        is5_t1_s2 = createIsoline(1, -1, "0 0, 1 1, 2 2",gf);
-        is6 = createIsoline(1, 0, "0 0, 1 1, 2 2",gf);
+        is1 = createIsoline(0, SlopeSide.NONE, "0 0.1,31 1,3 4", gf);
+        is2 = createIsoline(0, SlopeSide.NONE, "-2 3, 0 12, 3 -3, -8 12", gf);
+        is3 = createIsoline(0, SlopeSide.NONE, "0 0, 1 1, 2 2", gf);
+        is4 = createIsoline(0, SlopeSide.NONE, "2 2, 1 1, 0 0", gf);
+        is4_t1_s1 = createIsoline(1, SlopeSide.LEFT,"2 2, 1 1, 0 0", gf);
+        is4_t1_s2 = createIsoline(1, SlopeSide.RIGHT,"2 2, 1 1, 0 0", gf);
+        is5 = createIsoline(1, SlopeSide.NONE, "0 0, 1 1, 2 2", gf);
+        is5_t1_s1 = createIsoline(1, SlopeSide.LEFT, "0 0, 1 1, 2 2", gf);
+        is5_t1_s2 = createIsoline(1, SlopeSide.RIGHT, "0 0, 1 1, 2 2", gf);
+        is6 = createIsoline(1, SlopeSide.NONE, "0 0, 1 1, 2 2", gf);
 
 
         is1_lbeg = LineEnd.fromIsoline(is1,1);

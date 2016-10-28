@@ -7,6 +7,7 @@ import javafx.scene.paint.Color;
 import ru.ogpscenter.maps3d.algorithm.repair.MapEdge;
 import ru.ogpscenter.maps3d.isolines.IIsoline;
 import ru.ogpscenter.maps3d.isolines.IsolineContainer;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 import ru.ogpscenter.maps3d.utils.Constants;
 import ru.ogpscenter.maps3d.utils.LineStringInterpolatedLineIterator;
 import ru.ogpscenter.maps3d.utils.LineStringInterpolatedPointIterator;
@@ -45,13 +46,13 @@ public class Drawer {
                 col = Constants.DRAWING_COLOR_EGDE_TO_EDGE;
             }
 
-            if (i.getSlopeSide() != 0) {
+            if (i.getSlopeSide() != SlopeSide.NONE) {
                 LineSegment buf = new LineSegment();
                 Iterator<LineSegment> it = new LineStringInterpolatedLineIterator(i.getLineString(), buf, 50,0.5);
                 while (it.hasNext()) {
                     buf = it.next();
                     Vector2D vec = Vector2D.create(buf.p0, buf.p1).normalize().rotateByQuarterCircle(1).
-                            multiply(Constants.slope_length*i.getSlopeSide());
+                            multiply(Constants.slope_length * i.getSlopeSide().getIntValue());
                     Coordinate p0 = buf.midPoint();
                     Coordinate p = vec.add(Vector2D.create(p0)).toCoordinate();
                     LineString slope_ls = gf.createLineString(new Coordinate[]{p0, p});
@@ -120,13 +121,13 @@ public class Drawer {
             }
         }
 
-        if (i.getSlopeSide() != 0) {
+        if (i.getSlopeSide() != SlopeSide.NONE) {
             LineSegment buf = new LineSegment();
             Iterator<LineSegment> it = new LineStringInterpolatedLineIterator(i.getLineString(), buf, 50,0.5);
             while (it.hasNext()) {
                 buf = it.next();
                 Vector2D vec = Vector2D.create(buf.p0, buf.p1).normalize().rotateByQuarterCircle(1).
-                        multiply(Constants.slope_length*i.getSlopeSide());
+                        multiply(Constants.slope_length*i.getSlopeSide().getIntValue());
                 Coordinate p0 = buf.midPoint();
                 Coordinate p = vec.add(Vector2D.create(p0)).toCoordinate();
                 LineString slope_ls = gf.createLineString(new Coordinate[]{p0, p});

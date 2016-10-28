@@ -9,6 +9,7 @@ import ru.ogpscenter.maps3d.algorithm.repair.LineEnd;
 import ru.ogpscenter.maps3d.isolines.IIsoline;
 import ru.ogpscenter.maps3d.isolines.Isoline;
 import ru.ogpscenter.maps3d.isolines.IsolineContainer;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 import ru.ogpscenter.maps3d.utils.Pair;
 
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public class ActionConnect extends ActionBase {
 
         if (!con.isValid()) throw new Exception("Invalid connection");
 
-        Pair<LineString, Integer> pair = LineConnector.connect(con,cont.getFactory(),false);
+        Pair<LineString, SlopeSide> pair = LineConnector.connect(con,cont.getFactory(),false);
 
         if (pair == null || pair.v1 == null) throw new Exception("Connection operation failed");
 

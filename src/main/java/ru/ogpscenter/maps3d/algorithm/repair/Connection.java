@@ -2,6 +2,7 @@ package ru.ogpscenter.maps3d.algorithm.repair;
 
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineSegment;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 
 /**
  * Represents connection of lines and it's score.
@@ -73,13 +74,13 @@ public class Connection {
         if (l1.isoline == l2.isoline) return true;
 
         //Get resulting slope side from first and second isolines
-        int result_ss = -l1.isoline.getSlopeSide()*l1.end_index;
-        int second_ss = l2.isoline.getSlopeSide()*l2.end_index;
+        SlopeSide resultSlopeSide = SlopeSide.fromInt(-l1.isoline.getSlopeSide().getIntValue()*l1.end_index);
+        SlopeSide secondSide = SlopeSide.fromInt(l2.isoline.getSlopeSide().getIntValue()*l2.end_index);
 
-        if (result_ss == 0) {
-            result_ss = second_ss;
+        if (resultSlopeSide == SlopeSide.NONE) {
+            resultSlopeSide = secondSide;
         } else {
-            if (second_ss != 0 && result_ss != second_ss)
+            if (secondSide != SlopeSide.NONE && resultSlopeSide != secondSide)
                 return false;
         }
 
@@ -94,17 +95,17 @@ public class Connection {
      * @return
      * @throws Exception
      */
-    public int resultSlopeSide() throws Exception {
-        int result_ss = -l1.isoline.getSlopeSide()*l1.end_index;
-        int second_ss = l2.isoline.getSlopeSide()*l2.end_index;
+    public SlopeSide resultSlopeSide() throws Exception {
+        SlopeSide resultSlopeSide = SlopeSide.fromInt(-l1.isoline.getSlopeSide().getIntValue() * l1.end_index);
+        SlopeSide secondSlopeSide = SlopeSide.fromInt(l2.isoline.getSlopeSide().getIntValue() * l2.end_index);
 
-        if (result_ss == 0) {
-            result_ss = second_ss;
+        if (resultSlopeSide == SlopeSide.NONE) {
+            resultSlopeSide = secondSlopeSide;
         } else {
-            if (second_ss != 0 && result_ss != second_ss)
+            if (secondSlopeSide != SlopeSide.NONE && resultSlopeSide != secondSlopeSide)
                 throw new  Exception("Connection not valid!");
         }
-        return result_ss;
+        return resultSlopeSide;
     }
 
     /**

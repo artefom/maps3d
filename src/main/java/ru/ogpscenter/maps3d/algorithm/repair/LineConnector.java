@@ -4,6 +4,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.CoordinateSequence;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 import ru.ogpscenter.maps3d.utils.ArrayIterator;
 import ru.ogpscenter.maps3d.utils.ArrayReverseIterator;
 import ru.ogpscenter.maps3d.utils.CoordUtils;
@@ -26,7 +27,7 @@ public class LineConnector {
      * @param con Connection, describing which isolines and which ends are to be connected
      * @return IIsoline created by merging two
      */
-    public static Pair<LineString,Integer> connect (Connection con, GeometryFactory gf, boolean collapse) {
+    public static Pair<LineString, SlopeSide> connect (Connection con, GeometryFactory gf, boolean collapse) {
 
         if (!con.isValid()) return null;
 
@@ -39,7 +40,7 @@ public class LineConnector {
             }
         }
 
-        int result_ss;
+        SlopeSide result_ss;
         try {
             result_ss = con.resultSlopeSide();
         } catch (Exception ex) {
@@ -86,7 +87,7 @@ public class LineConnector {
         }
 
         LineString ls = gf.createLineString( coordinates.toArray(new Coordinate[coordinates.size()]));
-        return new Pair<>(ls,result_ss);
+        return new Pair<LineString, SlopeSide>(ls, result_ss);
     }
 
     /**

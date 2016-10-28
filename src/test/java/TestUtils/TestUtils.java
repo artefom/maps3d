@@ -8,6 +8,7 @@ import org.junit.Assert;
 import ru.ogpscenter.maps3d.algorithm.repair.AttributedIsoline;
 import ru.ogpscenter.maps3d.algorithm.repair.LineEnd;
 import ru.ogpscenter.maps3d.isolines.Isoline;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +50,7 @@ public class TestUtils {
                 gf);
     }
 
-    public static AttributedIsoline createIsoline(int type, int side, String str, GeometryFactory gf){
+    public static AttributedIsoline createIsoline(int type, SlopeSide side, String str, GeometryFactory gf){
 
 
         List<Coordinate> coordinates = new ArrayList<>();
@@ -76,7 +77,7 @@ public class TestUtils {
 
     public static AttributedIsoline createIsoline(Coordinate start, Coordinate end,GeometryFactory gf) {
         AttributedIsoline il = new AttributedIsoline(
-                new Isoline(0,0,gf.getCoordinateSequenceFactory().create(new Coordinate[] {start,end}),gf)
+                new Isoline(0,SlopeSide.NONE,gf.getCoordinateSequenceFactory().create(new Coordinate[] {start,end}),gf)
         );
         return il;
     }
@@ -137,7 +138,7 @@ public class TestUtils {
             if (lhs.getSlopeSide() == rhs.getSlopeSide()) return true;
         }
         if (reversed_match) {
-            if (lhs.getSlopeSide() == -rhs.getSlopeSide()) return true;
+            if (lhs.getSlopeSide() == rhs.getSlopeSide().getOpposite()) return true;
         }
 
         //if (this.slope_side != other.slope_side) return false;

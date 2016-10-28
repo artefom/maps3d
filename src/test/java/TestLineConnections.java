@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import ru.ogpscenter.maps3d.algorithm.repair.*;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 
 import static TestUtils.TestUtils.*;
 
@@ -115,16 +116,16 @@ public class TestLineConnections {
     public void createIsolines() throws Exception {
 
 //        container = new IsolineContainer( gf );
-        is1 = createIsoline(0,0,"0 0.1,31 1,3 4",gf);
-        is2 = createIsoline(1, -1, "-2 3, 0 12, 3 -3, -8 12",gf);
-        is3 = createIsoline(0, 0, "0 0, 1 1, 2 2",gf);
-        is4 = createIsoline(0,0,"2 2, 1 1, 0 0",gf);
-        is4_t1_s1 = createIsoline(1,1,"2 2, 1 1, 0 0",gf);
-        is4_t1_s2 = createIsoline(1,-1,"2 2, 1 1, 0 0",gf);
-        is5 = createIsoline(1, 0, "0 0, 1 1, 2 2",gf);
-        is5_t1_s1 = createIsoline(1, 1, "0 0, 1 1, 2 2",gf);
-        is5_t1_s2 = createIsoline(1, -1, "0 0, 1 1, 2 2",gf);
-        is6 = createIsoline(1, 0, "0 0, 1 1, 2 2",gf);
+        is1 = createIsoline(0, SlopeSide.NONE, "0 0.1,31 1,3 4", gf);
+        is2 = createIsoline(1, SlopeSide.RIGHT, "-2 3, 0 12, 3 -3, -8 12", gf);
+        is3 = createIsoline(0, SlopeSide.NONE, "0 0, 1 1, 2 2", gf);
+        is4 = createIsoline(0, SlopeSide.NONE, "2 2, 1 1, 0 0", gf);
+        is4_t1_s1 = createIsoline(1, SlopeSide.LEFT, "2 2, 1 1, 0 0", gf);
+        is4_t1_s2 = createIsoline(1, SlopeSide.RIGHT, "2 2, 1 1, 0 0", gf);
+        is5 = createIsoline(1, SlopeSide.NONE, "0 0, 1 1, 2 2", gf);
+        is5_t1_s1 = createIsoline(1, SlopeSide.LEFT, "0 0, 1 1, 2 2", gf);
+        is5_t1_s2 = createIsoline(1, SlopeSide.RIGHT, "0 0, 1 1, 2 2", gf);
+        is6 = createIsoline(1, SlopeSide.NONE, "0 0, 1 1, 2 2", gf);
 
         is1_lbeg = LineEnd.fromIsoline(is1,1);
         is1_lend = LineEnd.fromIsoline(is1,-1);
@@ -276,19 +277,19 @@ public class TestLineConnections {
         is3 = TestUtils.TestUtils.createIsoline(0, 0, "0 0, 1 1, 2 2",gf);
          */
         TestUtils.assertNotEquals(lw.Weld_copy(c_is1_beg_is3_end),
-                createIsoline(0, 0, "3 4,31 1,0 0,0 2, 1 1, 0 0",gf));
+                createIsoline(0, SlopeSide.NONE, "3 4,31 1,0 0,0 2, 1 1, 0 0",gf));
 
         TestUtils.assertEquals(lw.Weld_copy(c_is1_beg_is3_end_swapped),
                 lw.Weld_copy(c_is1_beg_is3_end));
 
         TestUtils.assertEquals(lw.Weld_copy(c_is1_beg_is3_end),
-                createIsoline(0, 0, "0 0, 1 1, 2 2, 0 0.1, 31 1, 3 4",gf));
+                createIsoline(0, SlopeSide.NONE, "0 0, 1 1, 2 2, 0 0.1, 31 1, 3 4",gf));
         TestUtils.assertEquals(lw.Weld_copy(c_is1_end_is3_beg),
-                createIsoline(0, 0, "2 2, 1 1, 0 0, 3 4, 31 1, 0 0.1",gf));
+                createIsoline(0, SlopeSide.NONE, "2 2, 1 1, 0 0, 3 4, 31 1, 0 0.1",gf));
         TestUtils.assertEquals(lw.Weld_copy(c_is1_end_is3_end),
-                createIsoline(0, 0, "0 0, 1 1, 2 2, 3 4, 31 1, 0 0.1",gf));
+                createIsoline(0, SlopeSide.NONE, "0 0, 1 1, 2 2, 3 4, 31 1, 0 0.1",gf));
         TestUtils.assertEquals(lw.Weld_copy(c_is1_beg_is3_beg),
-                createIsoline(0, 0, "2 2, 1 1, 0 0, 0 0.1, 31 1, 3 4",gf));
+                createIsoline(0, SlopeSide.NONE, "2 2, 1 1, 0 0, 0 0.1, 31 1, 3 4",gf));
     }
 
     private Connection createConnection(Coordinate start1, Coordinate end1,

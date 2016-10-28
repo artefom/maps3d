@@ -5,6 +5,7 @@ import Deserialization.Interpolation.SlopeMark;
 import com.vividsolutions.jts.geom.*;
 import ru.ogpscenter.maps3d.isolines.IIsoline;
 import ru.ogpscenter.maps3d.isolines.Isoline;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 import ru.ogpscenter.maps3d.utils.Constants;
 import ru.ogpscenter.maps3d.utils.GeomUtils;
 import ru.ogpscenter.maps3d.utils.Pair;
@@ -37,7 +38,7 @@ public class DeserializedOCAD {
     public Set<Integer> symbol_ids;
     private double metersPerUnit;
 
-    public void DeserializeMap(File ocadFile, BiConsumer<Integer, Integer> progressUpdate) throws Exception {
+    public void loadOcad(File ocadFile, BiConsumer<Integer, Integer> progressUpdate) throws Exception {
         long ocadFileSize = ocadFile.length();
         if (ocadFileSize > MAX_OCAD_FILE_SIZE) {
             throw new Exception("OCAD File is too big. Must be < " + MAX_OCAD_FILE_SIZE + " bytes");
@@ -169,51 +170,49 @@ public class DeserializedOCAD {
 
     public ArrayList<SlopeMark> slopeMarks;
 
-    public ArrayList<IIsoline> toIsolines(double interpolationStep ,GeometryFactory gf) throws Exception {
-        if (interpolationStep <= 0) throw new Exception("Invalid interpolation step");
-
+    public ArrayList<IIsoline> toIsolines(GeometryFactory gf) throws Exception {
         slopeMarks = new ArrayList<>();
         slopeMarks.addAll(objects.stream().filter(TOcadObject::isSlope).map(SlopeMark::new).collect(Collectors.toList()));
 
-        ArrayList<IIsoline> ret = new ArrayList<>();
+        ArrayList<IIsoline> result = new ArrayList<>();
         for (TOcadObject obj : objects) {
             if (obj.isLine()) {
 
                 // Detected slope, lying on this curve;
                 SlopeMark slope = null;
-                LineString ls = CurveString.fromOcadVertices(obj.vertices).interpolate(gf);
+                LineString lineString = CurveString.fromOcadVertices(obj.vertices).interpolate(gf);
 
                 // Find slope within specified distance
-                for (SlopeMark s : slopeMarks) {
-                    Point p = gf.createPoint(s.origin);
-                    if (ls.isWithinDistance(p, Constants.slope_near_dist)) {
-                        slope = s;
+                for (SlopeMark slopeMark : slopeMarks) {
+                    Point slopeMarkOrigin = gf.createPoint(slopeMark.origin);
+                    if (lineString.isWithinDistance(slopeMarkOrigin, Constants.slope_near_dist)) {
+                        slope = slopeMark;
                         break;
                     }
                 }
 
-                int slopeSide = 0;
+                SlopeSide slopeSide = SlopeSide.NONE;
                 if (slope != null) {
-                    double precision = Constants.tangent_precision / ls.getLength();
-                    double projectionFactor = GeomUtils.projectionFactor(slope.origin, ls);
-                    double pos1 = GeomUtils.clamp(projectionFactor-precision, 0, 1);
-                    double pos2 = GeomUtils.clamp(projectionFactor+precision, 0, 1);
-                    Coordinate c1 = GeomUtils.pointAlong(ls, pos1);
-                    Coordinate c2 = GeomUtils.pointAlong(ls, pos2);
-                    LineSegment seg = new LineSegment(c1, c2);
-                    slopeSide = GeomUtils.getSide(seg, slope.pointAlong(Constants.slope_length));
+                    double precision = Constants.tangent_precision / lineString.getLength();
+                    double projectionFactor = GeomUtils.projectionFactor(slope.origin, lineString);
+                    double pos1 = GeomUtils.clamp(projectionFactor - precision, 0, 1);
+                    double pos2 = GeomUtils.clamp(projectionFactor + precision, 0, 1);
+                    Coordinate c1 = GeomUtils.pointAlong(lineString, pos1);
+                    Coordinate c2 = GeomUtils.pointAlong(lineString, pos2);
+                    LineSegment segment = new LineSegment(c1, c2);
+                    slopeSide = GeomUtils.getSide(segment, slope.pointAlong(Constants.slope_length));
                 }
-                if (ls.getLength() < 0.01) {
+                if (lineString.getLength() < 0.01) {
                     System.out.println("Too small line string, skip");
-                } else if  (ls.getNumPoints() < 2) {
+                } else if  (lineString.getNumPoints() < 2) {
                     System.out.println("Invalid line string, skip");
                 } else {
-                    ret.add(new Isoline(obj.getType(), slopeSide, ls.getCoordinateSequence(), gf));
+                    result.add(new Isoline(obj.getType(), slopeSide, lineString.getCoordinateSequence(), gf));
                 }
             }
         }
 
-        return ret;
+        return result;
     }
 
     public List<TOcadObject> getObjectsByID(int symbolId) {

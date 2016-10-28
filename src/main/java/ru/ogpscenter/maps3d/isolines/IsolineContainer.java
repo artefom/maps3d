@@ -199,12 +199,12 @@ public class IsolineContainer extends HashSet<IIsoline> {
 
             LineString ls = g.fromJson(jobj.get("lineString"),LineString.class);
             int type = jobj.get("type").getAsInt();
-            int slope_side = jobj.get("slope_side").getAsInt();
+            int slopeSide = jobj.get("slope_side").getAsInt();
             int id = jobj.get("id").getAsInt();
             boolean edgeToEdge = jobj.get("isedgetoedge").getAsBoolean();
             double height = jobj.get("height").getAsDouble();
 
-            Isoline new_isoline = new Isoline(type,slope_side,ls.getCoordinateSequence(),gf);
+            Isoline new_isoline = new Isoline(type, SlopeSide.fromInt(slopeSide),ls.getCoordinateSequence(),gf);
 
             new_isoline.setHeight(height);
             new_isoline.setEdgeToEdge(edgeToEdge);

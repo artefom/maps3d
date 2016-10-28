@@ -3,6 +3,7 @@ package ru.ogpscenter.maps3d.utils.area;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineSegment;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 import ru.ogpscenter.maps3d.utils.GeomUtils;
 
 import java.util.ArrayList;
@@ -14,22 +15,22 @@ import java.util.Collection;
 public class PolygonAreaBuffer extends AreaBuffer<Integer> {
 
     Coordinate[] coordinates;
-    ArrayList<int[]> convex_polygons;
+    ArrayList<int[]> convexPolygons;
 
-    public PolygonAreaBuffer(Coordinate[] coordinates, ArrayList<int[]> convex_polygons, int width, int height) {
+    public PolygonAreaBuffer(Coordinate[] coordinates, ArrayList<int[]> convexPolygons, int width, int height) {
         this.coordinates = coordinates;
-        this.convex_polygons = convex_polygons;
+        this.convexPolygons = convexPolygons;
         setEnvelope(null);
         init(width,height);
-        for (int i = 0; i != convex_polygons.size(); ++i) {
+        for (int i = 0; i != convexPolygons.size(); ++i) {
             add(i);
         }
     }
 
     @Override
-    public boolean add(Integer entity_id) {
+    public boolean add(Integer entityId) {
 
-        int[] entity = convex_polygons.get(entity_id);
+        int[] entity = convexPolygons.get(entityId);
 
         double min_x = coordinates[entity[0]].x;
         double min_y = coordinates[entity[0]].y;
@@ -53,7 +54,7 @@ public class PolygonAreaBuffer extends AreaBuffer<Integer> {
 
             for (int column = begin_x; column < end_x; ++column) {
 
-                putToCell(column,row,entity_id);
+                putToCell(column,row,entityId);
 
             }
 
@@ -79,38 +80,38 @@ public class PolygonAreaBuffer extends AreaBuffer<Integer> {
 
     }
 
-    private static LineSegment ls_buf = new LineSegment();
+    private static LineSegment lineSegmentBuffer = new LineSegment();
     public boolean contains(int[] poly, Coordinate c) {
-        ls_buf.p0 = coordinates[poly[poly.length-1]];
-        ls_buf.p1 = coordinates[poly[0]];
-        int side = GeomUtils.getSide(ls_buf,c);
+        lineSegmentBuffer.p0 = coordinates[poly[poly.length-1]];
+        lineSegmentBuffer.p1 = coordinates[poly[0]];
+        SlopeSide side = GeomUtils.getSide(lineSegmentBuffer,c);
         for (int i = 0; i != poly.length-1;++i) {
-            ls_buf.p0 = coordinates[poly[i]];
-            ls_buf.p1 = coordinates[poly[i+1]];
-            int new_side = GeomUtils.getSide(ls_buf,c);
-            if (side != 0 && side != GeomUtils.getSide(ls_buf,c)) return false;
-            side = new_side;
+            lineSegmentBuffer.p0 = coordinates[poly[i]];
+            lineSegmentBuffer.p1 = coordinates[poly[i+1]];
+            SlopeSide newSide = GeomUtils.getSide(lineSegmentBuffer,c);
+            if (side != SlopeSide.NONE && side != GeomUtils.getSide(lineSegmentBuffer,c)) return false;
+            side = newSide;
         }
         return true;
     }
 
-    private static Coordinate coordinate_buf = new Coordinate();
+    private static Coordinate coordinateBuffer = new Coordinate();
     public int[] getPolygonByPoint(double x, double y) {
-        coordinate_buf.x = x;
-        coordinate_buf.y = y;
-        return getPolygonByPoint(coordinate_buf);
+        coordinateBuffer.x = x;
+        coordinateBuffer.y = y;
+        return getPolygonByPoint(coordinateBuffer);
     }
 
     public int[] getPolygonByPoint(Coordinate c) {
         int column = (int)toLocalX(c.x);
         int row = (int)toLocalY(c.y);
 
-        if (row < 0 || column < 0 || row >= height || column >= width) return null;
+        if (row < 0 || column < 0 || row >= height || column >= width) {
+            return null;
+        }
 
-        LineSegment ls = new LineSegment();
-
-        int[] closest_poly = null;
-        double closest_dist = 0;
+        int[] closestPoly = null;
+        double closestDist = 0;
 
         int x_begin = GeomUtils.clamp( column-1, 0, width);
         int y_begin = GeomUtils.clamp( row-1 , 0, height);
@@ -120,19 +121,19 @@ public class PolygonAreaBuffer extends AreaBuffer<Integer> {
         for (int x = x_begin; x != x_end; ++x) {
             for (int y = y_begin; y != y_end; ++y) {
                 for ( Integer poly_id : getCell(column,row) ) {
-                    int[] poly = convex_polygons.get(poly_id);
+                    int[] poly = convexPolygons.get(poly_id);
                     if (contains(poly,c)) return poly;
 
                     double dist = Math.min( c.distance(coordinates[poly[0]]), c.distance(coordinates[poly[1]]) );
                     dist = Math.min(dist, c.distance(coordinates[poly[2]]));
-                    if (dist < closest_dist || closest_poly == null) {
-                        closest_poly = poly;
-                        closest_dist = dist;
+                    if (dist < closestDist || closestPoly == null) {
+                        closestPoly = poly;
+                        closestDist = dist;
                     }
                 }
             }
         }
 
-        return closest_poly;
+        return closestPoly;
     }
 }

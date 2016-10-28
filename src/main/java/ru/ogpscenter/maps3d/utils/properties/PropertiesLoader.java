@@ -34,22 +34,24 @@ public class PropertiesLoader {
         public static String contour_4 = "106...";
         public static String contour_4_ignore = "106002";
 
+        public static String border = "950...";
+
         public static String slope = "104...";
 
-        public static int getLineType(int symbol_id) {
-            if (SymbolIdMatcher.matches(symbol_id,contour_1) && !SymbolIdMatcher.matches(symbol_id,contour_1_ignore)) return 1;
-            if (SymbolIdMatcher.matches(symbol_id,contour_2) && !SymbolIdMatcher.matches(symbol_id,contour_2_ignore)) return 2;
-            if (SymbolIdMatcher.matches(symbol_id,contour_3) && !SymbolIdMatcher.matches(symbol_id,contour_3_ignore)) return 3;
-            if (SymbolIdMatcher.matches(symbol_id,contour_4) && !SymbolIdMatcher.matches(symbol_id,contour_4_ignore)) return 4;
+        public static int getLineType(int symbolId) {
+            if (SymbolIdMatcher.matches(symbolId, contour_1) && !SymbolIdMatcher.matches(symbolId, contour_1_ignore)) return 1;
+            if (SymbolIdMatcher.matches(symbolId, contour_2) && !SymbolIdMatcher.matches(symbolId, contour_2_ignore)) return 2;
+            if (SymbolIdMatcher.matches(symbolId, contour_3) && !SymbolIdMatcher.matches(symbolId, contour_3_ignore)) return 3;
+            if (SymbolIdMatcher.matches(symbolId, contour_4) && !SymbolIdMatcher.matches(symbolId, contour_4_ignore)) return 4;
             return -1;
         }
 
-        public static boolean isLine(int symbol_id) {
-            return getLineType(symbol_id) != -1;
+        public static boolean isSlope(int symbolId) {
+            return SymbolIdMatcher.matches(symbolId, slope);
         }
 
-        public static boolean isSlope(int symbol_id) {
-            return SymbolIdMatcher.matches(symbol_id,slope);
+        public static boolean isBorder(int symbolId) {
+            return SymbolIdMatcher.matches(symbolId, border);
         }
     }
 

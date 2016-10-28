@@ -144,25 +144,32 @@ public class TOcadObject extends ByteDeserializable {
 //        System.out.println(offset + " " + this.toString());
     }
 
-    int isLineCache = 0;
     public boolean isLine() {
-        return getType() != -1;
+        return getType() != -1 && getType() != 5;
     }
 
-    private int isSlope_cache = 0;
+    private int isSlopeCache = 0;
     public boolean isSlope() {
-        if (isSlope_cache == 0) {
-            isSlope_cache = PropertiesLoader.ocad_input.isSlope(Sym) ? 1 : -1;
+        if (isSlopeCache == 0) {
+            isSlopeCache = PropertiesLoader.ocad_input.isSlope(Sym) ? 1 : -1;
         }
-        return isSlope_cache == 1;
+        return isSlopeCache == 1;
     }
 
-    private int line_type_cache = -2;
-    public int getType() {
-        if (line_type_cache == -2) {
-            line_type_cache = PropertiesLoader.ocad_input.getLineType(Sym);
+    private int isBorderCache = 0;
+    public boolean isBorder() {
+        if (isBorderCache == 0) {
+            isBorderCache = PropertiesLoader.ocad_input.isBorder(Sym) ? 1 : -1;
         }
-        return line_type_cache;
+        return isBorderCache == 1;
+    }
+
+    private int lineTypeCache = -2;
+    public int getType() {
+        if (lineTypeCache == -2) {
+            lineTypeCache = PropertiesLoader.ocad_input.getLineType(Sym);
+        }
+        return lineTypeCache;
     }
 
     private static ArrayList< ArrayList<OcadVertex> > splitByHoleFirst(ArrayList<OcadVertex> vertices) {
@@ -191,11 +198,8 @@ public class TOcadObject extends ByteDeserializable {
 
     public Geometry getGeometry(GeometryFactory gf) throws Exception {
         // Split into circles, if succeeded, means that it'buffer polygon
-        if (Otp == 3) {// Area object
-
-            ArrayList<TDPoly> poly = new ArrayList<>();
-
-            // Run through vertecies and add them to buffer, while hole first not encountered...
+        if (Otp == 3) { // Area object
+            // Run through vertices and add them to buffer, while hole first not encountered...
 
             // Exterior ring - first element of this array, other are holes
             ArrayList< ArrayList<OcadVertex> > exteriorAndHoles = splitByHoleFirst(vertices);
@@ -227,6 +231,11 @@ public class TOcadObject extends ByteDeserializable {
 
         }
         else if (Otp == 2) { // Line Object
+            CurveString cs = CurveString.fromOcadVertices(vertices);
+            return cs.interpolate(gf);
+        }
+        else if (Otp == 7) { // Rectangle Object
+            // todo(MS): support rectangle object
             CurveString cs = CurveString.fromOcadVertices(vertices);
             return cs.interpolate(gf);
         }
@@ -277,9 +286,6 @@ public class TOcadObject extends ByteDeserializable {
         return "TOcadObject{" +
             "TDPoly_offset=" + TDPOLY_OFFSET +
             ", TDPoly_size=" + TDPOLY_SIZE +
-            ", isLineCache=" + isLineCache +
-            ", isSlope_cache=" + isSlope_cache +
-            ", line_type_cache=" + line_type_cache +
             ", Sym=" + Sym +
             ", Otp=" + Otp +
             ", _Customer=" + _Customer +

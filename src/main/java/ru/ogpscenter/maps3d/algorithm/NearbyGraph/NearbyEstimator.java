@@ -8,6 +8,7 @@ import com.vividsolutions.jts.math.Vector2D;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 import ru.ogpscenter.maps3d.display.GeometryWrapper;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 import ru.ogpscenter.maps3d.utils.CachedTracer;
 import ru.ogpscenter.maps3d.utils.CommandLineUtils;
 import ru.ogpscenter.maps3d.utils.Constants;
@@ -95,8 +96,8 @@ public class NearbyEstimator {
                 // Process  pairs, only if trace did hit something and did nont hit current isoline.
 
                 if (traceres_positive.entitiy != null && traceres_positive.entitiy != iso && !traceres_positive.entitiy.getIsoline().isSteep() ) {
-                    int from_side_index = 1;
-                    int to_side_index = traceres_positive.side;
+                    SlopeSide from_side_index = SlopeSide.LEFT;
+                    SlopeSide to_side_index = traceres_positive.side;
                     AttributedIsoline.LineSide from_side = iso.getSideByIndex(from_side_index);
                     AttributedIsoline.LineSide to_side = traceres_positive.entitiy.getSideByIndex(to_side_index);
                     EdgeAttributed edge = ret.getEdge(from_side,to_side);
@@ -110,8 +111,8 @@ public class NearbyEstimator {
                 }
 
                 if (traceres_negative.entitiy != null && traceres_negative.entitiy != iso && !traceres_negative.entitiy.getIsoline().isSteep() ) {
-                    int from_side_index = -1;
-                    int to_side_index = traceres_negative.side;
+                    SlopeSide from_side_index = SlopeSide.RIGHT;
+                    SlopeSide to_side_index = traceres_negative.side;
                     AttributedIsoline.LineSide from_side = iso.getSideByIndex(from_side_index);
                     AttributedIsoline.LineSide to_side = traceres_negative.entitiy.getSideByIndex(to_side_index);
                     EdgeAttributed edge = ret.getEdge(from_side,to_side);

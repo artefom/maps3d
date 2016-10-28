@@ -1,6 +1,7 @@
 package ru.ogpscenter.maps3d.utils;
 
 import com.vividsolutions.jts.geom.*;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,26 +39,28 @@ public class GeomUtils {
     }
 
     /**
-     * @param seg
-     * @param c
-     * @return 1 if c is to the LEFT from seg, -1 if c is to the RIGHT from seg (looking from seg.p0 to seg.p1)
+     * @param seg segment
+     * @param point point
+     * @return 1 if point is to the LEFT from seg, -1 if point is to the RIGHT from seg (looking from seg.p0 to seg.p1)
      */
-    public static int getSide( LineSegment seg, Coordinate c ) {
-        double v1x = seg.p1.x-seg.p0.x;
-        double v1y = seg.p1.y-seg.p0.y;
-        double v2x = c.x - seg.p0.x;
-        double v2y = c.y - seg.p0.y;
-        return ( (v1x*v2y - v1y*v2x) > 0) ? 1 : -1;
+    public static SlopeSide getSide(LineSegment seg, Coordinate point) {
+        // segment vector
+        double v1x = seg.p1.x - seg.p0.x;
+        double v1y = seg.p1.y - seg.p0.y;
+        // vector to point from segment origin
+        double v2x = point.x - seg.p0.x;
+        double v2y = point.y - seg.p0.y;
+        return ((v1x * v2y - v1y * v2x) > 0) ? SlopeSide.LEFT : SlopeSide.RIGHT;
     }
 
     /**
      * Get side of (x3 y3) relative to Line segment( x0 y0, x0+v0x y0+v0y)
      * @return
      */
-    public static int getSide( double x0, double y0, double v0x, double v0y, double x3, double y3) {
+    public static SlopeSide getSide( double x0, double y0, double v0x, double v0y, double x3, double y3) {
         double v2x = x3 - x0;
         double v2y = y3 - y0;
-        return ( (v0x*v2y - v0y*v2x) > 0) ? 1 : -1;
+        return ( (v0x*v2y - v0y*v2x) > 0) ? SlopeSide.LEFT : SlopeSide.RIGHT;
     }
 
     public static double crossProduct(double v0x, double v0y, double v1x, double v1y) {
@@ -81,28 +84,28 @@ public class GeomUtils {
 
 
     /**
-     * returns length fraction of closest point along {@link LineString} ls to {@link Coordinate} c
+     * Returns length fraction of closest point along {@link LineString} lineString to {@link Coordinate} c
      * @param c
-     * @param ls
+     * @param lineString
      * @return length fraction
      */
-    public static double projectionFactor( Coordinate c, LineString ls ) {
-        LineSegment seg = new LineSegment();
-        double min_dist = c.distance(ls.getCoordinateN(0));
-        double min_length = 0;
-        double length_accum = 0;
-        for (int i = 1; i < ls.getNumPoints(); ++i) {
-            seg.p0 = ls.getCoordinateN(i-1);
-            seg.p1 = ls.getCoordinateN(i);
-            double len = seg.getLength();
-            double d = seg.distance(c);
-            if (d < min_dist) {
-                min_dist = d;
-                min_length = length_accum + len*seg.projectionFactor(c);
+    public static double projectionFactor( Coordinate c, LineString lineString ) {
+        LineSegment lineSegment = new LineSegment();
+        double minDist = c.distance(lineString.getCoordinateN(0));
+        double minLength = 0;
+        double totalLength = 0;
+        for (int i = 1; i < lineString.getNumPoints(); ++i) {
+            lineSegment.p0 = lineString.getCoordinateN(i-1);
+            lineSegment.p1 = lineString.getCoordinateN(i);
+            double segmentLength = lineSegment.getLength();
+            double distanceFromSegment = lineSegment.distance(c);
+            if (distanceFromSegment < minDist) {
+                minDist = distanceFromSegment;
+                minLength = totalLength + segmentLength * lineSegment.projectionFactor(c);
             }
-            length_accum += len;
+            totalLength += segmentLength;
         }
-        return min_length/length_accum;
+        return minLength / totalLength;
     }
 
     /**
@@ -165,8 +168,8 @@ public class GeomUtils {
         double b;
         double c;
         double t;
-        int side;
-        int prev_side;
+        SlopeSide side;
+        SlopeSide prevSide;
         Coordinate coord1;
         Coordinate coord2;
         CoordinateSequence ls_coords;
@@ -176,18 +179,18 @@ public class GeomUtils {
 
         ls_coords = ls.getCoordinateSequence();
         coord1 = ls_coords.getCoordinate(0);
-        prev_side = getSide(vec,coord1);
+        prevSide = getSide(vec,coord1);
         for (int i = 1; i < ls_coords.size(); ++i) {
             coord2 = ls_coords.getCoordinate(i);
             side = getSide(vec,coord2);
-            if (prev_side != side) {
+            if (prevSide != side) {
                 a = coord1.y-coord2.y;
                 b = coord2.x-coord1.x;
                 c = coord1.x*coord2.y-coord2.x*coord1.y;
                 t = -(c+a*x0+b*y0)/(a*vx+b*vy);
                 result.add(t);
             }
-            prev_side = side;
+            prevSide = side;
             coord1 = coord2;
         }
         return result;

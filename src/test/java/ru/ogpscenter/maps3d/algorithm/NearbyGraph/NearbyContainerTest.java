@@ -4,6 +4,7 @@ import TestUtils.TestUtils;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import org.junit.Test;
 import ru.ogpscenter.maps3d.isolines.IIsoline;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 
 import java.util.LinkedList;
 
@@ -25,10 +26,10 @@ public class NearbyContainerTest {
 
         LinkedList<IIsoline> isolines = new LinkedList<>();
 
-        isolines.add( TestUtils.createIsoline(2,0,"0 1, 1 2, 2 1",gf).getIsoline() );
-        isolines.add( TestUtils.createIsoline(2,0,"2 0, 0 0",gf).getIsoline() );
-        isolines.add( TestUtils.createIsoline(2,0,"3 0, 2 -2, 1 -1",gf).getIsoline() );
-        isolines.add( TestUtils.createIsoline(2,1,"0 -4, 3 -4",gf).getIsoline() );
+        isolines.add( TestUtils.createIsoline(2, SlopeSide.NONE, "0 1, 1 2, 2 1", gf).getIsoline() );
+        isolines.add( TestUtils.createIsoline(2, SlopeSide.NONE, "2 0, 0 0", gf).getIsoline() );
+        isolines.add( TestUtils.createIsoline(2, SlopeSide.NONE, "3 0, 2 -2, 1 -1", gf).getIsoline() );
+        isolines.add( TestUtils.createIsoline(2, SlopeSide.LEFT, "0 -4, 3 -4", gf).getIsoline() );
 
         NearbyContainer cont = new NearbyContainer(isolines);
 
@@ -42,10 +43,10 @@ public class NearbyContainerTest {
 
         graph.recoverAllSlopes();
 
-        assertEquals(1,isolines.get(0).getSlopeSide());
-        assertEquals(-1,isolines.get(1).getSlopeSide());
-        assertEquals(-1,isolines.get(2).getSlopeSide());
-        assertEquals(1,isolines.get(3).getSlopeSide());
+        assertEquals(SlopeSide.LEFT,isolines.get(0).getSlopeSide());
+        assertEquals(SlopeSide.RIGHT,isolines.get(1).getSlopeSide());
+        assertEquals(SlopeSide.RIGHT,isolines.get(2).getSlopeSide());
+        assertEquals(SlopeSide.LEFT,isolines.get(3).getSlopeSide());
     }
 
 }

@@ -4,6 +4,7 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import ru.ogpscenter.maps3d.isolines.IIsoline;
 import ru.ogpscenter.maps3d.isolines.Isoline;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 import ru.ogpscenter.maps3d.utils.CachedTracer;
 import ru.ogpscenter.maps3d.utils.Constants;
 import ru.ogpscenter.maps3d.utils.Pair;
@@ -47,10 +48,10 @@ public class LineWelder {
      * @return
      */
     public AttributedIsoline Weld_copy(Connection con) {
-        Pair<LineString, Integer> pair = LineConnector.connect(con,gf,false);
+        Pair<LineString, SlopeSide> pair = LineConnector.connect(con,gf,false);
         if (pair == null) return null;
         LineString result_ls = pair.getKey();
-        Integer result_ss = pair.getValue();
+        SlopeSide result_ss = pair.getValue();
         IIsoline new_iline = new Isoline(con.first().isoline.getType(),
                 result_ss,
                 result_ls.getCoordinateSequence(),gf);
@@ -69,11 +70,11 @@ public class LineWelder {
      * @return
      */
     public AttributedIsoline Weld(Connection con) {
-        Pair<LineString, Integer> pair = LineConnector.connect(con,gf,false);
+        Pair<LineString, SlopeSide> pair = LineConnector.connect(con,gf,false);
 
         if (pair == null) return null;
         LineString result_ls = pair.getKey();
-        Integer result_ss = pair.getValue();
+        SlopeSide result_ss = pair.getValue();
         IIsoline new_iline = new Isoline(con.first().isoline.getType(),
                 result_ss,
                 result_ls.getCoordinateSequence(),gf);

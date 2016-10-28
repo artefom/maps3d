@@ -9,13 +9,12 @@ import java.util.regex.Pattern;
 public class SymbolIdMatcher {
 
     public static boolean matches(int symbol, String str) {
-
-        if (str.length() == 0) return false;
-
-        Pattern p = Pattern.compile(str);
+        if (str.length() == 0) {
+            return false;
+        }
+        Pattern p = Pattern.compile(str); // todo(MS): do not compile pattern every time
         Matcher m = p.matcher(Integer.toString(symbol));
         return m.matches();
-
     }
 
 }

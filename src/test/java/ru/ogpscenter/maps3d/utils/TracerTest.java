@@ -7,6 +7,7 @@ import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.math.Vector2D;
 import org.junit.Before;
 import org.junit.Test;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 
 import java.util.ArrayList;
 
@@ -46,7 +47,7 @@ public class TracerTest {
         CachedTracer.traceres res = tracer.trace(new Coordinate(2,0),new Vector2D(-1,0),0.001,1000);
 
         assertEquals(line1,res.entitiy);
-        assertEquals(-1,res.side);
+        assertEquals(SlopeSide.RIGHT,res.side);
     }
 
 
@@ -57,7 +58,7 @@ public class TracerTest {
         CachedTracer.traceres res = tracer.trace(new Coordinate(0,0),new Vector2D(1,0),0.001,1000);
 
         assertEquals(line1,res.entitiy);
-        assertEquals(1,res.side);
+        assertEquals(SlopeSide.LEFT,res.side);
     }
 
 }

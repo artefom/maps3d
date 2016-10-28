@@ -2,6 +2,7 @@ package ru.ogpscenter.maps3d.utils;
 
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 import ru.ogpscenter.maps3d.utils.area.GeometryAreaBuffer;
 import ru.ogpscenter.maps3d.utils.area.LSWAttributed;
 import ru.ogpscenter.maps3d.utils.area.LineSegmentWrapper;
@@ -22,7 +23,7 @@ public class CachedTracer<T>{
         public T entitiy;
         public Coordinate point;
         //Vector2D normal;
-        public int side;
+        public SlopeSide side;
         public double distance;
 
         @Override
@@ -82,15 +83,15 @@ public class CachedTracer<T>{
         double b;
         double c;
         double t;
-        int side;
-        int prev_side;
+        SlopeSide side;
+        SlopeSide prevSide;
 
         traceres res = new traceres();
 
         res.distance = max;
         res.entitiy = null;
         res.point = null;
-        res.side = 0;
+        res.side = SlopeSide.NONE;
 
         intersection_candidates_buf.clear();
         buffer.findPossiblyIntersecting(x0+vx*min,y0+vy*min,x0+vx*max,y0+vy*max,intersection_candidates_buf);
@@ -102,10 +103,10 @@ public class CachedTracer<T>{
         for (LineSegmentWrapper lsw_raw : intersection_candidates_buf) {
             LSWAttributed<T> lsw = (LSWAttributed<T>)lsw_raw;
 
-            prev_side = GeomUtils.getSide(x0,y0,vx,vy,lsw.getBeginX(),lsw.getBeginY());
+            prevSide = GeomUtils.getSide(x0,y0,vx,vy,lsw.getBeginX(),lsw.getBeginY());
             side = GeomUtils.getSide(x0,y0,vx,vy,lsw.getEndX(),lsw.getEndY());
 
-            if (prev_side != side) {
+            if (prevSide != side) {
 
                 a = lsw.getBeginY()-lsw.getEndY();
                 b = lsw.getEndX()-lsw.getBeginX();
@@ -158,8 +159,8 @@ public class CachedTracer<T>{
         double b;
         double c;
         double t;
-        int side;
-        int prev_side;
+        SlopeSide side;
+        SlopeSide prevSide;
 
         intersection_candidates_buf.clear();
         buffer.findPossiblyIntersecting(x0+vx*min,y0+vy*min,x0+vx*max,y0+vy*max,intersection_candidates_buf);
@@ -168,10 +169,10 @@ public class CachedTracer<T>{
         for (LineSegmentWrapper lsw_raw : intersection_candidates_buf) {
             LSWAttributed<T> lsw = (LSWAttributed<T>)lsw_raw;
 
-            prev_side = GeomUtils.getSide(x0,y0,vx,vy,lsw.getBeginX(),lsw.getBeginY());
+            prevSide = GeomUtils.getSide(x0,y0,vx,vy,lsw.getBeginX(),lsw.getBeginY());
             side = GeomUtils.getSide(x0,y0,vx,vy,lsw.getEndX(),lsw.getEndY());
 
-            if (prev_side != side) {
+            if (prevSide != side) {
 
                 a = lsw.getBeginY()-lsw.getEndY();
                 b = lsw.getEndX()-lsw.getBeginX();
@@ -199,8 +200,8 @@ public class CachedTracer<T>{
         double b;
         double c;
         double t;
-        int side;
-        int prev_side;
+        SlopeSide side;
+        SlopeSide prevSide;
 
         intersection_candidates_buf.clear();
         buffer.findPossiblyIntersecting(x0+vx*min,y0+vy*min,x0+vx*max,y0+vy*max,intersection_candidates_buf);
@@ -208,10 +209,10 @@ public class CachedTracer<T>{
         for (LineSegmentWrapper lsw_raw : intersection_candidates_buf) {
             LSWAttributed<T> lsw = (LSWAttributed<T>)lsw_raw;
 
-            prev_side = GeomUtils.getSide(x0,y0,vx,vy,lsw.getBeginX(),lsw.getBeginY());
+            prevSide = GeomUtils.getSide(x0,y0,vx,vy,lsw.getBeginX(),lsw.getBeginY());
             side = GeomUtils.getSide(x0,y0,vx,vy,lsw.getEndX(),lsw.getEndY());
 
-            if (prev_side != side) {
+            if (prevSide != side) {
 
                 a = lsw.getBeginY()-lsw.getEndY();
                 b = lsw.getEndX()-lsw.getBeginX();
@@ -236,9 +237,9 @@ public class CachedTracer<T>{
         double b;
         double c;
         double t;
-        double prev_side = GeomUtils.getSide(s1,s2.p0);
-        double side = GeomUtils.getSide(s1,s2.p1);
-        if (side == prev_side) return false;
+        SlopeSide prevSide = GeomUtils.getSide(s1, s2.p0);
+        SlopeSide side = GeomUtils.getSide(s1, s2.p1);
+        if (side == prevSide) return false;
         a = s2.p0.y-s2.p1.y;
         b = s2.p1.x-s2.p0.x;
         c = s2.p0.x*s2.p1.y-s2.p1.x*s2.p0.y;
@@ -267,7 +268,7 @@ public class CachedTracer<T>{
         double b;
         double c;
         double t;
-        double prev_side;
+        SlopeSide prevSide;
         LineString boundary;
         Coordinate coord1;
         Coordinate coord2;
@@ -280,12 +281,12 @@ public class CachedTracer<T>{
 
             Coordinate[] coords = ls.getEnvelope().getBoundary().getCoordinates();
             coord1 = coords[0];
-            prev_side = GeomUtils.getSide(vec, coord1);
+            prevSide = GeomUtils.getSide(vec, coord1);
             boolean intersected = false;
             for (int i = 1; i < coords.length; ++i) {
                 coord2 = coords[i];
-                int side = GeomUtils.getSide(vec, coord2);
-                if (prev_side != side) {
+                SlopeSide side = GeomUtils.getSide(vec, coord2);
+                if (prevSide != side) {
                     a = coord1.y - coord2.y;
                     b = coord2.x - coord1.x;
                     c = coord1.x * coord2.y - coord2.x * coord1.y;
@@ -295,7 +296,7 @@ public class CachedTracer<T>{
                         break;
                     }
                 }
-                prev_side = side;
+                prevSide = side;
                 coord1 = coord2;
             }
             if (!intersected) return false;
@@ -306,11 +307,11 @@ public class CachedTracer<T>{
 
         line_coords = ls.getCoordinates();
         coord1 = line_coords[0];
-        prev_side = GeomUtils.getSide(vec,coord1);
+        prevSide = GeomUtils.getSide(vec,coord1);
         for (int i = 1; i < line_coords.length; ++i) {
             coord2 = line_coords[i];
-            int side = GeomUtils.getSide(vec,coord2);
-            if (prev_side != side) {
+            SlopeSide side = GeomUtils.getSide(vec,coord2);
+            if (prevSide != side) {
                 a = coord1.y-coord2.y;
                 b = coord2.x-coord1.x;
                 c = coord1.x*coord2.y-coord2.x*coord1.y;
@@ -319,7 +320,7 @@ public class CachedTracer<T>{
                     return true;
                 }
             }
-            prev_side = side;
+            prevSide = side;
             coord1 = coord2;
         }
         return false;

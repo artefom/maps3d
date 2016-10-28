@@ -134,7 +134,7 @@ public class DistanceFieldInterpolation {
             buf[x  ][y  ].pivot1_row = (short)x;
             buf[x  ][y  ].dirX = dir_x;
             buf[x  ][y  ].dirY = dir_y;
-            buf[x  ][y  ].slopeSide = (byte) iso.getIsoline().getSlopeSide();
+            buf[x  ][y  ].slopeSide = (byte) iso.getIsoline().getSlopeSide().getIntValue();
 
             numerator += shortest ;
             if (!(numerator<longest)) {

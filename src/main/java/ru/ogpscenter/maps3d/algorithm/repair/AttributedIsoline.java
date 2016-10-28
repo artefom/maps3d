@@ -6,6 +6,7 @@ import com.vividsolutions.jts.geom.LineSegment;
 import com.vividsolutions.jts.geom.LineString;
 import ru.ogpscenter.maps3d.isolines.IIsoline;
 import ru.ogpscenter.maps3d.isolines.Isoline;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 
 /**
  * Wrapper around {@link IIsoline}, containing all sufficient information about {@link LineEnd}s.
@@ -81,7 +82,7 @@ public class AttributedIsoline {
         return iso.getLineString();
     }
 
-    public int getSlopeSide() {
+    public SlopeSide getSlopeSide() {
         return iso.getSlopeSide();
     }
 

@@ -6,6 +6,7 @@ import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.math.Vector2D;
 import ru.ogpscenter.maps3d.isolines.IIsoline;
 import ru.ogpscenter.maps3d.isolines.IsolineContainer;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 import ru.ogpscenter.maps3d.utils.CachedTracer;
 import ru.ogpscenter.maps3d.utils.LineStringIterator;
 
@@ -25,7 +26,7 @@ public class ActionSlope extends  ActionBase {
         LineString cut_line = cont.getFactory().createLineString(actionPoints);
 
         List<IIsoline> intersected_isolines = cont.getIntersecting(cut_line);
-        for (IIsoline iso : intersected_isolines) iso.setSlopeSide(0);
+        for (IIsoline iso : intersected_isolines) iso.setSlopeSide(SlopeSide.NONE);
         HashSet<IIsoline> positive_side = new HashSet<>();
         HashSet<IIsoline> negative_side = new HashSet<>();
 
@@ -39,7 +40,7 @@ public class ActionSlope extends  ActionBase {
             CachedTracer.traceres res = tracer.trace(buf.p0, vec,0,1);
             while (res.entitiy != null) {
 
-                if (-res.side > 0) positive_side.add((IIsoline)res.entitiy);
+                if (res.side == SlopeSide.RIGHT) positive_side.add((IIsoline)res.entitiy);
                 else negative_side.add((IIsoline)res.entitiy);
 
                 vec = Vector2D.create(res.point,buf.p1);
@@ -53,10 +54,10 @@ public class ActionSlope extends  ActionBase {
             boolean negative = negative_side.contains(iso);
 
             if (positive && negative) {
-                iso.setSlopeSide(0);
+                iso.setSlopeSide(SlopeSide.NONE);
             } else if (positive) {
-                iso.setSlopeSide(1);
-            } else iso.setSlopeSide(-1);
+                iso.setSlopeSide(SlopeSide.LEFT);
+            } else iso.setSlopeSide(SlopeSide.RIGHT);
         }
     }
 

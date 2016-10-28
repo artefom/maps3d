@@ -2,6 +2,7 @@ package ru.ogpscenter.maps3d.utils;
 
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector2D;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 
 import java.util.Collection;
 import java.util.function.Function;
@@ -21,7 +22,7 @@ public class Tracer_Legacy<T>{
         public T entitiy;
         public Coordinate point;
         //Vector2D normal;
-        public int side;
+        public SlopeSide side;
         public double distance;
 
         @Override
@@ -54,9 +55,9 @@ public class Tracer_Legacy<T>{
         double c;
         double t;
         double result_dist = max;
-        int side;
-        int prev_side;
-        int result_side = 0;
+        SlopeSide side;
+        SlopeSide prevSide;
+        SlopeSide resultSide = SlopeSide.NONE;
         T ret = null;
         LineString boundary;
         Coordinate coord1;
@@ -72,12 +73,12 @@ public class Tracer_Legacy<T>{
                 try {
                     Coordinate[] coords = ls.getEnvelope().getBoundary().getCoordinates();
                     coord1 = coords[0];
-                    prev_side = getSide(vec, coord1);
+                    prevSide = getSide(vec, coord1);
                     boolean intersected = false;
                     for (int i = 1; i < coords.length; ++i) {
                         coord2 = coords[i];
                         side = getSide(vec, coord2);
-                        if (prev_side != side) {
+                        if (prevSide != side) {
                             a = coord1.y - coord2.y;
                             b = coord2.x - coord1.x;
                             c = coord1.x * coord2.y - coord2.x * coord1.y;
@@ -87,7 +88,7 @@ public class Tracer_Legacy<T>{
                                 break;
                             }
                         }
-                        prev_side = side;
+                        prevSide = side;
                         coord1 = coord2;
                     }
                     if (intersected == false) continue;
@@ -100,30 +101,30 @@ public class Tracer_Legacy<T>{
 
             ls_coords = ls.getCoordinateSequence();
             coord1 = ls_coords.getCoordinate(0);
-            prev_side = getSide(vec,coord1);
+            prevSide = getSide(vec,coord1);
             for (int i = 1; i < ls_coords.size(); ++i) {
                 coord2 = ls_coords.getCoordinate(i);
                 side = getSide(vec,coord2);
-                if (prev_side != side) {
+                if (prevSide != side) {
                     a = coord1.y-coord2.y;
                     b = coord2.x-coord1.x;
                     c = coord1.x*coord2.y-coord2.x*coord1.y;
                     t = -(c+a*x0+b*y0)/(a*vx+b*vy);
                     if (t > min && t < proj_factor) {
-                        result_side = side;
+                        resultSide = side;
                         proj_factor = t;
                         ret = ent;
                         result_dist = t;
                     }
                 }
-                prev_side = side;
+                prevSide = side;
                 coord1 = coord2;
             }
         }
         traceres result = new traceres();
         result.entitiy = ret;
         result.point = vec.pointAlong(proj_factor);
-        result.side = result_side;
+        result.side = resultSide;
         result.distance = result_dist;
         return result;
     }
@@ -138,7 +139,7 @@ public class Tracer_Legacy<T>{
         double b;
         double c;
         double t;
-        double prev_side;
+        SlopeSide prevSide;
         T ret = null;
         LineString boundary;
         Coordinate coord1;
@@ -154,12 +155,12 @@ public class Tracer_Legacy<T>{
 
                 Coordinate[] coords = ls.getEnvelope().getBoundary().getCoordinates();
                 coord1 = coords[0];
-                prev_side = getSide(vec, coord1);
+                prevSide = getSide(vec, coord1);
                 boolean intersected = false;
                 for (int i = 1; i < coords.length; ++i) {
                     coord2 = coords[i];
-                    int side = getSide(vec, coord2);
-                    if (prev_side != side) {
+                    SlopeSide side = getSide(vec, coord2);
+                    if (prevSide != side) {
                         a = coord1.y - coord2.y;
                         b = coord2.x - coord1.x;
                         c = coord1.x * coord2.y - coord2.x * coord1.y;
@@ -169,7 +170,7 @@ public class Tracer_Legacy<T>{
                             break;
                         }
                     }
-                    prev_side = side;
+                    prevSide = side;
                     coord1 = coord2;
                 }
                 if (!intersected) continue;
@@ -180,11 +181,11 @@ public class Tracer_Legacy<T>{
 
             line_coords = ls.getCoordinateSequence();
             coord1 = line_coords.getCoordinate(0);
-            prev_side = getSide(vec,coord1);
+            prevSide = getSide(vec,coord1);
             for (int i = 1; i < line_coords.size(); ++i) {
                 coord2 = line_coords.getCoordinate(i);
-                int side = getSide(vec,coord2);
-                if (prev_side != side) {
+                SlopeSide side = getSide(vec,coord2);
+                if (prevSide != side) {
                     a = coord1.y-coord2.y;
                     b = coord2.x-coord1.x;
                     c = coord1.x*coord2.y-coord2.x*coord1.y;
@@ -193,7 +194,7 @@ public class Tracer_Legacy<T>{
                         return true;
                     }
                 }
-                prev_side = side;
+                prevSide = side;
                 coord1 = coord2;
             }
         }
@@ -210,9 +211,9 @@ public class Tracer_Legacy<T>{
         double b;
         double c;
         double t;
-        double prev_side = getSide(s1,s2.p0);
-        double side = getSide(s1,s2.p1);
-        if (side == prev_side) return false;
+        SlopeSide prevSide = getSide(s1,s2.p0);
+        SlopeSide side = getSide(s1,s2.p1);
+        if (side == prevSide) return false;
         a = s2.p0.y-s2.p1.y;
         b = s2.p1.x-s2.p0.x;
         c = s2.p0.x*s2.p1.y-s2.p1.x*s2.p0.y;
@@ -230,7 +231,7 @@ public class Tracer_Legacy<T>{
         double b;
         double c;
         double t;
-        double prev_side;
+        SlopeSide prevSide;
         LineString boundary;
         Coordinate coord1;
         Coordinate coord2;
@@ -243,12 +244,12 @@ public class Tracer_Legacy<T>{
 
             Coordinate[] coords = ls.getEnvelope().getBoundary().getCoordinates();
             coord1 = coords[0];
-            prev_side = getSide(vec, coord1);
+            prevSide = getSide(vec, coord1);
             boolean intersected = false;
             for (int i = 1; i < coords.length; ++i) {
                 coord2 = coords[i];
-                int side = getSide(vec, coord2);
-                if (prev_side != side) {
+                SlopeSide side = getSide(vec, coord2);
+                if (prevSide != side) {
                     a = coord1.y - coord2.y;
                     b = coord2.x - coord1.x;
                     c = coord1.x * coord2.y - coord2.x * coord1.y;
@@ -258,7 +259,7 @@ public class Tracer_Legacy<T>{
                         break;
                     }
                 }
-                prev_side = side;
+                prevSide = side;
                 coord1 = coord2;
             }
             if (intersected == false) return false;
@@ -269,11 +270,11 @@ public class Tracer_Legacy<T>{
 
         line_coords = ls.getCoordinates();
         coord1 = line_coords[0];
-        prev_side = getSide(vec,coord1);
+        prevSide = getSide(vec,coord1);
         for (int i = 1; i < line_coords.length; ++i) {
             coord2 = line_coords[i];
-            int side = getSide(vec,coord2);
-            if (prev_side != side) {
+            SlopeSide side = getSide(vec,coord2);
+            if (prevSide != side) {
                 a = coord1.y-coord2.y;
                 b = coord2.x-coord1.x;
                 c = coord1.x*coord2.y-coord2.x*coord1.y;
@@ -282,7 +283,7 @@ public class Tracer_Legacy<T>{
                     return true;
                 }
             }
-            prev_side = side;
+            prevSide = side;
             coord1 = coord2;
         }
         return false;

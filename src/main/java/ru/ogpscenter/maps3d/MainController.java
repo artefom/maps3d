@@ -78,8 +78,8 @@ public class MainController {
     public DeserializedOCAD openFile(File ocadFile, BiConsumer<Integer, Integer> progressUpdate) throws Exception {
         deserializedOCAD = new DeserializedOCAD();
         isolineContainer = new IsolineContainer(gf);
-        deserializedOCAD.DeserializeMap(ocadFile, progressUpdate);
-        ArrayList<IIsoline> isolines = deserializedOCAD.toIsolines(1, gf);
+        deserializedOCAD.loadOcad(ocadFile, progressUpdate);
+        ArrayList<IIsoline> isolines = deserializedOCAD.toIsolines(gf);
         slopeMarks = new ArrayList<>();
         isolines.forEach(isolineContainer::add);
         deserializedOCAD.slopeMarks.forEach(slopeMarks::add);

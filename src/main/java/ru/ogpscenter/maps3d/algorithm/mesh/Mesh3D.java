@@ -736,7 +736,7 @@ public class Mesh3D {
 //        mesh.saveAsFbx("mesh");
 //
 //        DeserializedOCAD ocad = new DeserializedOCAD();
-//        ocad.DeserializeMap("sample.ocd",null);
+//        ocad.loadOcad("sample.ocd",null);
 //        mesh.generateTexture(ocad,"mesh_texture","png");
 //    }
 }

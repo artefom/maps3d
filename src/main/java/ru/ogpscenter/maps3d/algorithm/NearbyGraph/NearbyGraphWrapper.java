@@ -10,6 +10,7 @@ import org.jgrapht.graph.AsUnweightedGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 import org.jgrapht.traverse.BreadthFirstIterator;
 import ru.ogpscenter.maps3d.isolines.IIsoline;
+import ru.ogpscenter.maps3d.isolines.SlopeSide;
 import ru.ogpscenter.maps3d.utils.Constants;
 
 import java.util.*;
@@ -40,13 +41,13 @@ public class NearbyGraphWrapper {
             // If side have only one neighbour, this neighbour is other side of line. So, we found inside side of empty cirlce.
             if (neighbours.size() == 1 &&
                     side.getIsoline().getIsoline().isClosed() &&
-                    side.getIsoline().getIsoline().getSlopeSide() == 0) {
+                    side.getIsoline().getIsoline().getSlopeSide() == SlopeSide.NONE) {
                 LinearRing ring = gf.createLinearRing(side.getIsoline().getIsoline().getLineString().getCoordinateSequence());
                 Polygon poly = gf.createPolygon(ring);
                 double area = poly.getArea();
                 if (area < Constants.NEARBY_HILL_THRESHOLD_AREA) {
-                    int SlopeSide = side.isPositive() ? -1 : 1;
-                    side.getIsoline().getIsoline().setSlopeSide(SlopeSide);
+                    SlopeSide slopeSide = side.isPositive() ? SlopeSide.RIGHT : SlopeSide.LEFT;
+                    side.getIsoline().getIsoline().setSlopeSide(slopeSide);
                 }
             }
         }
@@ -91,17 +92,17 @@ public class NearbyGraphWrapper {
         IIsoline isoline2 = side2.getIsoline().getIsoline();
         if (isoline1 != isoline2) {
 
-            if (isoline1.getSlopeSide() != 0 && isoline2.getSlopeSide() == 0) {
+            if (isoline1.getSlopeSide() != SlopeSide.NONE && isoline2.getSlopeSide() == SlopeSide.NONE) {
                 if (inverted) {
-                    isoline2.setSlopeSide(-1 * isoline1.getSlopeSide());
+                    isoline2.setSlopeSide(isoline1.getSlopeSide().getOpposite());
                 } else {
                     isoline2.setSlopeSide(isoline1.getSlopeSide());
                 }
                 return side2;
             }
-            if (isoline1.getSlopeSide() == 0 && isoline2.getSlopeSide() != 0) {
+            if (isoline1.getSlopeSide() == SlopeSide.NONE && isoline2.getSlopeSide() != SlopeSide.NONE) {
                 if (inverted) {
-                    isoline1.setSlopeSide(-1 * isoline2.getSlopeSide());
+                    isoline1.setSlopeSide(isoline2.getSlopeSide().getOpposite());
                 } else {
                     isoline1.setSlopeSide(isoline2.getSlopeSide());
                 }
@@ -176,12 +177,12 @@ public class NearbyGraphWrapper {
             if (pivot.getIsoline().getIsoline().isHalf() || target.getIsoline().getIsoline().isHalf()) {
                 height_delta = 0.5;
             }
-            if (pivot.getIsoline().getIsoline().getSlopeSide() == 0) {
+            if (pivot.getIsoline().getIsoline().getSlopeSide() == SlopeSide.NONE) {
                 throw new RuntimeException("Slope side undetermined!");
                 //pivot.getIsoline().getIsoline().setHeight(-100000);
             }
-            int mul1 = pivot.getSign() == pivot.getIsoline().getIsoline().getSlopeSide() ? -1 : 1;
-            int mul2 = target.getSign() == target.getIsoline().getIsoline().getSlopeSide() ? -1 : 1;
+            int mul1 = pivot.getSign() == pivot.getIsoline().getIsoline().getSlopeSide().getIntValue() ? -1 : 1;
+            int mul2 = target.getSign() == target.getIsoline().getIsoline().getSlopeSide().getIntValue() ? -1 : 1;
             if (mul1 == -mul2) {
                 height_delta = height_delta*mul1;
             } else {

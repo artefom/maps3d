@@ -9,8 +9,8 @@ import com.vividsolutions.jts.geom.LineString;
  */
 public interface IIsoline {
 
-    int getSlopeSide();
-    void setSlopeSide(int side);
+    SlopeSide getSlopeSide();
+    void setSlopeSide(SlopeSide side);
     int getType();
 
     double getHeight();
