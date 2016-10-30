@@ -3,6 +3,7 @@ package Deserialization;
 import Deserialization.Binary.*;
 import Deserialization.Interpolation.SlopeMark;
 import com.vividsolutions.jts.geom.*;
+import org.jetbrains.annotations.NotNull;
 import ru.ogpscenter.maps3d.isolines.IIsoline;
 import ru.ogpscenter.maps3d.isolines.Isoline;
 import ru.ogpscenter.maps3d.isolines.SlopeSide;
@@ -33,11 +34,10 @@ public class DeserializedOCAD {
     public DeserializedOCAD() {
     }
 
-    private ArrayList<TOcadObject> objects;
     private HashMap< Integer,ArrayList<TRecord> > records;
-    public Set<Integer> symbol_ids;
-    private double metersPerUnit;
+    private HashMap<Integer, ArrayList<TOcadObject>> symbolIds2objects;
 
+    private double metersPerUnit;
     public void loadOcad(File ocadFile, BiConsumer<Integer, Integer> progressUpdate) throws Exception {
         long ocadFileSize = ocadFile.length();
         if (ocadFileSize > MAX_OCAD_FILE_SIZE) {
@@ -52,9 +52,8 @@ public class DeserializedOCAD {
         if ( header.OCADMark != 3245 ) throw new Exception("Invalid format: wrong OCAD header mark");
         if ( header.Version != 11 ) throw new Exception("Invalid format: version 11 required");
 
-        objects = new ArrayList<>(2048);
         records = new HashMap<>(2048);
-        symbol_ids = new HashSet<>();
+        symbolIds2objects = new HashMap<>();
 
         int nextStringIB = header.FirstStringIndexBlk;
         TStringIndexBlock stringIB = new TStringIndexBlock();
@@ -85,7 +84,9 @@ public class DeserializedOCAD {
                     if (stringIB.Table[i] != null && stringIB.Table[i].getString().length() != 0) {
                         TRecord rec =TRecord.fromTStringIndex(stringIB.Table[i]);
                         if (rec != null && rec.isValid()) {
-                            if (!records.containsKey(rec.getTypeID())) records.put(rec.getTypeID(),new ArrayList<>());
+                            if (!records.containsKey(rec.getTypeID())) {
+                                records.put(rec.getTypeID(),new ArrayList<>());
+                            }
                             records.get(rec.getTypeID()).add(rec);
                         }
                     }
@@ -95,8 +96,10 @@ public class DeserializedOCAD {
             }
         }
         ArrayList<TRecord> scaleParameters = getRecordsByName("ScalePar");
-        if (scaleParameters.size() != 1) throw new RuntimeException("File's map scale not understood");
-        this.metersPerUnit = scaleParameters.get(0).getValueAsDouble('m')/1000;
+        if (scaleParameters.size() != 1) {
+            throw new RuntimeException("File's map scale not understood");
+        }
+        this.metersPerUnit = scaleParameters.get(0).getValueAsDouble('m') / 1000;
         PropertiesLoader.update();
         Function<Pair<Integer, Integer>, Coordinate> coordinateConverter;
         if (PropertiesLoader.ocad_input.multiply_by_scale) {
@@ -146,12 +149,25 @@ public class DeserializedOCAD {
                 }
                 TOcadObject obj = new TOcadObject(coordinateConverter);
                 obj.deserialize(buffer,oi.Pos);
-
-                objects.add(obj);
-                symbol_ids.add(obj.Sym);
+                ArrayList<TOcadObject> objectsWithSymbol = symbolIds2objects.get(obj.Sym);
+                if (objectsWithSymbol == null) {
+                    objectsWithSymbol =  new ArrayList<>();
+                    symbolIds2objects.put(obj.Sym, objectsWithSymbol);
+                }
+                objectsWithSymbol.add(obj);
                 updateProgress(progressUpdate, progress, total);
             }
         }
+
+        @NotNull List<TOcadObject> borders = getObjectsByMask(PropertiesLoader.ocad_input.border);
+        border = borders.isEmpty() ? null : borders.get(0);
+        if (borders.size() > 1) {
+            System.out.println("Several border objects found! Will use first one");
+        }
+    }
+
+    public HashMap<Integer, ArrayList<TOcadObject>> getSymbolIds2objects() {
+        return symbolIds2objects;
     }
 
     private void updateProgress(BiConsumer<Integer, Integer> progressUpdate, int progress, int total) {
@@ -169,58 +185,71 @@ public class DeserializedOCAD {
     }
 
     public ArrayList<SlopeMark> slopeMarks;
+    public TOcadObject border;
 
     public ArrayList<IIsoline> toIsolines(GeometryFactory gf) throws Exception {
         slopeMarks = new ArrayList<>();
-        slopeMarks.addAll(objects.stream().filter(TOcadObject::isSlope).map(SlopeMark::new).collect(Collectors.toList()));
+        slopeMarks.addAll(getObjectsByMask(PropertiesLoader.ocad_input.slope).stream().map(SlopeMark::new).collect(Collectors.toList()));
 
         ArrayList<IIsoline> result = new ArrayList<>();
-        for (TOcadObject obj : objects) {
-            if (obj.isLine()) {
+        symbolIds2objects.values().forEach(objects -> {
+            for (TOcadObject obj : objects) {
+                if (obj.isLine()) {
 
-                // Detected slope, lying on this curve;
-                SlopeMark slope = null;
-                LineString lineString = CurveString.fromOcadVertices(obj.vertices).interpolate(gf);
+                    // Detected slope, lying on this curve;
+                    try {
+                        SlopeMark slope = null;
+                        LineString lineString = CurveString.fromOcadVertices(obj.vertices).interpolate(gf);
 
-                // Find slope within specified distance
-                for (SlopeMark slopeMark : slopeMarks) {
-                    Point slopeMarkOrigin = gf.createPoint(slopeMark.origin);
-                    if (lineString.isWithinDistance(slopeMarkOrigin, Constants.slope_near_dist)) {
-                        slope = slopeMark;
-                        break;
+                        // Find slope within specified distance
+                        for (SlopeMark slopeMark : slopeMarks) {
+                            Point slopeMarkOrigin = gf.createPoint(slopeMark.origin);
+                            if (lineString.isWithinDistance(slopeMarkOrigin, Constants.slope_near_dist)) {
+                                slope = slopeMark;
+                                break;
+                            }
+                        }
+
+                        SlopeSide slopeSide = SlopeSide.NONE;
+                        if (slope != null) {
+                            double precision = Constants.tangent_precision / lineString.getLength();
+                            double projectionFactor = GeomUtils.projectionFactor(slope.origin, lineString);
+                            double pos1 = GeomUtils.clamp(projectionFactor - precision, 0, 1);
+                            double pos2 = GeomUtils.clamp(projectionFactor + precision, 0, 1);
+                            Coordinate c1 = GeomUtils.pointAlong(lineString, pos1);
+                            Coordinate c2 = GeomUtils.pointAlong(lineString, pos2);
+                            LineSegment segment = new LineSegment(c1, c2);
+                            slopeSide = GeomUtils.getSide(segment, slope.pointAlong(Constants.slope_length));
+                        }
+                        if (lineString.getLength() < 0.01) {
+                            System.out.println("Too small line string, skip");
+                        } else if  (lineString.getNumPoints() < 2) {
+                            System.out.println("Invalid line string, skip");
+                        } else {
+                            result.add(new Isoline(obj.getType(), slopeSide, lineString.getCoordinateSequence(), gf));
+                        }
+                    }
+                    catch (Exception e) {
+                        System.out.println("Error while processing object: " + e.getMessage());
                     }
                 }
-
-                SlopeSide slopeSide = SlopeSide.NONE;
-                if (slope != null) {
-                    double precision = Constants.tangent_precision / lineString.getLength();
-                    double projectionFactor = GeomUtils.projectionFactor(slope.origin, lineString);
-                    double pos1 = GeomUtils.clamp(projectionFactor - precision, 0, 1);
-                    double pos2 = GeomUtils.clamp(projectionFactor + precision, 0, 1);
-                    Coordinate c1 = GeomUtils.pointAlong(lineString, pos1);
-                    Coordinate c2 = GeomUtils.pointAlong(lineString, pos2);
-                    LineSegment segment = new LineSegment(c1, c2);
-                    slopeSide = GeomUtils.getSide(segment, slope.pointAlong(Constants.slope_length));
-                }
-                if (lineString.getLength() < 0.01) {
-                    System.out.println("Too small line string, skip");
-                } else if  (lineString.getNumPoints() < 2) {
-                    System.out.println("Invalid line string, skip");
-                } else {
-                    result.add(new Isoline(obj.getType(), slopeSide, lineString.getCoordinateSequence(), gf));
-                }
             }
-        }
-
+        });
         return result;
     }
 
-    public List<TOcadObject> getObjectsByID(int symbolId) {
-        return objects.stream().filter(obj -> obj.Sym == symbolId).collect(Collectors.toList());
+    public List<TOcadObject> getObjectsBySymbolId(int symbolId) {
+        ArrayList<TOcadObject> objects = symbolIds2objects.get(symbolId);
+        if (objects == null) {
+            return Collections.emptyList();
+        }
+        return Collections.unmodifiableList(objects);
     }
 
-    public List<TOcadObject> getObjectsByIDs(List<Integer> symbolIds) {
-        return objects.stream().filter(obj -> symbolIds.contains(obj.Sym)).collect(Collectors.toList());
+    public List<TOcadObject> getObjectsBySymbolIds(List<Integer> symbolIds) {
+        ArrayList<TOcadObject> result =  new ArrayList<>();
+        symbolIds.forEach(symbolId -> result.addAll(getObjectsBySymbolId(symbolId)));
+        return result;
     }
 
     private static List<String> splitMask(String mask) {
@@ -231,7 +260,7 @@ public class DeserializedOCAD {
         return result;
     }
 
-    private static boolean matchesMask(int symbolId, String mask) {
+    public static boolean matchesMask(int symbolId, String mask) {
         String symbolIdString = Integer.toString(symbolId);
         int symbolIdLength = symbolIdString.length();
         if (symbolIdLength != mask.length()) {
@@ -247,12 +276,20 @@ public class DeserializedOCAD {
         return true;
     }
 
-    private static boolean matchesMasks(int symbolId, List<String> masks) {
+    public static boolean matchesMasks(int symbolId, List<String> masks) {
         return masks.stream().anyMatch(obj -> matchesMask(symbolId, obj));
     }
 
-    public List<TOcadObject> getObjectsByMask(String mask) {
+    @NotNull
+    public List<TOcadObject> getObjectsByMask(@NotNull String mask) {
+        ArrayList<TOcadObject> result = new ArrayList<>();
         List<String> masks = splitMask(mask);
-        return objects.stream().filter(obj -> matchesMasks(obj.Sym, masks)).collect(Collectors.toList());
+        symbolIds2objects.keySet().stream().filter(symbolId -> matchesMasks(symbolId, masks)).forEach(it -> {
+            ArrayList<TOcadObject> objects = symbolIds2objects.get(it);
+            if (objects != null) {
+                result.addAll(objects);
+            }
+        });
+        return result;
     }
 }

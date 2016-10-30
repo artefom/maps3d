@@ -66,7 +66,7 @@ public class Mask {
         }
     }
 
-    public void drawLines(List<LineString> strings, PointRasterizer rasterizer, byte color, int width) {
+    public void drawLines(List<LineString> strings, PointRasterizer rasterizer, byte color, float width) {
         Graphics2D g = (Graphics2D)image.getGraphics();
         g.setClip(0,0,image.getWidth(),image.getHeight());
         g.setColor(new Color(color,color,color,255));
@@ -103,25 +103,25 @@ public class Mask {
 
     public enum BlendMode { NONE, OVERLAY, MULTIPLY, SCREEN }
 
-    int mask_pixels_width;
-    int mask_pixels_height;
+    int maskPixelsWidth;
+    int maskPixelsHeight;
     public byte[] mask_pixels;
 
-    public void calcImgPixels(int img_width, int img_height) {
+    public void calcImagePixels(int img_width, int img_height) {
         mask_pixels = new byte[img_width * img_height];
         TextureUtils.drawOver(mask_pixels,img_width,img_height,pixels,width,height,new Envelope(
                 new Coordinate(0,0),
                 new Coordinate(img_width-1,img_height-1)
         ),false);
-        mask_pixels_width = img_width;
-        mask_pixels_height = img_height;
+        maskPixelsWidth = img_width;
+        maskPixelsHeight = img_height;
     }
 
     public void overlay(BufferedImage img, int color, BlendMode blendMode) {
 
         int[] img_pixels = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
-        if (mask_pixels_width != img.getWidth() || mask_pixels_height != img.getHeight()) {
-            calcImgPixels(img.getWidth(),img.getHeight());
+        if (maskPixelsWidth != img.getWidth() || maskPixelsHeight != img.getHeight()) {
+            calcImagePixels(img.getWidth(),img.getHeight());
         }
 
         short dr = getR(color);
@@ -172,25 +172,23 @@ public class Mask {
 
     //byte[] mask_pixels = null;
     /**
-     * Draw image over tex, using this mask
-     * @param img
-     * @param tex
+     * Draw image over texture, using this mask
+     * @param image
+     * @param texture
      * @param blendMode
      */
-    public void overlay(BufferedImage img, BufferedImage tex, BlendMode blendMode, Envelope texture_envelope ) {
+    public void overlay(BufferedImage image, BufferedImage texture, BlendMode blendMode, Envelope texture_envelope ) {
 
-        int[] img_pixels = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
+        int[] imagePixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
 
-        int img_width = img.getWidth();
-        int img_height = img.getHeight();
-        int tex_width = tex.getWidth();
-        int tex_height = tex.getHeight();
+        int imageWidth = image.getWidth();
+        int imageHeight = image.getHeight();
 
-        if (mask_pixels_width != img_width || mask_pixels_height != img_height) {
-            calcImgPixels(img_width,img_height);
+        if (maskPixelsWidth != imageWidth || maskPixelsHeight != imageHeight) {
+            calcImagePixels(imageWidth, imageHeight);
         }
 
-        TextureUtils.drawOver(img_pixels,img_width,img_height,tex,mask_pixels,texture_envelope,true,blendMode);
+        TextureUtils.drawOver(imagePixels,imageWidth,imageHeight,texture,mask_pixels,texture_envelope,true,blendMode);
     }
 
     /* Atomic functions, working with bits */

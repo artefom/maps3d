@@ -1,6 +1,6 @@
 package ru.ogpscenter.maps3d;
 
-import Deserialization.DeserializedOCAD;
+import Deserialization.Binary.TOcadObject;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
@@ -28,6 +28,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.jetbrains.annotations.NotNull;
 import ru.ogpscenter.maps3d.algorithm.dataset.Datagen;
 import ru.ogpscenter.maps3d.algorithm.mesh.TexturedPatch;
 import ru.ogpscenter.maps3d.display.Drawer;
@@ -37,6 +38,8 @@ import ru.ogpscenter.maps3d.isolines.IIsoline;
 import ru.ogpscenter.maps3d.isolines.IsolineContainer;
 import ru.ogpscenter.maps3d.mouse.*;
 import ru.ogpscenter.maps3d.utils.CommandLineUtils;
+import ru.ogpscenter.maps3d.utils.Constants;
+import ru.ogpscenter.maps3d.utils.properties.PropertiesLoader;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -53,6 +56,8 @@ import java.util.stream.Collectors;
  */
 public class MainApp extends Application implements Initializable {
 
+    // todo(MS): enable/disable UI elements depending on state
+
     @FXML protected AnchorPane ap;
     @FXML protected Text statusText;
     @FXML protected ProgressBar progressBar;
@@ -62,7 +67,7 @@ public class MainApp extends Application implements Initializable {
     @FXML protected Button healButton;
     @FXML protected Button linesButton;
     @FXML protected Button interpolateButton;
-    @FXML protected Button texButton;
+    @FXML protected Button generateTexturesButton;
     @FXML protected Label actionLabel;
     @FXML protected Label infoLabel;
 
@@ -79,7 +84,6 @@ public class MainApp extends Application implements Initializable {
 
     private int renderAction_draw_limit = 10;
     private int renderAction_draw_count = 0;
-    private DeserializedOCAD cachedOCAD = null;
     private File lastOpenedDir;
 
     public MainApp() {
@@ -112,7 +116,12 @@ public class MainApp extends Application implements Initializable {
             List<GeometryWrapper> geometry = drawer.draw(displayedContainer,mc.edge);
             renderer.clear();
             renderer.addAll(geometry);
-            if (mc.slopeMarks != null) renderer.addAll( drawer.draw(mc.slopeMarks) );
+            if (mc.slopeMarks.isEmpty()) {
+                renderer.addAll( drawer.draw(mc.slopeMarks) );
+            }
+            if (mc.border != null) {
+                renderer.add(drawer.draw(mc.border, Color.RED, 2));
+            }
         }
     }
 
@@ -229,14 +238,14 @@ public class MainApp extends Application implements Initializable {
                 @Override public void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
                     try {
                         updateProgress(0,100);
-                        cachedOCAD = mc.openFile(ocadFile, this::updateProgress);
+                        mc.loadOcadFile(ocadFile, this::updateProgress);
                         statusText.setText("Added " + mc.IsolineCount() + " isolines. Bbox: " + mc.isolineContainer.getEnvelope());
                         originalContainer = new IsolineContainer(mc.isolineContainer);
                         displayedContainer = mc.isolineContainer;
                     } catch (FileNotFoundException e) {
                         statusText.setText("File not found");
                     } catch (Exception e) {
-                        statusText.setText("File parsing error: "+e.getMessage());
+                        statusText.setText("File load error: "+e.getMessage());
                     }
                 }
 
@@ -251,10 +260,12 @@ public class MainApp extends Application implements Initializable {
         }
     }
 
-    private void executeAsBackgroundTask(final BackgroundTask task) {
+    private Thread executeAsBackgroundTask(final BackgroundTask task) {
         progressBar.progressProperty().unbind();
         progressBar.progressProperty().bind(task.progressProperty());
-        new Thread(task).start();
+        Thread thread = new Thread(task);
+        thread.start();
+        return thread;
     }
 
     @FXML
@@ -290,19 +301,14 @@ public class MainApp extends Application implements Initializable {
 
     @FXML
     public void saveJsonButtonAction(ActionEvent event) throws Exception {
-
-        FileChooser fileChooser1 = new FileChooser();
-        fileChooser1.setTitle("Save json map as");
-
-
-        fileChooser1.setInitialDirectory(getLastOpenedDir());
-
-        File file = fileChooser1.showSaveDialog(stage);
-
-        if (file == null) return;
-
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save json map as");
+        fileChooser.setInitialDirectory(getLastOpenedDir());
+        File file = fileChooser.showSaveDialog(stage);
+        if (file == null) {
+            return;
+        }
         mc.saveJsonFile(file);
-
     }
 
     @FXML
@@ -509,9 +515,10 @@ public class MainApp extends Application implements Initializable {
         });
     }
 
-    @FXML void onAlgorithmTexturePressed() {
+    @FXML void onAlgorithmGenerateTexturesPressed() {
+        // todo(MS): show dialog with all paths
         FileChooser saveFileChooser = new FileChooser();
-        saveFileChooser.setTitle("Save texture as");
+        saveFileChooser.setTitle("Select where to save textures");
 
         saveFileChooser.setInitialFileName(TexturedPatch.getDefaultTextureNameBase());
         saveFileChooser.setInitialDirectory(getLastOpenedDir());
@@ -521,33 +528,77 @@ public class MainApp extends Application implements Initializable {
           return;
         }
 
-        if (cachedOCAD == null) {
-            FileChooser ocadFileChooser = new FileChooser();
-            ocadFileChooser.setTitle("Open ocad map");
-            ocadFileChooser.setInitialDirectory(getLastOpenedDir());
-            File ocadFile = ocadFileChooser.showOpenDialog(stage);
-            if (ocadFile != null) {
-                try {
-                    lastOpenedDir = ocadFile.getParentFile();
-                    cachedOCAD = new DeserializedOCAD();
-                    cachedOCAD.DeserializeMap(ocadFile, null);
-                } catch (FileNotFoundException ex) {
-                    statusText.setText("File not found");
-                } catch (IOException ex) {
-                    statusText.setText("File reading error: "+ex.getMessage());
-                } catch (Exception ex) {
-                    statusText.setText("File parsing error: "+ex.getMessage());
-                }
-            }
-        }
+        ensureOcadLoaded();
 
         executeAsBackgroundTask(new BackgroundTask("Generate textures action") {
             @Override
             void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
                 String texture_output_path = file.getAbsolutePath();
-                if (!mc.generateTexture(texture_output_path, progressUpdate)) {
-                    mc.generateTexture(texture_output_path, cachedOCAD, progressUpdate);
+                mc.generateTexture(texture_output_path, progressUpdate);
+            }
+        });
+    }
+
+    private void ensureOcadLoaded() {
+        if (mc.getDeserializedOcad() == null) {
+            FileChooser ocadFileChooser = new FileChooser();
+            ocadFileChooser.setTitle("Open ocad map");
+            ocadFileChooser.setInitialDirectory(getLastOpenedDir());
+            File ocadFile = ocadFileChooser.showOpenDialog(stage);
+            if (ocadFile != null) {
+                lastOpenedDir = ocadFile.getParentFile();
+                try {
+                    mc.loadOcadFile(ocadFile, null);
+                } catch (FileNotFoundException ex) {
+                    statusText.setText("File not found");
+                } catch (IOException ex) {
+                    statusText.setText("File reading error: "+ex.getMessage());
+                } catch (Exception ex) {
+                    statusText.setText("File load error: "+ex.getMessage());
                 }
+            }
+        }
+    }
+
+    @FXML void onAlgorithmSplitMapImagePressed() {
+        // todo(MS): show dialog with all paths
+        ensureOcadLoaded();
+
+        if (mc.border == null) {
+            statusText.setText("No border objects found");
+            return;
+        }
+
+        // open external texture image file
+        FileChooser imageFileChooser = new FileChooser();
+        imageFileChooser.setTitle("Select map image to split");
+        imageFileChooser.setInitialDirectory(getLastOpenedDir());
+        imageFileChooser.getExtensionFilters().addAll(
+             new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif"),
+             new FileChooser.ExtensionFilter("All Files", "*.*")
+        );
+        File imageFile = imageFileChooser.showOpenDialog(stage);
+        if (imageFile == null) {
+            return;
+        }
+
+        // select where to save result files
+        FileChooser saveFileChooser = new FileChooser();
+        saveFileChooser.setTitle("Save texture as");
+        saveFileChooser.setInitialFileName(imageFile.toPath().getFileName().toString().replaceFirst("[.][^.]+$", "_texture"));
+        saveFileChooser.setInitialDirectory(getLastOpenedDir());
+
+        File file = saveFileChooser.showSaveDialog(stage);
+        if (file == null) {
+          return;
+        }
+
+
+        executeAsBackgroundTask(new BackgroundTask("Generate textures action") {
+            @Override
+            void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {
+                String textureOutputPath = file.getAbsolutePath();
+                mc.splitTexture(imageFile, textureOutputPath, progressUpdate);
             }
         });
     }

@@ -28,7 +28,7 @@ public class TerminalApp {
 //            mc.buildIndex();
 //        } else {
 //            throw new RuntimeException("Not implemented");
-//            //mc.openFile(new File(args[args.length-1]));
+//            //mc.loadOcadFile(new File(args[args.length-1]));
 //            //mc.detectEdge();
 //            //mc.connectLines();
 //            //mc.buildGraph();

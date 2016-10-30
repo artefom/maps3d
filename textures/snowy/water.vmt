@@ -5,5 +5,5 @@
   "filled" : true,
   "blur_size" : 1,
   "color" : "0, 0, 255",
-  "texture" : "water.bmp"
+  "texture" : "ice.jpg"
 }

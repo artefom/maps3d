@@ -85,10 +85,12 @@ public class Drawer {
 
     public List<GeometryWrapper> draw(Collection<SlopeMark> slopes) {
         ArrayList<GeometryWrapper> gws = new ArrayList<>();
-        slopes.forEach((s)->{
-            gws.add(new GeometryWrapper( s.asGeometry(Constants.slope_length,gf), Constants.DRAWING_COLOR_SLOPE_ORIGINAL, 1 ));
-        });
+        slopes.forEach((s)-> gws.add(new GeometryWrapper( s.asGeometry(Constants.slope_length,gf), Constants.DRAWING_COLOR_SLOPE_ORIGINAL, 1 )));
         return gws;
+    }
+
+    public GeometryWrapper draw(Geometry geometry, Color color, int width) {
+        return new GeometryWrapper(geometry, color, width);
     }
 
     private LineString interpolatedLine(LineString ls, double step) {

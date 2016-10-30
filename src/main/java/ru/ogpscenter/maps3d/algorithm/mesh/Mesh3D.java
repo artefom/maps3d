@@ -1,5 +1,6 @@
 package ru.ogpscenter.maps3d.algorithm.mesh;
 
+import Deserialization.Binary.TOcadObject;
 import Deserialization.DeserializedOCAD;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.math.Vector3D;
@@ -15,6 +16,8 @@ import ru.ogpscenter.maps3d.utils.curves.CurveString;
 import ru.ogpscenter.maps3d.utils.fbx.FBXConverter;
 import ru.ogpscenter.maps3d.utils.properties.PropertiesLoader;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.*;
@@ -23,6 +26,8 @@ import java.util.*;
  * Class, representing 3-dimentional mesh
  */
 public class Mesh3D {
+
+    private HashMap<TOcadObject, Geometry> geometryCache =  new HashMap<>();
 
     private Mesh3D() {
 
@@ -377,23 +382,21 @@ public class Mesh3D {
         out.close();
     }
 
-    public void generateTexture(DeserializedOCAD ocad, String out_path, String extension) {
+    public void generateTexture(DeserializedOCAD ocad, String outPath, String extension) {
         System.out.println("Generating texture");
-
+        long startTime = System.currentTimeMillis();
         // Load brushes from vmt files
         List<PatchTextureGenerator.Brush> brushes = PatchTextureGenerator.loadBrushes(PatchTextureGenerator.getTextureFolder());
-
+        geometryCache.clear();
         int patch_id = 0;
         for (TexturedPatch texturedPatch : getTexturedPatches()) {
-
-            PatchTextureGenerator patchTextureGenerator = new PatchTextureGenerator(ocad, texturedPatch, this, brushes);
-
-            String full_path = TexturedPatch.extendTextureName(out_path,patch_id);
-            patchTextureGenerator.writeToFile(full_path);
-
+            PatchTextureGenerator patchTextureGenerator = new PatchTextureGenerator(ocad, texturedPatch, this, brushes, geometryCache);
+            String fullPath = TexturedPatch.extendTextureName(outPath + "." + extension,patch_id);
+            CommandLineUtils.reportProgressBegin("Patch #" + patch_id);
+            patchTextureGenerator.generateAndWriteToFile(fullPath);
             patch_id += 1;
-
         }
+        System.out.println("Done in " + (System.currentTimeMillis() - startTime) + " ms.");
     }
 
 
@@ -718,25 +721,14 @@ public class Mesh3D {
         return Math.abs( Math.acos( norm.dot(z_normal) ) )/Math.PI*2;
     }
 
-
-//    public static void main(String[] args) throws Exception {
-//
-//        IsolineContainer ic = IsolineContainer.deserialize("sample_clean_map2.json");
-//        NearbyContainer cont = new NearbyContainer(ic);
-//        NearbyEstimator est = new NearbyEstimator(ic.getFactory());
-//        NearbyGraphWrapper graph = new NearbyGraphWrapper(est.getRelationGraph(cont));
-//        graph.SetHillsSlopeSides();
-//        graph.ConvertToSpanningTree();
-//        graph.recoverAllSlopes();
-//        graph.recoverAllHeights();
-//
-//        Mesh3D mesh = Mesh3D.fromIsolineContainer(ic);
-//
-//        mesh.saveAsObj("mesh");
-//        mesh.saveAsFbx("mesh");
-//
-//        DeserializedOCAD ocad = new DeserializedOCAD();
-//        ocad.loadOcad("sample.ocd",null);
-//        mesh.generateTexture(ocad,"mesh_texture","png");
-//    }
+    public void splitTexture(BufferedImage image, DeserializedOCAD ocad, String textureOutputPath, String extension) {
+        System.out.println("Splitting texture");
+        int patch_id = 0;
+        for (TexturedPatch texturedPatch : getTexturedPatches()) {
+            PatchTextureGenerator patchTextureGenerator = new PatchTextureGenerator(ocad, texturedPatch, this, Collections.emptyList(), geometryCache);
+            String fullPath = TexturedPatch.extendTextureName(textureOutputPath + "." + extension,patch_id);
+            patchTextureGenerator.splitAndWriteToFile(image, fullPath);
+            patch_id += 1;
+        }
+    }
 }

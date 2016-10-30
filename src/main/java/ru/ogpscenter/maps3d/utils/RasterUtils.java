@@ -1211,10 +1211,10 @@ public class RasterUtils {
 
     public static void save(BufferedImage image, String path) {
 
-        String extenstion = OutputUtils.getExtension(path);
+        String extension = OutputUtils.getExtension(path);
         try {
             File f = new File(path);
-            ImageIO.write(image, extenstion, f);
+            ImageIO.write(image, extension, f);
         } catch (IOException e) {
             throw new RuntimeException("Could not save " + path);
         }

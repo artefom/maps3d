@@ -35,7 +35,7 @@ public class SlopeMark {
     }
 
     public LineString asGeometry(double length, GeometryFactory gf) {
-        return gf.createLineString(new Coordinate[] {origin,pointAlong(length)});
+        return gf.createLineString(new Coordinate[] {origin, pointAlong(length)});
     }
 
 }

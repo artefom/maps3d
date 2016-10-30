@@ -7,13 +7,13 @@ import com.vividsolutions.jts.geom.Coordinate;
  */
 public class OcadVertex extends Coordinate {
 
-    boolean IS_BEIZER;
-    boolean EMPTY_LEFT;
-    boolean AREA_BORDER;
-    boolean CONNER;
-    boolean HOLE_FIRST;
-    boolean EMPTY_RIGHT;
-    boolean IS_DASH;
+    public boolean IS_BEIZER;
+    public boolean EMPTY_LEFT;
+    public boolean AREA_BORDER;
+    public boolean CONNER;
+    public boolean HOLE_FIRST;
+    public boolean EMPTY_RIGHT;
+    public boolean IS_DASH;
 
     OcadVertex() {
 

@@ -8,6 +8,7 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.math.Vector2D;
 import ru.ogpscenter.maps3d.utils.Pair;
+import ru.ogpscenter.maps3d.utils.properties.PropertiesLoader;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -166,7 +167,7 @@ public class CurveString {
     public LineString interpolate(GeometryFactory gf) {
 
         ArrayList<Coordinate> interpolate_coords = new ArrayList<>();
-        interpolate(interpolate_coords,0.25);
+        interpolate(interpolate_coords, PropertiesLoader.mesh_creation.crease_angle);
 
         return gf.createLineString( interpolate_coords.toArray(new Coordinate[interpolate_coords.size()]) );
     }

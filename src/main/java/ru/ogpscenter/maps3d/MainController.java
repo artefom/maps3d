@@ -1,13 +1,17 @@
 package ru.ogpscenter.maps3d;
 
+import Deserialization.Binary.TOcadObject;
 import Deserialization.DeserializedOCAD;
 import Deserialization.Interpolation.SlopeMark;
+import com.sun.imageio.plugins.common.ImageUtil;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LinearRing;
 import com.vividsolutions.jts.geom.Point;
 import ru.ogpscenter.maps3d.algorithm.NearbyGraph.NearbyContainer;
 import ru.ogpscenter.maps3d.algorithm.NearbyGraph.NearbyEstimator;
 import ru.ogpscenter.maps3d.algorithm.NearbyGraph.NearbyGraphWrapper;
+import ru.ogpscenter.maps3d.algorithm.Texture.PatchTextureGenerator;
 import ru.ogpscenter.maps3d.algorithm.healing.Healer;
 import ru.ogpscenter.maps3d.algorithm.index.Index;
 import ru.ogpscenter.maps3d.algorithm.interpolation.DistanceFieldInterpolation;
@@ -19,8 +23,13 @@ import ru.ogpscenter.maps3d.isolines.IIsoline;
 import ru.ogpscenter.maps3d.isolines.IsolineContainer;
 import ru.ogpscenter.maps3d.utils.CommandLineUtils;
 import ru.ogpscenter.maps3d.utils.OutputUtils;
+import ru.ogpscenter.maps3d.utils.RasterUtils;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.function.BiConsumer;
@@ -38,11 +47,17 @@ public class MainController {
     public DistanceFieldInterpolation interpolation;
     public Triangulation triangulation;
     public Index index;
-    DeserializedOCAD deserializedOCAD;
+
+    public DeserializedOCAD getDeserializedOcad() {
+        return deserializedOcad;
+    }
+
+    private DeserializedOCAD deserializedOcad;
 
     public MapEdge edge;
 
-    public ArrayList<SlopeMark> slopeMarks;
+    public ArrayList<SlopeMark> slopeMarks = new ArrayList<>();
+    public LinearRing border = null;
 
     MainController() {
         gf = new GeometryFactory();
@@ -50,7 +65,7 @@ public class MainController {
         edge = null;
     }
 
-//    public void openFile(File f) throws IOException {
+//    public void loadOcadFile(File f) throws IOException {
 //        FileInputStream fis = new FileInputStream(f);
 //        BufferedReader br = new BufferedReader(new InputStreamReader(fis));
 //
@@ -75,17 +90,17 @@ public class MainController {
 //        }
 //    }
 
-    public DeserializedOCAD openFile(File ocadFile, BiConsumer<Integer, Integer> progressUpdate) throws Exception {
-        deserializedOCAD = new DeserializedOCAD();
+    public DeserializedOCAD loadOcadFile(File ocadFile, BiConsumer<Integer, Integer> progressUpdate) throws Exception {
+        deserializedOcad = new DeserializedOCAD();
         isolineContainer = new IsolineContainer(gf);
-        deserializedOCAD.loadOcad(ocadFile, progressUpdate);
-        ArrayList<IIsoline> isolines = deserializedOCAD.toIsolines(gf);
-        slopeMarks = new ArrayList<>();
+        deserializedOcad.loadOcad(ocadFile, progressUpdate);
+        ArrayList<IIsoline> isolines = deserializedOcad.toIsolines(gf);
         isolines.forEach(isolineContainer::add);
-        deserializedOCAD.slopeMarks.forEach(slopeMarks::add);
+        slopeMarks.addAll(deserializedOcad.slopeMarks);
+        border = PatchTextureGenerator.getLineRingForBorder(deserializedOcad.border, gf);
         System.out.println(("Added " + IsolineCount() + " isolines, bounding box: " + isolineContainer.getEnvelope()));
         CommandLineUtils.reportFinish();
-        return deserializedOCAD;
+        return deserializedOcad;
     }
 
     public void openJsonFile(File f) throws Exception {
@@ -167,28 +182,17 @@ public class MainController {
         //index.diamondRain();
     }
 
-    public boolean generateTexture(String output_path, BiConsumer<Integer, Integer> progressUpdate) {
+    public boolean generateTexture(String outputPath, BiConsumer<Integer, Integer> progressUpdate) {
 
-        if (deserializedOCAD != null) {
-            generateTexture(output_path,deserializedOCAD, progressUpdate);
-            return true;
-        }
-
-        return false;
-    }
-
-
-    public boolean generateTexture(String output_path, DeserializedOCAD ocad, BiConsumer<Integer, Integer> progressUpdate) {
-
-        if (ocad != null) {
-            String extension = OutputUtils.getExtension(output_path);
+        if (deserializedOcad != null) {
+            String extension = OutputUtils.getExtension(outputPath);
             if (extension.length() > 0) {
-                output_path = output_path.substring(0,output_path.length()-1-extension.length());
+                outputPath = outputPath.substring(0,outputPath.length()-1-extension.length());
                 extension = "png";
             } else {
                 extension = "png";
             }
-            getMesh(progressUpdate).generateTexture(ocad, output_path, extension);
+            getMesh(progressUpdate).generateTexture(deserializedOcad, outputPath, extension);
             return true;
         }
 
@@ -227,4 +231,24 @@ public class MainController {
         index.dumpToJS("index.js");
     }
 
+    public boolean splitTexture(File imageFile, String textureOutputPath, BiConsumer<Integer, Integer> progressUpdate) {
+        if (deserializedOcad != null) {
+            String extension = OutputUtils.getExtension(textureOutputPath);
+            if (extension.length() > 0) {
+                textureOutputPath = textureOutputPath.substring(0,textureOutputPath.length()-1-extension.length());
+                extension = "png";
+            } else {
+                extension = "png";
+            }
+            try {
+                BufferedImage image = ImageIO.read(imageFile);
+                getMesh(progressUpdate).splitTexture(image, deserializedOcad, textureOutputPath, extension);
+                return true;
+            }
+            catch (IOException e) {
+                System.out.println("Cannot load image to be split: " + e.getMessage());
+            }
+        }
+        return false;
+    }
 }

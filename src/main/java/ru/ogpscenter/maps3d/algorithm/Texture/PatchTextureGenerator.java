@@ -1,13 +1,17 @@
 package ru.ogpscenter.maps3d.algorithm.Texture;
 
+import Deserialization.Binary.OcadVertex;
 import Deserialization.Binary.TOcadObject;
 import Deserialization.DeserializedOCAD;
+import Deserialization.Interpolation.SlopeMark;
 import com.google.gson.Gson;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.Polygon;
+import org.jetbrains.annotations.Nullable;
 import ru.ogpscenter.maps3d.algorithm.mesh.Mesh3D;
 import ru.ogpscenter.maps3d.algorithm.mesh.TexturedPatch;
 import ru.ogpscenter.maps3d.utils.*;
+import ru.ogpscenter.maps3d.utils.curves.CurveString;
 import ru.ogpscenter.maps3d.utils.properties.PropertiesLoader;
 
 import javax.imageio.ImageIO;
@@ -18,23 +22,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
- * generates texture for map
+ * generates texture for deserializedOCAD
  */
 public class PatchTextureGenerator {
 
-    DeserializedOCAD map;
+    private final HashMap<TOcadObject, Geometry> geometryCache;
+    DeserializedOCAD deserializedOCAD;
     TexturedPatch patch;
     Mesh3D mesh;
     private List<PatchTextureGenerator.Brush> brushes;
 
-    public PatchTextureGenerator(DeserializedOCAD map, TexturedPatch texturedPatch, Mesh3D mesh, List<PatchTextureGenerator.Brush> brushes) {
-        this.map = map;
+    public PatchTextureGenerator(DeserializedOCAD deserializedOCAD, TexturedPatch texturedPatch,
+                                 Mesh3D mesh, List<Brush> brushes, HashMap<TOcadObject, Geometry> geometryCache) {
+        this.deserializedOCAD = deserializedOCAD;
         this.patch = texturedPatch;
         this.mesh = mesh;
         this.brushes = brushes;
+        this.geometryCache = geometryCache;
     }
 
     public class Brush {
@@ -47,7 +55,7 @@ public class PatchTextureGenerator {
         public String z_mask_bezier_definitions = "";
         public String angle_mask_bezier_definitions = "";
         public String texture;
-        public int width = 1;
+        public float width = 1;
 
         public boolean erode_first;
         public int dilate_size;
@@ -55,6 +63,7 @@ public class PatchTextureGenerator {
         public int blur_size;
 
         public String blend_mode = "";
+        private BufferedImage textureImage;
 
         public boolean shouldFill() {
             return filled;
@@ -98,18 +107,20 @@ public class PatchTextureGenerator {
         }
 
         public BufferedImage getTexture() {
-            BufferedImage img = null;
-            try {
-                Path texture_folder = getTextureFolder();
-                if (texture != null) {
-                    Path texture = texture_folder.resolve(this.texture);
-                    img = ImageIO.read(texture.toFile());
+            if (textureImage == null) {
+                try {
+                    Path textureFolder = getTextureFolder();
+                    if (texture != null && textureFolder != null) {
+                        Path texture = textureFolder.resolve(this.texture);
+                        textureImage = ImageIO.read(texture.toFile());
+                    }
                 }
-            } catch (IOException ignored) {
-                CommandLineUtils.printError("Could not load texture image for texture "+getName());
-                CommandLineUtils.reportException(ignored);
+                catch (IOException ignored) {
+                    CommandLineUtils.printError("Could not load texture image for texture " + getName());
+                    CommandLineUtils.reportException(ignored);
+                }
             }
-            return img;
+            return textureImage;
         }
 
         public NodedFunction getZMaskFilter() {
@@ -150,6 +161,7 @@ public class PatchTextureGenerator {
     }
 
     // todo(MS): move to PropertiesLoader???
+    @Nullable
     public static Path getTextureFolder() {
 
         PropertiesLoader.update();
@@ -185,14 +197,133 @@ public class PatchTextureGenerator {
         return null;
     }
 
-    public void writeToFile(String path) {
+    private ArrayList< ArrayList<OcadVertex> > splitByHoleFirst(ArrayList<OcadVertex> vertices) {
+        ArrayList< ArrayList<OcadVertex> > ret = new ArrayList<>();
+
+        ArrayList<OcadVertex> buf = new ArrayList<>();
+
+        for (OcadVertex v : vertices) {
+            if (v.HOLE_FIRST) { // Hole first encountered, enclose linestring 'buf' and put it into ret.
+                if (buf.size() >= 3) {
+                    buf.add(buf.get(0));
+                    ret.add(buf);
+                }
+                buf = new ArrayList<>();
+            }
+            buf.add(v);
+        }
+        // Enclose buf residue and add it into ret.
+        if (buf.size() >= 3) {
+            buf.add(buf.get(0));
+            ret.add(buf);
+        }
+        return ret;
+    }
+
+    public Geometry objToGeometry(TOcadObject obj, GeometryFactory gf) throws Exception {
+        if (obj.Otp == 2) { // Line Object
+            CurveString cs = CurveString.fromOcadVertices(obj.vertices);
+            return cs.interpolate(gf);
+        }
+        else if (obj.Otp == 3) { // Area object
+            // Run through vertices and add them to buffer, while hole first not encountered...
+
+            // Exterior ring - first element of this array, other are holes
+            ArrayList< ArrayList<OcadVertex> > exteriorAndHoles = splitByHoleFirst(obj.vertices);
+            if (exteriorAndHoles.size() == 0) {
+                throw new Exception("Ocad object has no geometry");
+            }
+
+            ArrayList<OcadVertex> exterior = exteriorAndHoles.get(0);
+            ArrayList< ArrayList<OcadVertex> > holes = new ArrayList<>();
+            for (int i = 1; i < exteriorAndHoles.size(); ++i) {
+                holes.add(exteriorAndHoles.get(i));
+            }
+
+            LineString exteriorString = CurveString.fromOcadVertices(exterior).interpolate(gf);
+            LinearRing exteriorRing = gf.createLinearRing(exteriorString.getCoordinateSequence());
+            ArrayList<LinearRing> holeRings = new ArrayList<>();
+            holes.forEach(hole -> {
+                try {
+                    LineString holeString = CurveString.fromOcadVertices(hole).interpolate(gf);
+                    holeRings.add(gf.createLinearRing(holeString.getCoordinateSequence()));
+                }
+                catch (Exception e) {
+                    System.out.println("Invalid area object: " + e.getMessage());
+                }
+            });
+
+            // Rings gathered. Now transform them into polygon
+            return gf.createPolygon(exteriorRing, holeRings.toArray(new LinearRing[holeRings.size()]));
+        }
+        else if (obj.Otp == 7) { // Rectangle Object
+            // border
+            if (DeserializedOCAD.matchesMask(obj.Sym, PropertiesLoader.ocad_input.border)) {
+                Geometry coordinates = getLineRingForBorder(obj, gf);
+                if (coordinates != null) {
+                    return coordinates;
+                }
+            }
+            else {
+                // todo(MS): support other rectangle objects
+            }
+        }
+        else if (obj.Otp == 1) { // Point Object
+            // slope marks
+            if (DeserializedOCAD.matchesMask(obj.Sym, PropertiesLoader.ocad_input.slope)) {
+                return new SlopeMark(obj).asGeometry(Constants.slope_length, gf);
+            }
+            else {
+                // todo(MS): support other point objects
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    public static LinearRing getLineRingForBorder(TOcadObject obj, GeometryFactory gf) {
+        ArrayList<OcadVertex> vertices = obj.vertices;
+        if (!vertices.isEmpty()) {
+            OcadVertex firstVertex = vertices.get(0);
+            OcadVertex lastVertex = vertices.get(vertices.size() - 1);
+            if (!firstVertex.equals(lastVertex)) {
+                vertices.add(firstVertex);
+            }
+            Coordinate[] coordinates = vertices.toArray(new OcadVertex[vertices.size()]);
+            return gf.createLinearRing(coordinates);
+        }
+        return null;
+    }
+
+    public void splitAndWriteToFile(BufferedImage image, String outputPath) {
+        if (deserializedOCAD.border == null) {
+            return;
+        }
+        GeometryFactory geometryFactory = new GeometryFactory();
+        LinearRing borderLineRing = PatchTextureGenerator.getLineRingForBorder(deserializedOCAD.border, geometryFactory);
+        if (borderLineRing == null) {
+            return;
+        }
+
+        PointRasterizer rasterizer = patch.getTextureRasterizer();
+        CommandLineUtils.reportProgressBegin("Splitting textures");
+
+        PointRasterizer maskRasterizer = patch.getMaskRasterizer();
+        Mask layer = new Mask(maskRasterizer.getColumnCount(), maskRasterizer.getRowCount());
+
+
+        BufferedImage textureImage = new BufferedImage(rasterizer.getColumnCount(), rasterizer.getRowCount(), BufferedImage.TYPE_INT_ARGB);
+
+    }
+
+    public void generateAndWriteToFile(String path) {
         GeometryFactory geometryFactory = new GeometryFactory();
         PointRasterizer rasterizer = patch.getTextureRasterizer();
 
         CommandLineUtils.reportProgressBegin("Rasterizing textures");
 
         PointRasterizer maskRasterizer = patch.getMaskRasterizer();
-        Mask layer = new Mask(maskRasterizer.getColumnCount(),maskRasterizer.getRowCount());
+        Mask layer = new Mask(maskRasterizer.getColumnCount(), maskRasterizer.getRowCount());
 
         BufferedImage textureImage = new BufferedImage(rasterizer.getColumnCount(), rasterizer.getRowCount(), BufferedImage.TYPE_INT_ARGB);
         int brushNumber = -1;
@@ -204,7 +335,7 @@ public class PatchTextureGenerator {
                 layer.fill((byte)127);
             }
             else {
-                if (map == null) {
+                if (deserializedOCAD == null) {
                     continue;
                 }
                 layer.clean();
@@ -212,24 +343,27 @@ public class PatchTextureGenerator {
                 List<Polygon> polygons = new ArrayList<>();
                 List<LineString> strings = new ArrayList<>();
 
-                List<TOcadObject> objs = map.getObjectsByMask(brush.symbol_ids);
-                for (TOcadObject obj : objs) {
-                    Geometry col = null;
-                    try {
-                        col = obj.getGeometry(geometryFactory);
-                    } catch (Exception ex) {
-                        // todo(MS): is it ok?
-                        System.out.println("Failed to read geometry for " + obj.Sym + " " + obj.getType());
+                List<TOcadObject> objects = deserializedOCAD.getObjectsByMask(brush.symbol_ids);
+                for (TOcadObject obj : objects) {
+                    Geometry geometry = geometryCache.get(obj);
+                    if (geometry == null) {
+                        try {
+                            geometry = objToGeometry(obj, geometryFactory);
+                        }
+                        catch (Exception ex) {
+                            System.out.println("\nFailed to read geometry for " + obj.Sym + " " + obj.getType());
+                        }
                     }
-                    if (col == null) {
+                    if (geometry == null) {
                         continue;
                     }
 
-                    if (Polygon.class.isAssignableFrom(col.getClass()) && brush.shouldFill()) {
-                        Polygon poly = (Polygon) col;
+                    if (Polygon.class.isAssignableFrom(geometry.getClass()) && brush.shouldFill()) {
+                        Polygon poly = (Polygon) geometry;
                         polygons.add(poly);
-                    } else if (LineString.class.isAssignableFrom(col.getClass())) {
-                        LineString ls = (LineString) col;
+                    }
+                    else if (LineString.class.isAssignableFrom(geometry.getClass())) {
+                        LineString ls = (LineString) geometry;
                         strings.add(ls);
                     }
                 }
@@ -289,22 +423,23 @@ public class PatchTextureGenerator {
             }
 
             Coordinate texture_min = patch.XYtoUV(0,0);
-            Coordinate texture_max = patch.XYtoUV(textureImage.getWidth()*PropertiesLoader.texture.scale,textureImage.getHeight()*PropertiesLoader.texture.scale);
+            double textureScale = PropertiesLoader.texture.scale;
+            Coordinate texture_max = patch.XYtoUV(textureImage.getWidth() * textureScale, textureImage.getHeight() * textureScale);
 
-            texture_min.x = GeomUtils.map(texture_min.x,0,1,0,textureImage.getWidth());
-            texture_min.y = GeomUtils.map(texture_min.y,0,1,0,textureImage.getHeight());
-            texture_max.x = GeomUtils.map(texture_max.x,0,1,0,textureImage.getWidth());
-            texture_max.y = GeomUtils.map(texture_max.y,0,1,0,textureImage.getHeight());
+            texture_min.x = GeomUtils.map(texture_min.x, 0, 1, 0, textureImage.getWidth());
+            texture_min.y = GeomUtils.map(texture_min.y, 0, 1, 0, textureImage.getHeight());
+            texture_max.x = GeomUtils.map(texture_max.x, 0, 1, 0, textureImage.getWidth());
+            texture_max.y = GeomUtils.map(texture_max.y, 0, 1, 0, textureImage.getHeight());
 
-            Envelope textureEnvelope = new Envelope(texture_min,texture_max);
+            Envelope textureEnvelope = new Envelope(texture_min, texture_max);
 
-            layer.calcImgPixels(textureImage.getWidth(),textureImage.getHeight());
+            layer.calcImagePixels(textureImage.getWidth(), textureImage.getHeight());
 
             // Write layer to texture
             if (brush.hasTexture()) {
                 BufferedImage texture = brush.getTexture();
                 if (texture == null) {
-                    CommandLineUtils.printWarning("Could not load texture for brush: "+brush.getName()+", skipping");
+                    CommandLineUtils.printWarning("Could not load texture for brush: " + brush.getName() + ", skipping");
                 } else {
                     layer.overlay(textureImage, texture, brush.getBlendMode(), textureEnvelope);
                 }
@@ -334,8 +469,8 @@ public class PatchTextureGenerator {
                     }
                 }
             });
-        } catch (Exception ignored) {
-            CommandLineUtils.printWarning("Could not find textures folder");
+        } catch (Exception e) {
+            CommandLineUtils.printWarning("Could not find textures folder: " + e.getMessage());
             return null;
         }
         // Sort brushes by z-index

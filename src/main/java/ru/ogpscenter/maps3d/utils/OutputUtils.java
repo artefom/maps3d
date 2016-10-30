@@ -88,6 +88,7 @@ public class OutputUtils {
     }
 
     public static String getExtension(String fpath) {
+        // todo(MS): rewrite using Path
         String extension = "";
         int i = fpath.lastIndexOf('.');
         int p = Math.max(fpath.lastIndexOf('/'), fpath.lastIndexOf('\\'));
