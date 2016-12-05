@@ -45,7 +45,7 @@ public class BaseMesh extends Mesh {
     }
 
     public BaseMesh(Mesh3D arteMesh) {
-        this(arteMesh.coord_array, arteMesh.tris);
+        this(arteMesh.coordinatesArray, arteMesh.tris);
     }
 
     @Override

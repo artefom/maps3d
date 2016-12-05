@@ -15,13 +15,18 @@ import ru.ogpscenter.maps3d.utils.curves.CurveString;
 import ru.ogpscenter.maps3d.utils.properties.PropertiesLoader;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.awt.image.WritableRaster;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -62,7 +67,7 @@ public class PatchTextureGenerator {
         public int erode_size;
         public int blur_size;
 
-        public String blend_mode = "";
+        public String blendMode = "";
         private BufferedImage textureImage;
 
         public boolean shouldFill() {
@@ -135,11 +140,11 @@ public class PatchTextureGenerator {
         }
 
         public Mask.BlendMode getBlendMode() {
-            if (blend_mode == null) return Mask.BlendMode.NONE;
-            String bmode = blend_mode.toLowerCase();
-            if (bmode.contains("screen")) return Mask.BlendMode.SCREEN;
-            if (bmode.contains("multiply")) return Mask.BlendMode.MULTIPLY;
-            if (bmode.contains("overlay")) return Mask.BlendMode.OVERLAY;
+            if (blendMode == null) return Mask.BlendMode.NONE;
+            String blendModeName = blendMode.toLowerCase();
+            if (blendModeName.contains("screen")) return Mask.BlendMode.SCREEN;
+            if (blendModeName.contains("multiply")) return Mask.BlendMode.MULTIPLY;
+            if (blendModeName.contains("overlay")) return Mask.BlendMode.OVERLAY;
             return Mask.BlendMode.NONE;
         }
 
@@ -295,7 +300,10 @@ public class PatchTextureGenerator {
         return null;
     }
 
-    public void splitAndWriteToFile(BufferedImage image, String outputPath) {
+    public void splitAndWriteToFile(BufferedImage textureToSplit, String outputPath) {
+        // todo(MS): incorrect Y-coordinate mapping - flip vertically textureToSplit and flip vertically back texture patches produces correct result
+        // todo(MS): incorrect patches joins - print resolution of textureToSplit required to avoid rescaling
+        CommandLineUtils.reportProgressBegin("Splitting textures");
         if (deserializedOCAD.border == null) {
             return;
         }
@@ -304,16 +312,121 @@ public class PatchTextureGenerator {
         if (borderLineRing == null) {
             return;
         }
+        Envelope borderEnvelope = getRectangle(borderLineRing);
+        if (borderEnvelope == null) {
+            return;
+        }
+        Envelope patchEnvelope = new Envelope(patch.UVtoXY(new Coordinate(0, 0)), patch.UVtoXY(new Coordinate(1, 1)));
+        Envelope intersection = borderEnvelope.intersection(patchEnvelope);
 
         PointRasterizer rasterizer = patch.getTextureRasterizer();
-        CommandLineUtils.reportProgressBegin("Splitting textures");
-
-        PointRasterizer maskRasterizer = patch.getMaskRasterizer();
-        Mask layer = new Mask(maskRasterizer.getColumnCount(), maskRasterizer.getRowCount());
-
-
         BufferedImage textureImage = new BufferedImage(rasterizer.getColumnCount(), rasterizer.getRowCount(), BufferedImage.TYPE_INT_ARGB);
 
+        // fill textureImage with white color
+        int[] textureImagePixels = ((DataBufferInt) textureImage.getRaster().getDataBuffer()).getData();
+        int backgroundColor = Color.white.getRGB();
+        for (int i = 0; i != textureImagePixels.length; ++i) textureImagePixels[i] = backgroundColor;
+
+        if (!intersection.isNull()) {
+            // Intersection is not empty - copy part of textureToSplit into textureImage
+            int width = textureToSplit.getWidth();
+            int height = textureToSplit.getHeight();
+            PointRasterizer textureToSplitRasterizer =  new PointRasterizer(
+                borderEnvelope.getMinX(),
+                borderEnvelope.getMinY(),
+                width / borderEnvelope.getWidth(),
+                height / borderEnvelope.getHeight(),
+                width - 1,
+                height - 1
+            );
+
+            // Determine pixels coordinates of intersection in textureToSplit
+            int borderMinXPixel = (int) Math.ceil((intersection.getMinX() - borderEnvelope.getMinX()) * textureToSplitRasterizer.getXPixelsPerUnit());
+            int borderMaxXPixel = (int) Math.ceil((intersection.getMaxX() - borderEnvelope.getMinX()) * textureToSplitRasterizer.getXPixelsPerUnit());
+            int borderMinYPixel = (int) Math.ceil((intersection.getMinY() - borderEnvelope.getMinY()) * textureToSplitRasterizer.getYPixelsPerUnit());
+            int borderMaxYPixel = (int) Math.ceil((intersection.getMaxY() - borderEnvelope.getMinY()) * textureToSplitRasterizer.getYPixelsPerUnit());
+            int borderIntersectionWidth = borderMaxXPixel - borderMinXPixel;
+            int borderIntersectionHeight = borderMaxYPixel - borderMinYPixel;
+
+
+            // Determine pixels coordinates of intersection in textureImage
+            int textureMinXPixel = (int) Math.ceil((intersection.getMinX() - patchEnvelope.getMinX()) * rasterizer.getXPixelsPerUnit());
+            int textureMaxXPixel = (int) Math.ceil((intersection.getMaxX() - patchEnvelope.getMinX()) * rasterizer.getXPixelsPerUnit());
+            int textureMinYPixel = (int) Math.ceil((intersection.getMinY() - patchEnvelope.getMinY()) * rasterizer.getYPixelsPerUnit());
+            int textureMaxYPixel = (int) Math.ceil((intersection.getMaxY() - patchEnvelope.getMinY()) * rasterizer.getYPixelsPerUnit());
+            int textureIntersectionWidth = textureMaxXPixel - textureMinXPixel;
+            int textureIntersectionHeight = textureMaxYPixel - textureMinYPixel;
+
+
+            // Scale part of textureToSplit to part of textureImage
+            WritableRaster sourceRaster = textureToSplit.getRaster().createWritableChild(
+                borderMinXPixel,
+                borderMinYPixel,
+                borderIntersectionWidth,
+                borderIntersectionHeight,
+                0,
+                0,
+                null
+            );
+            BufferedImage sourceImage = new BufferedImage(textureToSplit.getColorModel(), sourceRaster, textureToSplit.isAlphaPremultiplied(), null);
+            WritableRaster targetRaster = textureImage.getRaster().createWritableChild(
+                textureMinXPixel,
+                textureMinYPixel,
+                textureIntersectionWidth,
+                textureIntersectionHeight,
+                0,
+                0,
+                null
+            );
+            BufferedImage targetImage = new BufferedImage(textureImage.getColorModel(), targetRaster, textureImage.isAlphaPremultiplied(), null);
+            rescale(sourceImage, targetImage);
+        }
+        CommandLineUtils.reportProgressEnd();
+        RasterUtils.save(textureImage, outputPath);
+        CommandLineUtils.reportFinish();
+
+    }
+
+    private static void rescale(BufferedImage sourceImage, BufferedImage targetImage) {
+        try {
+            Graphics2D g = targetImage.createGraphics();
+            AffineTransform transform = AffineTransform.getScaleInstance(
+                (double)targetImage.getWidth() / sourceImage.getWidth(),
+                (double)targetImage.getHeight() / sourceImage.getHeight()
+            );
+            g.drawRenderedImage(sourceImage, transform);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Envelope getRectangle(LinearRing borderLineRing) {
+        Coordinate[] borderPoints = borderLineRing.getCoordinates();
+        if (borderPoints.length == 0) {
+            return null;
+        }
+        Coordinate point = borderPoints[0];
+        double minX = point.x;
+        double maxX = point.x;
+        double minY = point.y;
+        double maxY = point.y;
+        for (int i = 1; i < borderPoints.length; i++) {
+            point = borderPoints[i];
+            if (point.x < minX) {
+                minX = point.x;
+            }
+            if (point.x > maxX) {
+                maxX = point.x;
+            }
+            if (point.y < minY) {
+                minY = point.y;
+            }
+            if (point.y > maxY) {
+                maxY = point.y;
+            }
+        }
+        return new Envelope(minX, maxX, minY, maxY);
     }
 
     public void generateAndWriteToFile(String path) {
@@ -474,7 +587,7 @@ public class PatchTextureGenerator {
             return null;
         }
         // Sort brushes by z-index
-        brushes.sort((lhs, rhs)->Integer.compare(lhs.z_index, rhs.z_index));
+        brushes.sort(Comparator.comparingInt(lhs -> lhs.z_index));
         return brushes;
     }
 }

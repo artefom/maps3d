@@ -25,18 +25,18 @@ public class RasterUtils {
      * @param color
      */
     public static void rasterizeline(double[][] buf, int x,int y,int x2, int y2, double color) {
-        int w = x2 - x ;
-        int h = y2 - y ;
+        int width = x2 - x ;
+        int height = y2 - y ;
         int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0 ;
-        if (w<0) dx1 = -1 ; else if (w>0) dx1 = 1 ;
-        if (h<0) dy1 = -1 ; else if (h>0) dy1 = 1 ;
-        if (w<0) dx2 = -1 ; else if (w>0) dx2 = 1 ;
-        int longest = Math.abs(w) ;
-        int shortest = Math.abs(h) ;
+        if (width<0) dx1 = -1 ; else if (width>0) dx1 = 1 ;
+        if (height<0) dy1 = -1 ; else if (height>0) dy1 = 1 ;
+        if (width<0) dx2 = -1 ; else if (width>0) dx2 = 1 ;
+        int longest = Math.abs(width) ;
+        int shortest = Math.abs(height) ;
         if (!(longest>shortest)) {
-            longest = Math.abs(h) ;
-            shortest = Math.abs(w) ;
-            if (h<0) dy2 = -1 ; else if (h>0) dy2 = 1 ;
+            longest = Math.abs(height) ;
+            shortest = Math.abs(width) ;
+            if (height<0) dy2 = -1 ; else if (height>0) dy2 = 1 ;
             dx2 = 0 ;
         }
         int numerator = longest >> 1 ;

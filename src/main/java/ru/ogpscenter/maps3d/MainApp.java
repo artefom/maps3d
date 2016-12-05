@@ -593,7 +593,6 @@ public class MainApp extends Application implements Initializable {
           return;
         }
 
-
         executeAsBackgroundTask(new BackgroundTask("Generate textures action") {
             @Override
             void callWithProgress(BiConsumer<Integer, Integer> progressUpdate) {

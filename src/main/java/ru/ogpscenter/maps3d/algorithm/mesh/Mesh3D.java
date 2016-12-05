@@ -17,10 +17,10 @@ import ru.ogpscenter.maps3d.utils.fbx.FBXConverter;
 import ru.ogpscenter.maps3d.utils.properties.PropertiesLoader;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Class, representing 3-dimentional mesh
@@ -36,7 +36,7 @@ public class Mesh3D {
     public ArrayList<Coordinate> vertexes;
     public ArrayList<int[]> tris;
 
-    public Coordinate[] coord_array;
+    public Coordinate[] coordinatesArray;
     public Coordinate[] normals;
 
     public double x_min;
@@ -82,8 +82,8 @@ public class Mesh3D {
             tris.add(tri);
         }
 
-        coord_array = new Coordinate[last_index + 1];
-        coordinates.forEach((c, i) -> coord_array[i] = c);
+        coordinatesArray = new Coordinate[last_index + 1];
+        coordinates.forEach((c, i) -> coordinatesArray[i] = c);
         calculateNormals();
         initializePolygonBuffer();
     }
@@ -142,11 +142,11 @@ public class Mesh3D {
 
     PolygonAreaBuffer poly_buf;
     public void initializePolygonBuffer() {
-        poly_buf = new PolygonAreaBuffer(coord_array,tris,200,200);
+        poly_buf = new PolygonAreaBuffer(coordinatesArray,tris,200,200);
     }
 
     public void calculateNormals() {
-        normals = calculateNormals(coord_array,tris);
+        normals = calculateNormals(coordinatesArray,tris);
     }
 
 
@@ -173,7 +173,7 @@ public class Mesh3D {
 
         System.out.println("Calculating textured patches");
 
-        TexturedPatch initial = TexturedPatch.fromTriangles(coord_array, tris);
+        TexturedPatch initial = TexturedPatch.fromTriangles(coordinatesArray, tris);
         initial.setMantainAspect(mantain_aspect);
         initial.setEdgePadding(PropertiesLoader.textured_patch.padding);
 
@@ -258,8 +258,7 @@ public class Mesh3D {
             texture_coordinate_offset += textureCoordinates.size();
             texturedPatchesIndexOffset.add(texture_coordinate_offset);
 
-            for (Coordinate c : textureCoordinates)
-                tex_coord_array.add(new Coordinate(c.x,1-c.y));
+            tex_coord_array.addAll(textureCoordinates.stream().map(c -> new Coordinate(c.x, 1 - c.y)).collect(Collectors.toList()));
         }
 
         ArrayList<Integer> polygon_indexes = new ArrayList<>();
@@ -268,7 +267,7 @@ public class Mesh3D {
         for (int i = 0; i != texturedPatches.size(); ++i) {
             TexturedPatch texturedPatch = texturedPatches.get(i);
             int textureCoordinateOffset = texturedPatchesIndexOffset.get(i);
-            for (int[] tri : texturedPatch.triangles) {
+            for (int[] tri : texturedPatch.getTriangles()) {
                 for (int tri_i = 0; tri_i != tri.length; ++tri_i) {
                     int v_index = tri[tri_i];
                     int vt_index = texturedPatch.getTextureCoordinateID(v_index) + textureCoordinateOffset;
@@ -285,7 +284,7 @@ public class Mesh3D {
 
         Coordinate[] texture_coordinates = tex_coord_array.toArray(new Coordinate[tex_coord_array.size()]);
 
-        Coordinate[] vertices = transformCoordinates(coord_array);
+        Coordinate[] vertices = transformCoordinates(coordinatesArray);
         Coordinate[] normals = calculateNormals(vertices,tris);
 
         try {
@@ -320,11 +319,11 @@ public class Mesh3D {
             throw new RuntimeException("Could not save " + path);
         }
 
-        double max_y = coord_array[0].y;
+        double max_y = coordinatesArray[0].y;
         // Write vertexes
         out.println("#Vertexes");
-        for (int i = 0; i != coord_array.length; ++i) {
-            Coordinate c = coord_array[i];
+        for (int i = 0; i != coordinatesArray.length; ++i) {
+            Coordinate c = coordinatesArray[i];
             double z = c.z;
             max_y = Math.max(max_y,c.y);
             out.println("v " + c.x + " " + z + " " + (-c.y));
@@ -366,7 +365,7 @@ public class Mesh3D {
         for (int i = 0; i != texturedPatches.size(); ++i) {
             TexturedPatch texturedPatch = texturedPatches.get(i);
             int textureCoordinateOffset = texturedPatchesIndexOffset.get(i);
-            for (int[] tri : texturedPatch.triangles) {
+            for (int[] tri : texturedPatch.getTriangles()) {
                 int v1_index = tri[0];
                 int v2_index = tri[1];
                 int v3_index = tri[2];
@@ -588,9 +587,9 @@ public class Mesh3D {
             mesh.z_max = Math.max(mesh.z_max,coordinates[i+2]);
         }
 
-        mesh.coord_array = new Coordinate[mesh.vertexes.size()];
-        for (int i = 0; i != mesh.coord_array.length; ++i) {
-            mesh.coord_array[i] = mesh.vertexes.get(i);
+        mesh.coordinatesArray = new Coordinate[mesh.vertexes.size()];
+        for (int i = 0; i != mesh.coordinatesArray.length; ++i) {
+            mesh.coordinatesArray[i] = mesh.vertexes.get(i);
         }
         mesh.tris = new ArrayList<>();
 
@@ -687,14 +686,14 @@ public class Mesh3D {
 
         int[] triangle = poly_buf.getPolygonByPoint(x,y);
         if (triangle == null) return Double.NaN;
-        //return coord_array[triangle[0]].z;
+        //return coordinatesArray[triangle[0]].z;
 
-        double area_0 = GeomUtils.area(point_height_buf,coord_array[triangle[1]],coord_array[triangle[2]]);
-        double area_1 = GeomUtils.area(point_height_buf,coord_array[triangle[0]],coord_array[triangle[2]]);
-        double area_2 = GeomUtils.area(point_height_buf,coord_array[triangle[1]],coord_array[triangle[0]]);
+        double area_0 = GeomUtils.area(point_height_buf, coordinatesArray[triangle[1]], coordinatesArray[triangle[2]]);
+        double area_1 = GeomUtils.area(point_height_buf, coordinatesArray[triangle[0]], coordinatesArray[triangle[2]]);
+        double area_2 = GeomUtils.area(point_height_buf, coordinatesArray[triangle[1]], coordinatesArray[triangle[0]]);
         double area_sum = area_0+area_1+area_2;
 
-        return (coord_array[triangle[0]].z*area_0+coord_array[triangle[1]].z*area_1+coord_array[triangle[2]].z*area_2)/area_sum;
+        return (coordinatesArray[triangle[0]].z*area_0+ coordinatesArray[triangle[1]].z*area_1+ coordinatesArray[triangle[2]].z*area_2)/area_sum;
     }
 
     Vector3D z_normal = new Vector3D(0,0,1);
@@ -705,11 +704,11 @@ public class Mesh3D {
 
         int[] triangle = poly_buf.getPolygonByPoint(x,y);
         if (triangle == null) return Double.NaN;
-        //return coord_array[triangle[0]].z;
+        //return coordinatesArray[triangle[0]].z;
 
-        double area_0 = GeomUtils.area(point_height_buf,coord_array[triangle[1]],coord_array[triangle[2]]);
-        double area_1 = GeomUtils.area(point_height_buf,coord_array[triangle[0]],coord_array[triangle[2]]);
-        double area_2 = GeomUtils.area(point_height_buf,coord_array[triangle[1]],coord_array[triangle[0]]);
+        double area_0 = GeomUtils.area(point_height_buf, coordinatesArray[triangle[1]], coordinatesArray[triangle[2]]);
+        double area_1 = GeomUtils.area(point_height_buf, coordinatesArray[triangle[0]], coordinatesArray[triangle[2]]);
+        double area_2 = GeomUtils.area(point_height_buf, coordinatesArray[triangle[1]], coordinatesArray[triangle[0]]);
         double area_sum = area_0+area_1+area_2;
 
         Coordinate angle = new Coordinate(0,0,0);

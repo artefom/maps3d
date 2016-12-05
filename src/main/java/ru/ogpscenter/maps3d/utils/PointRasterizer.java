@@ -14,91 +14,97 @@ import java.util.function.Consumer;
  */
 public class PointRasterizer {
 
-    private double x_addition;
-    private double y_addition;
-    private double x_mult;
-    private double y_mult;
-    private int x_last_index;
-    private int y_last_index;
+    private double xOffset;
+    private double yOffset;
 
-    public PointRasterizer(double x_addition, double y_addition, double x_mult, double y_mult, int x_last_index, int y_last_index) {
-        this.x_addition = x_addition;
-        this.y_addition = y_addition;
-        this.x_mult = x_mult;
-        this.y_mult = y_mult;
-        this.x_last_index = x_last_index;
-        this.y_last_index = y_last_index;
+    public double getXPixelsPerUnit() {
+        return xPixelsPerUnit;
     }
 
-    public PointRasterizer(int x_cells, int y_cells, Envelope envelope) {
-        x_addition = -envelope.getMinX();
-        y_addition = -envelope.getMinY();
-        x_mult = x_cells/envelope.getWidth();
-        y_mult = y_cells/envelope.getHeight();
-        this.x_last_index = x_cells-1;
-        this.y_last_index = y_cells-1;
+    public double getYPixelsPerUnit() {
+        return yPixelsPerUnit;
+    }
+
+    private double xPixelsPerUnit;
+    private double yPixelsPerUnit;
+    private int xLastIndex;
+    private int yLastIndex;
+
+    public PointRasterizer(double xOffset, double yOffset, double xPixelsPerUnit, double yPixelsPerUnit, int xLastIndex, int yLastIndex) {
+        this.xOffset = xOffset;
+        this.yOffset = yOffset;
+        this.xPixelsPerUnit = xPixelsPerUnit;
+        this.yPixelsPerUnit = yPixelsPerUnit;
+        this.xLastIndex = xLastIndex;
+        this.yLastIndex = yLastIndex;
+    }
+
+    public PointRasterizer(int xCells, int yCells, Envelope envelope) {
+        xOffset = -envelope.getMinX();
+        yOffset = -envelope.getMinY();
+        xPixelsPerUnit = xCells/envelope.getWidth();
+        yPixelsPerUnit = yCells/envelope.getHeight();
+        this.xLastIndex = xCells-1;
+        this.yLastIndex = yCells-1;
     }
 
     public PointRasterizer(double cellSize, Envelope envelope) {
         int x_cells = (int)Math.ceil(envelope.getWidth()/cellSize);
         int y_cells = (int)Math.ceil(envelope.getHeight()/cellSize);
-        x_addition = -envelope.getMinX();
-        y_addition = -envelope.getMinY();
-        x_mult = x_cells/envelope.getWidth();
-        y_mult = y_cells/envelope.getHeight();
-        this.x_last_index = x_cells-1;
-        this.y_last_index = y_cells-1;
+        xOffset = -envelope.getMinX();
+        yOffset = -envelope.getMinY();
+        xPixelsPerUnit = x_cells/envelope.getWidth();
+        yPixelsPerUnit = y_cells/envelope.getHeight();
+        this.xLastIndex = x_cells-1;
+        this.yLastIndex = y_cells-1;
     }
 
     public PointRasterizer subDivision(int startRow,int startColumn, int endRow, int endColumn) {
-        return new PointRasterizer(x_addition-toX(startColumn),y_addition-toY(startRow),x_mult,y_mult,endColumn,endRow);
+        return new PointRasterizer(xOffset -toX(startColumn), yOffset -toY(startRow), xPixelsPerUnit, yPixelsPerUnit, endColumn, endRow);
     }
 
     public int getRowCount() {
-        return y_last_index+1;
+        return yLastIndex +1;
     }
 
     public int getColumnCount() {
-        return x_last_index+1;
+        return xLastIndex +1;
     }
 
     public boolean isInBounds(double x, double y) {
-        int column = (int)((x+x_addition)*x_mult);
-        int row = (int)((y+y_addition)*y_mult);
-        if (column < 0 || column > x_last_index || row < 0 || row > y_last_index) return false;
-        return true;
+        int column = (int)((x+ xOffset)* xPixelsPerUnit);
+        int row = (int)((y+ yOffset)* yPixelsPerUnit);
+        return !(column < 0 || column > xLastIndex || row < 0 || row > yLastIndex);
     }
 
     public int toColumn(double x){
-        int ret = (int)((x+x_addition)*x_mult);
-        return ret;
+        return (int)((x+ xOffset)* xPixelsPerUnit);
     }
 
     public int toRow(double y) {
-        int ret = (int)((y+y_addition)*y_mult);
-        return ret;
+        return (int)((y+ yOffset)* yPixelsPerUnit);
     }
 
     public double toColumnDouble(double x){
-        return ((x+x_addition)*x_mult);
+        return ((x+ xOffset)* xPixelsPerUnit);
     }
 
     public double toRowDouble(double y) {
-        return ((y+y_addition)*y_mult);
+        return ((y+ yOffset)* yPixelsPerUnit);
     }
 
 
     public int toColumnClamped(double x){
-        int ret = (int)((x+x_addition)*x_mult);
+        int ret = (int)((x+ xOffset)* xPixelsPerUnit);
         if (ret < 0) return 0;
-        if (ret > x_last_index) return x_last_index;
+        if (ret > xLastIndex) return xLastIndex;
         return ret;
     }
 
     public int toRowClamped(double y) {
-        int ret = (int)((y+y_addition)*y_mult);
+        int ret = (int)((y+ yOffset)* yPixelsPerUnit);
         if (ret < 0) return 0;
-        if (ret > y_last_index) return y_last_index;
+        if (ret > yLastIndex) return yLastIndex;
         return ret;
     }
 
@@ -212,11 +218,11 @@ public class PointRasterizer {
 //    }
 
     public double toX(int column) {
-        return ((double)(column+0.5)/x_mult)-x_addition;
+        return ((double)(column+0.5)/ xPixelsPerUnit)- xOffset;
     }
 
     public double toY(int row) {
-        return ((double)(row+0.5)/y_mult)-y_addition;
+        return ((double)(row+0.5)/ yPixelsPerUnit)- yOffset;
     }
 
     public boolean isInBounds(int row, int column) {

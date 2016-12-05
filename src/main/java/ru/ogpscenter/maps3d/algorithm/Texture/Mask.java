@@ -5,6 +5,7 @@ import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.geom.Polygon;
 import ru.ogpscenter.maps3d.utils.LineStringIterator;
 import ru.ogpscenter.maps3d.utils.PointRasterizer;
+import ru.ogpscenter.maps3d.utils.RasterUtils;
 import ru.ogpscenter.maps3d.utils.TextureUtils;
 
 import java.awt.*;
@@ -25,6 +26,16 @@ public class Mask {
     int height;
     byte[] pixels;
     //float[] opacity;
+    int maskPixelsWidth;
+    int maskPixelsHeight;
+    public byte[] mask_pixels;
+
+    public enum BlendMode {
+        NONE,
+        OVERLAY,
+        MULTIPLY,
+        SCREEN
+    }
 
     public Mask(int width, int height) {
         image = new BufferedImage(width,height,BufferedImage.TYPE_BYTE_GRAY);
@@ -92,20 +103,13 @@ public class Mask {
         }
     }
 
-
     public Graphics2D getGraphics() {
         return (Graphics2D)image.getGraphics();
     }
-//
-//    public void blur() {
-//        RasterUtils.gauss(pixels,width,height,5,3);
-//    }
 
-    public enum BlendMode { NONE, OVERLAY, MULTIPLY, SCREEN }
-
-    int maskPixelsWidth;
-    int maskPixelsHeight;
-    public byte[] mask_pixels;
+    public void blur() {
+        RasterUtils.gauss(pixels,width,height,5,3);
+    }
 
     public void calcImagePixels(int img_width, int img_height) {
         mask_pixels = new byte[img_width * img_height];
@@ -146,7 +150,6 @@ public class Mask {
 
             float a = ((float)(mask_pixels[i] + 128) / 255)*((float)da/255);
             float a2 = 1 - a;
-
 
             if (blendMode == BlendMode.SCREEN) {
                 dr = (short)(255-(float)(255-dr)*(255-sr)/255);
@@ -192,6 +195,8 @@ public class Mask {
     }
 
     /* Atomic functions, working with bits */
+
+    // todo(MS): why not to use java.awt.Color class?
 
     public static int toRGB(short r, short g, short b, short a) {
         return (a << 24) | (r << 16) | (g << 8) | (b);

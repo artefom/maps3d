@@ -12,20 +12,25 @@ import java.util.*;
  */
 public class TexturedPatch {
 
-    ArrayList<Coordinate> texture_coordinates;
-    Coordinate[] vertexes;
-    Collection<int[]> triangles;
+    private ArrayList<Coordinate> textureCoordinates;
+    private Coordinate[] vertexes;
 
-    HashMap<Integer,Integer> vertexes_to_textureCoordinates;
+    public Collection<int[]> getTriangles() {
+        return triangles;
+    }
 
-    Envelope coords_envelope;
-    Envelope uv_envelope;
+    private Collection<int[]> triangles;
 
-    int vertex_count;
-    int triangle_count;
+    private HashMap<Integer,Integer> vertexesToTextureCoordinates;
 
-    double edge_padding;
-    boolean mantain_aspect;
+    private Envelope coordinatesEnvelope;
+    private Envelope uvEnvelope;
+
+    private int vertexCount;
+    private int triangleCount;
+
+    private double edgePadding;
+    private boolean mantainAspect;
 
     public double getTexturePointsPerUnit() {
         return texturePointsPerUnit;
@@ -79,32 +84,33 @@ public class TexturedPatch {
         this.vertexes = vertexes;
         this.triangles = triangles;
 
-        vertexes_to_textureCoordinates = new HashMap<>();
+        vertexesToTextureCoordinates = new HashMap<>();
 
         HashSet<Integer> unique_vertex_ids = new HashSet<>();
 
-        vertex_count = 0;
-        triangle_count = 0;
+        vertexCount = 0;
+        triangleCount = 0;
 
-        coords_envelope = new Envelope();
+        coordinatesEnvelope = new Envelope();
         for (int[] triangle : triangles) {
             for (int i = 0; i != 3; ++i) {
                 unique_vertex_ids.add(triangle[i]);
-                coords_envelope.expandToInclude(vertexes[triangle[i]]);
+                coordinatesEnvelope.expandToInclude(vertexes[triangle[i]]);
             }
-            triangle_count+=1;
+            triangleCount +=1;
         }
 
-        vertex_count = unique_vertex_ids.size();
+        vertexCount = unique_vertex_ids.size();
     }
 
     boolean textureCoordsInitialized = false;
     private void initializeTextureCoordinates() {
 
-        vertexes_to_textureCoordinates.clear();
+        vertexesToTextureCoordinates.clear();
 
-        if (texture_coordinates != null) texture_coordinates.clear();
-        else {texture_coordinates = new ArrayList<>();}
+        if (textureCoordinates != null) textureCoordinates.clear();
+        else {
+            textureCoordinates = new ArrayList<>();}
 
         validateAspect();
 
@@ -114,9 +120,9 @@ public class TexturedPatch {
                 int vertex_id = triangle[i];
                 Coordinate vertex = vertexes[vertex_id];
                 Coordinate texture_coordinate = XYtoUV(vertex);
-                int texture_coordinate_id = texture_coordinates.size();
-                texture_coordinates.add(texture_coordinate);
-                vertexes_to_textureCoordinates.put(vertex_id,texture_coordinate_id);
+                int texture_coordinate_id = textureCoordinates.size();
+                textureCoordinates.add(texture_coordinate);
+                vertexesToTextureCoordinates.put(vertex_id,texture_coordinate_id);
             }
 
         }
@@ -124,29 +130,29 @@ public class TexturedPatch {
         textureCoordsInitialized = true;
     }
 
-    public Envelope getCoordsEnvelope() {
-        return coords_envelope;
+    public Envelope getCoordinatesEnvelope() {
+        return coordinatesEnvelope;
     }
 
     public Envelope getUvEnvelope() {
-        return uv_envelope;
+        return uvEnvelope;
     }
 
     public double getEdgePadding() {
-        return edge_padding;
+        return edgePadding;
     }
 
     public void setEdgePadding(double edge_padding) {
-        this.edge_padding = edge_padding;
+        this.edgePadding = edge_padding;
         //validateAspect();
     }
 
     public boolean isMantainAspect() {
-        return mantain_aspect;
+        return mantainAspect;
     }
 
     public void setMantainAspect(boolean mantain_aspect) {
-        this.mantain_aspect = mantain_aspect;
+        this.mantainAspect = mantain_aspect;
         //validateAspect();
     }
 
@@ -175,18 +181,18 @@ public class TexturedPatch {
         double width_padding = 0;
         double height_padding = 0;
 
-        if (mantain_aspect) {
-            if (coords_envelope.getWidth() < coords_envelope.getHeight()) {
-                width_padding = (coords_envelope.getHeight() - coords_envelope.getWidth()) / 2 / coords_envelope.getHeight();
+        if (mantainAspect) {
+            if (coordinatesEnvelope.getWidth() < coordinatesEnvelope.getHeight()) {
+                width_padding = (coordinatesEnvelope.getHeight() - coordinatesEnvelope.getWidth()) / 2 / coordinatesEnvelope.getHeight();
             } else {
-                height_padding = (coords_envelope.getWidth() - coords_envelope.getHeight()) / 2 / coords_envelope.getWidth();
+                height_padding = (coordinatesEnvelope.getWidth() - coordinatesEnvelope.getHeight()) / 2 / coordinatesEnvelope.getWidth();
             }
         }
 
-        width_padding+=edge_padding;
-        height_padding+=edge_padding;
+        width_padding+= edgePadding;
+        height_padding+= edgePadding;
 
-        uv_envelope = new Envelope(width_padding,1-width_padding,height_padding,1-height_padding);
+        uvEnvelope = new Envelope(width_padding,1-width_padding,height_padding,1-height_padding);
 
     }
 
@@ -195,25 +201,25 @@ public class TexturedPatch {
     }
 
     public int getTriangleCount() {
-        return triangle_count;
+        return triangleCount;
     }
 
     public int getVertexCount() {
-        return vertex_count;
+        return vertexCount;
     }
 
     public double getWidth() {
-        return coords_envelope.getWidth();
+        return coordinatesEnvelope.getWidth();
     }
 
     public double getHeight() {
-        return coords_envelope.getHeight();
+        return coordinatesEnvelope.getHeight();
     }
 
     public Coordinate UVtoXY(Coordinate uv) {
-        Coordinate ret = new Coordinate();
-        UVtoXY(uv.x,uv.y,ret);
-        return ret;
+        Coordinate result = new Coordinate();
+        UVtoXY(uv.x, uv.y, result);
+        return result;
     }
 
     public Coordinate UVtoXY(double u, double v) {
@@ -223,13 +229,13 @@ public class TexturedPatch {
     }
 
 
-    public void UVtoXY(Coordinate uv, Coordinate ret) {
-        UVtoXY(uv.x,uv.y,ret);
+    public void UVtoXY(Coordinate uv, Coordinate result) {
+        UVtoXY(uv.x, uv.y, result);
     }
 
-    public void UVtoXY(double u, double v, Coordinate ret) {
-        ret.x = GeomUtils.map(u,uv_envelope.getMinX(),uv_envelope.getMaxX(),coords_envelope.getMinX(),coords_envelope.getMaxX());
-        ret.y = GeomUtils.map(v,uv_envelope.getMaxY(),uv_envelope.getMinY(),coords_envelope.getMinY(),coords_envelope.getMaxY());
+    public void UVtoXY(double u, double v, Coordinate result) {
+        result.x = GeomUtils.map(u, uvEnvelope.getMinX(), uvEnvelope.getMaxX(), coordinatesEnvelope.getMinX(), coordinatesEnvelope.getMaxX());
+        result.y = GeomUtils.map(v, uvEnvelope.getMaxY(), uvEnvelope.getMinY(), coordinatesEnvelope.getMinY(), coordinatesEnvelope.getMaxY());
     }
 
     public Coordinate XYtoUV(Coordinate xy) {
@@ -239,8 +245,8 @@ public class TexturedPatch {
     }
 
 
-    public void XYtoUV(Coordinate xy, Coordinate ret) {
-        XYtoUV(xy.x,xy.y,ret);
+    public void XYtoUV(Coordinate xy, Coordinate result) {
+        XYtoUV(xy.x, xy.y, result);
     }
 
     public Coordinate XYtoUV(double x, double y) {
@@ -250,16 +256,16 @@ public class TexturedPatch {
     }
 
     public void XYtoUV(double x, double y, Coordinate ret) {
-        ret.x = GeomUtils.map(x,coords_envelope.getMinX(),coords_envelope.getMaxX(),uv_envelope.getMinX(),uv_envelope.getMaxX());
-        ret.y = GeomUtils.map(y,coords_envelope.getMinY(),coords_envelope.getMaxY(),uv_envelope.getMaxY(),uv_envelope.getMinY());
+        ret.x = GeomUtils.map(x, coordinatesEnvelope.getMinX(), coordinatesEnvelope.getMaxX(), uvEnvelope.getMinX(), uvEnvelope.getMaxX());
+        ret.y = GeomUtils.map(y, coordinatesEnvelope.getMinY(), coordinatesEnvelope.getMaxY(), uvEnvelope.getMaxY(), uvEnvelope.getMinY());
     }
 
     public ArrayList<Coordinate> getTextureCoordinates() {
-        return texture_coordinates;
+        return textureCoordinates;
     }
 
     public int getTextureCoordinateID(int vertex_id) {
-        return vertexes_to_textureCoordinates.get(vertex_id);
+        return vertexesToTextureCoordinates.get(vertex_id);
     }
 
     public PointRasterizer getTextureRasterizer() {
@@ -271,26 +277,26 @@ public class TexturedPatch {
 
     public PointRasterizer getMaskRasterizer() {
 
-        Envelope square_envelope = new Envelope( UVtoXY( new Coordinate(0,0)), UVtoXY(new Coordinate(1,1)) );
+        Envelope squareEnvelope = new Envelope( UVtoXY( new Coordinate(0,0)), UVtoXY(new Coordinate(1,1)) );
 
-        PointRasterizer rast = getTextureRasterizer();
+        PointRasterizer rasterizer = getTextureRasterizer();
 
-        Envelope texture_to_coordinates_envelope = new Envelope(
-                rast.toX(0),rast.toX(rast.getColumnCount()-1),
-                rast.toY(0),rast.toY(rast.getRowCount()-1)
+        Envelope textureToCoordinatesEnvelope = new Envelope(
+                rasterizer.toX(0), rasterizer.toX(rasterizer.getColumnCount()-1),
+                rasterizer.toY(0), rasterizer.toY(rasterizer.getRowCount()-1)
         );
 
-        int layer_width = (int)Math.ceil( texture_to_coordinates_envelope.getWidth()*getMaskPointsPerUnit() );
-        int layer_hegith = (int)Math.ceil( texture_to_coordinates_envelope.getHeight()*getMaskPointsPerUnit()  );
+        int layerWidth = (int)Math.ceil( textureToCoordinatesEnvelope.getWidth() * getMaskPointsPerUnit() );
+        int layerHeight = (int)Math.ceil( textureToCoordinatesEnvelope.getHeight() * getMaskPointsPerUnit()  );
 
 
-        return new PointRasterizer(layer_width,layer_hegith,square_envelope);
+        return new PointRasterizer(layerWidth, layerHeight, squareEnvelope);
     }
 
     private Pair<TexturedPatch,TexturedPatch> splitVerticallyInternal() {
         Collection<int[]> triangles1 = new ArrayList<>();
         Collection<int[]> triangles2 = new ArrayList<>();
-        double x_threshold = (coords_envelope.getMinX()+coords_envelope.getMaxX())*0.5;
+        double x_threshold = (coordinatesEnvelope.getMinX()+ coordinatesEnvelope.getMaxX())*0.5;
         for (int[] triangle : triangles) {
             double center_x = TriangleUtils.getCenterX(vertexes,triangle);
             if (center_x < x_threshold)  {
@@ -310,7 +316,7 @@ public class TexturedPatch {
         Collection<int[]> triangles1 = new ArrayList<>();
         Collection<int[]> triangles2 = new ArrayList<>();
 
-        double y_threshold = (coords_envelope.getMinY()+coords_envelope.getMaxY())*0.5;
+        double y_threshold = (coordinatesEnvelope.getMinY()+ coordinatesEnvelope.getMaxY())*0.5;
         for (int[] triangle : triangles) {
             double center_y = TriangleUtils.getCenterY(vertexes,triangle);
             if (center_y < y_threshold) {
@@ -328,7 +334,7 @@ public class TexturedPatch {
 
 
     private Pair<TexturedPatch,TexturedPatch> splitInternal() {
-        if (coords_envelope.getMaxX()-coords_envelope.getMinX() > coords_envelope.getMaxY()-coords_envelope.getMinY()) {
+        if (coordinatesEnvelope.getMaxX()- coordinatesEnvelope.getMinX() > coordinatesEnvelope.getMaxY()- coordinatesEnvelope.getMinY()) {
             return splitVerticallyInternal();
         } else {
             return splitHorizontallyInternal();
