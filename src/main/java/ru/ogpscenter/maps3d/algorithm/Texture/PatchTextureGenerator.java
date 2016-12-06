@@ -301,8 +301,6 @@ public class PatchTextureGenerator {
     }
 
     public void splitAndWriteToFile(BufferedImage textureToSplit, String outputPath) {
-        // todo(MS): incorrect Y-coordinate mapping - flip vertically textureToSplit and flip vertically back texture patches produces correct result
-        // todo(MS): incorrect patches joins - print resolution of textureToSplit required to avoid rescaling
         CommandLineUtils.reportProgressBegin("Splitting textures");
         if (deserializedOCAD.border == null) {
             return;
@@ -340,6 +338,8 @@ public class PatchTextureGenerator {
                 height - 1
             );
 
+            // todo(MS): incorrect Y-coordinate mapping - flip vertically textureToSplit and flip vertically back texture patches produces correct result
+
             // Determine pixels coordinates of intersection in textureToSplit
             int borderMinXPixel = (int) Math.ceil((intersection.getMinX() - borderEnvelope.getMinX()) * textureToSplitRasterizer.getXPixelsPerUnit());
             int borderMaxXPixel = (int) Math.ceil((intersection.getMaxX() - borderEnvelope.getMinX()) * textureToSplitRasterizer.getXPixelsPerUnit());
@@ -356,6 +356,18 @@ public class PatchTextureGenerator {
             int textureMaxYPixel = (int) Math.ceil((intersection.getMaxY() - patchEnvelope.getMinY()) * rasterizer.getYPixelsPerUnit());
             int textureIntersectionWidth = textureMaxXPixel - textureMinXPixel;
             int textureIntersectionHeight = textureMaxYPixel - textureMinYPixel;
+
+            // print resolution of textureToSplit required to avoid rescaling
+            System.out.printf("Rescale source texture [ %d, %d - %d, %d ] ==> target texture [ %d, %d - %d, %d ]\n",
+                borderMinXPixel,
+                borderMinYPixel,
+                borderMaxXPixel,
+                borderMaxYPixel,
+                textureMinXPixel,
+                textureMinYPixel,
+                textureMaxXPixel,
+                textureMaxYPixel
+            );
 
 
             // Scale part of textureToSplit to part of textureImage
@@ -388,17 +400,15 @@ public class PatchTextureGenerator {
     }
 
     private static void rescale(BufferedImage sourceImage, BufferedImage targetImage) {
-        try {
-            Graphics2D g = targetImage.createGraphics();
-            AffineTransform transform = AffineTransform.getScaleInstance(
-                (double)targetImage.getWidth() / sourceImage.getWidth(),
-                (double)targetImage.getHeight() / sourceImage.getHeight()
-            );
-            g.drawRenderedImage(sourceImage, transform);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
+        Graphics2D g = targetImage.createGraphics();
+        AffineTransform transform = AffineTransform.getScaleInstance(
+            (double)targetImage.getWidth() / sourceImage.getWidth(),
+            (double)targetImage.getHeight() / sourceImage.getHeight()
+        );
+        g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g.drawRenderedImage(sourceImage, transform);
+        g.dispose();
     }
 
     private Envelope getRectangle(LinearRing borderLineRing) {
