@@ -1,0 +1,9 @@
+{
+  "name" : "marsh",
+  "symbol_ids" : "309000,310000,311000",
+  "z_index" : 2999,
+  "filled" : true,
+  "blur_size" : 0,
+  "color" : "100, 100, 255",
+  "texture" : "ice.jpg"
+}

@@ -1,0 +1,9 @@
+{
+  "name" : "semiopen",
+  "symbol_ids" : "402000,404000",
+  "z_index" : 2000,
+  "filled" : true,
+  "blur_size" : 0,
+  "color" : "0, 255, 0",
+  "texture" : "semiopen.jpg"
+}

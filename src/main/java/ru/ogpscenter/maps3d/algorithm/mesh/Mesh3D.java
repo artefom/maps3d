@@ -18,6 +18,7 @@ import ru.ogpscenter.maps3d.utils.properties.PropertiesLoader;
 
 import java.awt.image.BufferedImage;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -720,14 +721,20 @@ public class Mesh3D {
         return Math.abs( Math.acos( norm.dot(z_normal) ) )/Math.PI*2;
     }
 
-    public void splitTexture(BufferedImage image, DeserializedOCAD ocad, String textureOutputPath, String extension) {
+    public void splitTexture(BufferedImage image, DeserializedOCAD ocad, String textureOutputPath, String extension) throws IOException {
         System.out.println("Splitting texture");
         int patch_id = 0;
         for (TexturedPatch texturedPatch : getTexturedPatches()) {
             PatchTextureGenerator patchTextureGenerator = new PatchTextureGenerator(ocad, texturedPatch, this, Collections.emptyList(), geometryCache);
-            String fullPath = TexturedPatch.extendTextureName(textureOutputPath + "." + extension,patch_id);
+            String fullPath = TexturedPatch.extendTextureName(textureOutputPath + "." + extension, patch_id);
             patchTextureGenerator.splitAndWriteToFile(image, fullPath);
             patch_id += 1;
         }
+        System.out.println("{ \"textures\" : [");
+        for (int i = 0; i < getTexturedPatches().size(); i++) {
+            String fullPath = TexturedPatch.extendTextureName(textureOutputPath + "." + extension, i);
+            System.out.print((i != 0 ? "," : "") + "\n\t\"" + CoSpacesBase62Id.calculateIdFromFile(fullPath) + "\"");
+        }
+        System.out.println("]}");
     }
 }

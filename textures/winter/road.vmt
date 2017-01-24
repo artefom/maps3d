@@ -1,0 +1,16 @@
+{
+  "name"                                : "road",
+  "symbol_ids"                          : "504...",
+  "filled"                              : false,
+  "color"                               : "155, 127, 106",
+  "z_index"                             : 3900,
+  "width"                               : 9,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}

@@ -1,0 +1,16 @@
+{
+  "name"                                : "Line",
+  "symbol_ids"                          : "704000, 704001, 705000",
+  "filled"                              : false,
+  "color"                               : "255, 25, 100, 200",
+  "z_index"                             : 4200,
+  "width"                               : 8,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}

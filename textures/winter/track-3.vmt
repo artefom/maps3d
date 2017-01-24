@@ -1,0 +1,16 @@
+{
+  "name"                                : "Track 0.80 - 1.5 m",
+  "symbol_ids"                          : "803000",
+  "filled"                              : false,
+  "color"                               : "255, 255, 255",
+  "z_index"                             : 4000,
+  "width"                               : 6,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}

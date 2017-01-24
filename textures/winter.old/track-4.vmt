@@ -1,0 +1,16 @@
+{
+  "name"                                : "Track, slow 0.8-1 m",
+  "symbol_ids"                          : "804000",
+  "filled"                              : false,
+  "color"                               : "181, 188, 196",
+  "z_index"                             : 4000,
+  "width"                               : 2,
+  "mask_blur"                           : 0,
+  "z_mask_bezier_definitions"           : "",
+  "angle_mask_bezier_definitions"       : "",
+  "texture"                             : "",
+  "erode_first"                         : false,
+  "dilate_size"                         : 0,
+  "erode_size"                          : 0,
+  "blur_size"                           : 0
+}

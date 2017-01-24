@@ -30,6 +30,8 @@ import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.function.BiConsumer;
@@ -228,7 +230,8 @@ public class MainController {
         }
 
         Index index = new Index(getMesh(progressUpdate).saveAsFbx(output_path), true);
-        index.dumpToJS("index.js");
+        Path zIndex = Paths.get(output_path).getParent().resolve("3d-Z-index.js");
+        index.dumpToJS(zIndex.toString());
     }
 
     public boolean splitTexture(File imageFile, String textureOutputPath, BiConsumer<Integer, Integer> progressUpdate) {
@@ -236,10 +239,8 @@ public class MainController {
             String extension = OutputUtils.getExtension(textureOutputPath);
             if (extension.length() > 0) {
                 textureOutputPath = textureOutputPath.substring(0,textureOutputPath.length()-1-extension.length());
-                extension = "png";
-            } else {
-                extension = "png";
             }
+            extension = "png";
             try {
                 BufferedImage image = ImageIO.read(imageFile);
                 getMesh(progressUpdate).splitTexture(image, deserializedOcad, textureOutputPath, extension);

@@ -1,0 +1,9 @@
+{
+  "name" : "water",
+  "symbol_ids" : "406000,409000,408000,410000",
+  "z_index" : 2000,
+  "filled" : true,
+  "blur_size" : 5,
+  "color" : "0, 255, 0",
+  "texture" : "snow_grass.jpg"
+}

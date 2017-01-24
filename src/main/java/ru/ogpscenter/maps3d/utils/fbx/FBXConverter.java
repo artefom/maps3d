@@ -82,7 +82,7 @@ public class FBXConverter {
         FBXNode connections = new FBXNode("Connections");
 
 
-        writeMeshRes meshRes = writeMesh(coordinates,normals,texture_coordinates,polygons,uv_ids,material_ids,"GenericMesh",0,objects,connections);
+        writeMeshRes meshRes = writeMesh(coordinates,normals,texture_coordinates,polygons,uv_ids,material_ids,"dxGround",0,objects,connections);
 
         ArrayList<Integer> unique_materials_sorted = new ArrayList<>();
 

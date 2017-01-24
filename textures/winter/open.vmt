@@ -1,0 +1,9 @@
+{
+  "name" : "open",
+  "symbol_ids" : "401000,403000,415000",
+  "z_index" : 2000,
+  "filled" : true,
+  "blur_size" : 0,
+  "color" : "0, 255, 0",
+  "texture" : "open.jpg"
+}

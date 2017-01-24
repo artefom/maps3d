@@ -1210,7 +1210,6 @@ public class RasterUtils {
 
 
     public static void save(BufferedImage image, String path) {
-
         String extension = OutputUtils.getExtension(path);
         try {
             File f = new File(path);

@@ -1,0 +1,10 @@
+{
+  "name"                                : "White background",
+  "symbol_ids"                          : "960000",
+  "filled"                              : true,
+  "color"                               : "255, 255, 255",
+  "z_index"                             : -500,
+  "texture"                             : "",
+  "blur_size"                           : 0
+}
+
