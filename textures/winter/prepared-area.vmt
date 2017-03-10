@@ -1,0 +1,10 @@
+{
+  "name"                                : "Prepared area",
+  "symbol_ids"                          : "808000",
+  "filled"                              : true,
+  "color"                               : "255, 255, 255",
+  "z_index"                             : 3000,
+  "texture"                             : "",
+  "blur_size"                           : 0
+}
+

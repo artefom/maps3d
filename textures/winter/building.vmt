@@ -3,7 +3,7 @@
   "symbol_ids"                          : "526000",
   "filled"                              : true,
   "color"                               : "0, 0, 0",
-  "z_index"                             : 4010,
+  "z_index"                             : 5010,
   "texture"                             : "",
   "blur_size"                           : 0
 }

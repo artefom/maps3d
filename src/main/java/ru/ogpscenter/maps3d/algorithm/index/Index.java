@@ -21,7 +21,7 @@ public class Index {
 
     public Index(BaseMesh mesh, boolean centerAndNormalize) {
         this.mesh = mesh;
-        mesh.centerAndNormalize();
+//        mesh.centerAndNormalize();
         this.tree = new QTree(mesh);
         System.out.print(tree);
     }
@@ -89,7 +89,8 @@ public class Index {
     public void dumpToJS(String fileName){
         try{
             BufferedWriter bw = new BufferedWriter(new FileWriter(fileName));
-            bw.write("var index = {\n");
+            bw.write("{\n");
+//            bw.write("var index = {\n");
             mesh.dumpToJS(bw);
             bw.write(",\n");
             tree.dumpToJS(bw);

@@ -314,6 +314,13 @@ public class PatchTextureGenerator {
         if (borderEnvelope == null) {
             return;
         }
+        System.out.printf("Border coordinates [ %f, %f - %f, %f ]\n",
+            borderEnvelope.getMinX(),
+            borderEnvelope.getMinY(),
+            borderEnvelope.getMaxX(),
+            borderEnvelope.getMaxY()
+        );
+
         Envelope patchEnvelope = new Envelope(patch.UVtoXY(new Coordinate(0, 0)), patch.UVtoXY(new Coordinate(1, 1)));
         Envelope intersection = borderEnvelope.intersection(patchEnvelope);
 

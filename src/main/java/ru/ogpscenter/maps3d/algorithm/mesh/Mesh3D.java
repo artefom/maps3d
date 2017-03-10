@@ -290,6 +290,11 @@ public class Mesh3D {
 
         try {
             FBXConverter.serializeMesh(vertices,normals,texture_coordinates,polygon_indexes,texture_indexes,material_ids, path+".fbx");
+            Optional<Coordinate> minZ = Arrays.stream(vertices).min(Comparator.comparingDouble(o -> o.z));
+            Optional<Coordinate> maxZ = Arrays.stream(vertices).max(Comparator.comparingDouble(o -> o.z));
+            if (minZ.isPresent() && maxZ.isPresent()) {
+                System.out.println("Z coordinate range: [" + minZ.get().z + " - " + maxZ.get().z + "]");
+            }
         } catch (Exception ignored) {
 
             CommandLineUtils.reportException(ignored);

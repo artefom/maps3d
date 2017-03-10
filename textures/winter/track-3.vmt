@@ -1,6 +1,6 @@
 {
   "name"                                : "Track 0.80 - 1.5 m",
-  "symbol_ids"                          : "803000",
+  "symbol_ids"                          : "803001,803004",
   "filled"                              : false,
   "color"                               : "255, 255, 255",
   "z_index"                             : 4000,

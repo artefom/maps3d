@@ -1,6 +1,6 @@
 {
   "name"                                : "Minor road under construction",
-  "symbol_ids"                          : "503001",
+  "symbol_ids"                          : "503001,503009",
   "filled"                              : false,
   "color"                               : "155, 127, 106",
   "z_index"                             : 3900,

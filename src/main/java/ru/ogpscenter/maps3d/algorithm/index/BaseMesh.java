@@ -20,7 +20,7 @@ public class BaseMesh extends Mesh {
         Arrays.asList(coord_array).forEach(vertexXZY -> {
             vertexesXZ.add(vertexXZY);
             vertexesY.add(vertexXZY.z);
-            boxXZ.update(vertexXZY.x, vertexXZY.z);
+            boxXZ.update(vertexXZY.x, vertexXZY.y);
         });
         tris.forEach(tri -> {
             Triplet face = new Triplet(tri);

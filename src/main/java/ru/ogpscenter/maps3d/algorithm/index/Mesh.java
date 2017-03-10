@@ -7,8 +7,7 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -198,21 +197,21 @@ public class Mesh {
 
     public void dumpToJS(BufferedWriter bw){
         try {
-            bw.write("dx:" + dx + ",\n");
-            bw.write("dz:" + dz + ",\n");
-            bw.write("scaling: " + scale + ",\n");
-            bw.write("vertexes: [\n");
+            bw.write("\"dx\":" + dx + ",\n");
+            bw.write("\"dz\":" + dz + ",\n");
+            bw.write("\"scaling\": " + scale + ",\n");
+            bw.write("\"vertexes\": [\n");
             for (int i = 0; i < vertexesY.size(); ++i) {
                 Coordinate coordinate = vertexesXZ.get(i);
                 printVertex(coordinate.x, vertexesY.get(i), coordinate.y, "[", ',',
-                        i == vertexesY.size()-1 ? "]" : "],",
+                        i == vertexesY.size()-1 ? "]" : "],\n",
                         bw);
             }
-            bw.write("\n],triplets: [\n");
+            bw.write("\n],\n\"triplets\": [\n");
             for (int i = 0; i < faceIndices.size(); ++i) {
                 Triplet face = faceIndices.get(i);
                 printFace(face.a, face.b, face.c, "[", ',',
-                        i == faceIndices.size()-1 ? "]" : "],",
+                        i == faceIndices.size()-1 ? "]" : "],\n",
                         bw);
             }
             bw.write("\n]");
@@ -224,8 +223,10 @@ public class Mesh {
     public double centerAndNormalize(){
         dx = -(boxXZ.x0+boxXZ.x1)/2;
         dz = -(boxXZ.z0+boxXZ.z1)/2;
-        double inv_scale = Math.max(boxXZ.xsize(), boxXZ.zsize()), full_scale = 2/inv_scale;
-        double htx = boxXZ.xsize()/inv_scale, htz = boxXZ.zsize()/inv_scale;
+        double inv_scale = Math.max(boxXZ.xsize(), boxXZ.zsize());
+        double full_scale = 2/inv_scale;
+        double htx = boxXZ.xsize()/inv_scale;
+        double htz = boxXZ.zsize()/inv_scale;
 
         Consumer<Coordinate> tfm = c -> {
             c.x = GeomUtils.map(c.x, boxXZ.x0, boxXZ.x1, -htx, htx);
@@ -238,10 +239,18 @@ public class Mesh {
             vertexesY.set(i, vertexesY.get(i)*full_scale);
         }
 
+
         boxXZ.apply(tfm);
 
         this.scale = full_scale;
-        System.out.println("scaled by " + full_scale);
+
+        Optional<Double> maxY = vertexesY.stream().max(Double::compareTo);
+        Optional<Double> minY = vertexesY.stream().min(Double::compareTo);
+        if (minY.isPresent() && maxY.isPresent()) {
+            System.out.println("QTree: Y range after scaling: [" + minY.get() + " - " + maxY.get() + "]");
+        }
+        System.out.println("QTree: box XZ after scaling: " + boxXZ);
+        System.out.println("QTree: scale = " + full_scale);
         return full_scale;
     }
 

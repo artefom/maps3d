@@ -1,6 +1,6 @@
 {
   "name"                                : "Very wide track > 3 m",
-  "symbol_ids"                          : "801000",
+  "symbol_ids"                          : "801003",
   "filled"                              : false,
   "color"                               : "255, 255, 255",
   "z_index"                             : 4000,

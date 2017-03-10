@@ -1,6 +1,6 @@
 {
   "name"                                : "Paved area",
-  "symbol_ids"                          : "529000",
+  "symbol_ids"                          : "529000,861000,862000",
   "filled"                              : true,
   "color"                               : "155, 127, 106",
   "z_index"                             : 4000,
