@@ -230,7 +230,7 @@ public class MainController {
         }
 
         Index index = new Index(getMesh(progressUpdate).saveAsFbx(output_path), true);
-        Path zIndex = Paths.get(output_path).getParent().resolve("3d-Z-index.js");
+        Path zIndex = Paths.get(output_path).getParent().resolve("3dZIndex.js");
         index.dumpToJS(zIndex.toString());
     }
 

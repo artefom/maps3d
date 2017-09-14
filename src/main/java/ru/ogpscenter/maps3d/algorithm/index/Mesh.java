@@ -197,17 +197,17 @@ public class Mesh {
 
     public void dumpToJS(BufferedWriter bw){
         try {
-            bw.write("\"dx\":" + dx + ",\n");
-            bw.write("\"dz\":" + dz + ",\n");
-            bw.write("\"scaling\": " + scale + ",\n");
-            bw.write("\"vertexes\": [\n");
+            bw.write("dx:" + dx + ",\n");
+            bw.write("dz:" + dz + ",\n");
+            bw.write("scaling: " + scale + ",\n");
+            bw.write("vertexes: [\n");
             for (int i = 0; i < vertexesY.size(); ++i) {
                 Coordinate coordinate = vertexesXZ.get(i);
                 printVertex(coordinate.x, vertexesY.get(i), coordinate.y, "[", ',',
                         i == vertexesY.size()-1 ? "]" : "],\n",
                         bw);
             }
-            bw.write("\n],\n\"triplets\": [\n");
+            bw.write("\n],\ntriplets: [\n");
             for (int i = 0; i < faceIndices.size(); ++i) {
                 Triplet face = faceIndices.get(i);
                 printFace(face.a, face.b, face.c, "[", ',',

@@ -210,7 +210,7 @@ public class QTree {
 
     void dumpToJS(BufferedWriter bw) throws IOException{
 //        bw.write("rootbb: " + root.ownBox.toString() + "\n");
-        bw.write("\"tree\":\n");
+        bw.write("tree:\n");
         root.dfd(bw);
         CommandLineUtils.reportFinish();
     }

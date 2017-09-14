@@ -653,6 +653,7 @@ public class Mesh3D {
     public static String debug_prefix = "";
 
     public static Mesh3D fromIsolineContainer(IsolineContainer ic) {
+        System.out.println("Interpolation...");
         PropertiesLoader.update();
 
         DistanceFieldInterpolation interpolation = new DistanceFieldInterpolation(ic);
@@ -676,12 +677,12 @@ public class Mesh3D {
 
         Polygon map_area = MapEdge.getConvexHull(ic);
 
+        System.out.println("success.");
         if (PropertiesLoader.mesh_creation.convex_hull_cull) {
             return Mesh3D.fromHeightmap(heightmap, width, height, c_min, c_max, map_area);
         } else {
             return Mesh3D.fromHeightmap(heightmap, width, height, c_min, c_max, null);
         }
-
     }
 
     private static Coordinate point_height_buf = new Coordinate();

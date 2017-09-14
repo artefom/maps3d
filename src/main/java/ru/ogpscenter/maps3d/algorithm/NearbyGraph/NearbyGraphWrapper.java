@@ -138,6 +138,7 @@ public class NearbyGraphWrapper {
                 // TODO: optimize
             }
         }
+        System.out.println("success.");
     }
 
     /**

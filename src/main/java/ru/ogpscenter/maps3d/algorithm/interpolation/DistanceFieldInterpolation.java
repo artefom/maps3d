@@ -18,8 +18,8 @@ import java.util.List;
  *
  * This algorithm tries to copy the way human does estimation of point height between lines.
  *
- * It takes distance to 2 closest isolines and takes a weighted summ of their heights,
- * where wheights are distances to isolines.
+ * It takes distance to 2 closest isolines and takes a weighted sum of their heights,
+ * where weights are distances to isolines.
  *
  * It uses distance field algorithm to calculate 2 closes isolines sitting on different heights for each pixel
  * of resulting image. Distance field algorithm implemented using 3x3 kernel as described here: https://habrahabr.ru/post/245729/
@@ -789,21 +789,21 @@ public class DistanceFieldInterpolation {
 
         CommandLineUtils.reportProgressEnd();
 
-        int[][] gaussian_blur_mask = rasterizer.createIntBuffer(1);
-
-        for (int row = 0; row != rasterizer.getRowCount(); ++row) {
-            for (int column = 1; column != rasterizer.getColumnCount() - 1; ++column) {
-                gaussian_blur_mask[row][column] = (int)Math.floor(distanceField[row][column].distance1*0.3);
-                //if (gaussian_blur_mask[row][column] < 1) gaussian_blur_mask[row][column] = 1;
-                //if (gaussian_blur_mask[row][column] > 50) gaussian_blur_mask[row][column] = 50;
-            }
-        }
-
-        CommandLineUtils.reportProgressBegin("Applying gaussian blur");
-        RasterUtils.gauss(result,1,1);
-        CommandLineUtils.reportProgress(1,2);
-        RasterUtils.gauss(result,gaussian_blur_mask,3);
-        CommandLineUtils.reportProgressEnd();
+//        int[][] gaussian_blur_mask = rasterizer.createIntBuffer(1);
+//
+//        for (int row = 0; row != rasterizer.getRowCount(); ++row) {
+//            for (int column = 1; column != rasterizer.getColumnCount() - 1; ++column) {
+//                gaussian_blur_mask[row][column] = (int)Math.floor(distanceField[row][column].distance1*0.3);
+//                //if (gaussian_blur_mask[row][column] < 1) gaussian_blur_mask[row][column] = 1;
+//                //if (gaussian_blur_mask[row][column] > 50) gaussian_blur_mask[row][column] = 50;
+//            }
+//        }
+//
+//        CommandLineUtils.reportProgressBegin("Applying gaussian blur");
+//        RasterUtils.gauss(result,1,1);
+//        CommandLineUtils.reportProgress(1,2);
+//        RasterUtils.gauss(result,gaussian_blur_mask,3);
+//        CommandLineUtils.reportProgressEnd();
 
         //return
         return result;

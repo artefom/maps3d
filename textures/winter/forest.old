@@ -1,8 +1,0 @@
-{
-  "name" : "forest",
-  "z_index" : 2000,
-  "filled" : true,
-  "blur_size" : 5,
-  "color" : "0, 255, 0",
-  "texture" : "snow_grass.jpg"
-}

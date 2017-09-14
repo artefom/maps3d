@@ -89,12 +89,11 @@ public class Index {
     public void dumpToJS(String fileName){
         try{
             BufferedWriter bw = new BufferedWriter(new FileWriter(fileName));
-            bw.write("{\n");
-//            bw.write("var index = {\n");
+            bw.write("var map3d_meshIndex = {\n");
             mesh.dumpToJS(bw);
             bw.write(",\n");
             tree.dumpToJS(bw);
-            bw.write("\n}");
+            bw.write("\n};\n");
             bw.flush();
         } catch (IOException e) {
             e.printStackTrace(System.err);
